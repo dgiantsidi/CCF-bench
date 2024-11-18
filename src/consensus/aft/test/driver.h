@@ -211,7 +211,7 @@ public:
     net->associate_node_address(my_nid, peer_hostname, std::to_string(port));
 
     net->connect_to_peer(
-      peer_hostname, std::to_string(port), ccf::NodeId("1"), "10.5.0.6", 2800);
+      peer_hostname, std::to_string(port), ccf::NodeId("1"), "10.5.0.7", 2800);
 
     net->accept_connection(ccf::NodeId("0"));
     

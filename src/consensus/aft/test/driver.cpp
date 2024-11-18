@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
   my_connections[ccf::NodeId("0")].base_sending_port = 1900;
 
   my_connections[ccf::NodeId("1")].nid = ccf::NodeId("1");
-  my_connections[ccf::NodeId("1")].ip = "10.5.0.6";
+  my_connections[ccf::NodeId("1")].ip = "10.5.0.7";
   my_connections[ccf::NodeId("1")].base_listening_port = 2800;
   my_connections[ccf::NodeId("1")].base_sending_port = 2900;
 
