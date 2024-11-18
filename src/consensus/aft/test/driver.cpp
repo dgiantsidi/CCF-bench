@@ -4,7 +4,7 @@
 #define VERBOSE_RAFT_LOGGING
 
 #include "driver.h"
-
+#include "config.hpp"
 #include "ccf/ds/hash.h"
 #include "networking_api.h"
 #include <chrono>
@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
     //fmt::print("\n");
             
 
-  for (auto i = 0ULL; i < 8; i ++) {
+  for (auto i = 0ULL; i < k_num_requests; i ++) {
     driver->replicate_commitable("2", data, 0);
         driver->periodic_listening_acks(ccf::NodeId("1"));
   }
@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
       my_connections[ccf::NodeId("1")].ip,
       my_connections[ccf::NodeId("1")].base_listening_port);
       int count = 0;
-      for (auto i = 0ULL; i < 8; i ++) {
+      for (auto i = 0ULL; i < k_num_requests; i ++) {
 
         count += driver->periodic_listening(ccf::NodeId("0"));
       }
