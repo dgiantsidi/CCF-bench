@@ -27,6 +27,7 @@ namespace aft
 
     virtual void init(Index, Index) {}
 
+
     virtual void put_entry(
       const std::vector<uint8_t>& original,
       bool globally_committable,
@@ -34,7 +35,7 @@ namespace aft
       ccf::kv::Version index)
     {
       std::lock_guard<std::mutex> lock(ledger_access);
-
+      
       // The payload that we eventually deserialise must include the
       // ledger entry as well as the View and Index that identify it, and
       // whether this is committable. In the real entries, they are nested in
@@ -60,6 +61,8 @@ namespace aft
 
       combined.insert(combined.end(), original.begin(), original.end());
 
+    
+      
       ledger.push_back(combined);
     }
 
@@ -71,6 +74,7 @@ namespace aft
 
     static std::vector<uint8_t> get_entry(const uint8_t*& data, size_t& size)
     {
+      fmt::print("{}\n", __func__);
       const auto entry_size = serialized::read<size_t>(data, size);
       std::vector<uint8_t> entry(data, data + entry_size);
       serialized::skip(data, size, entry_size);
@@ -209,6 +213,7 @@ namespace aft
       const uint8_t* data,
       size_t size) override
     {
+      fmt::print("[{}] to {}\n", __func__, to);
       std::vector<uint8_t> m(data, data + size);
       messages.emplace_back(to, std::move(m));
       return true;
@@ -220,12 +225,15 @@ namespace aft
       const uint8_t*& data,
       size_t& size) override
     {
+      fmt::print("[{}] from {}\n", __func__, from_node);
       return true;
     }
 
     bool recv_channel_message(
       const ccf::NodeId& from, const uint8_t* data, size_t size) override
     {
+      fmt::print("[{}] from {}\n", __func__, from);
+
       return true;
     }
 
@@ -242,6 +250,8 @@ namespace aft
       std::span<const uint8_t> cb,
       const std::vector<uint8_t>& data) override
     {
+      fmt::print("[{}] to {}\n", __func__, to);
+
       return true;
     }
 
@@ -251,6 +261,8 @@ namespace aft
       const uint8_t* data,
       size_t size) override
     {
+      fmt::print("[{}] from {}\n", __func__, fromfpf32);
+
       return {};
     }
 
@@ -262,6 +274,8 @@ namespace aft
     bool recv_authenticated_with_load(
       const ccf::NodeId& from, const uint8_t*& data, size_t& size) override
     {
+      fmt::print("[{}] from {}\n", __func__, from);
+
       return true;
     }
   };
