@@ -185,8 +185,8 @@ namespace aft
 
     size_t entry_size_not_limited = 0;
     size_t entry_count = 0;
-    Index entries_batch_size = 20;
-    static constexpr int batch_window_size = 100;
+    Index entries_batch_size = 1;
+    static constexpr int batch_window_size = 1;
     int batch_window_sum = 0;
 
     // When this is set, only public domain is deserialised when receiving
@@ -203,7 +203,7 @@ namespace aft
     static constexpr size_t max_terms_per_append_entries = 1;
 
   public:
-    static constexpr size_t append_entries_size_limit = 20000;
+    static constexpr size_t append_entries_size_limit = 1;
     std::unique_ptr<LedgerProxy> ledger;
     std::shared_ptr<ccf::NodeToNode> channels;
 
