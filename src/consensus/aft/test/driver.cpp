@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
     std::chrono::duration<double> duration = end - start;
 
 
-  fmt::print("{}: time elapsed={}s\n", __func__, duration.count());
+  fmt::print("{}: time elapsed={}s, tput={} op/s, avg latency={} ms\n", __func__, duration.count(), (1.0*k_num_requests)/(1.0*duration.count()), ((1000.0*duration.count())/(1.0*k_num_requests)));
 
 #if 0
   threading::ThreadMessaging::init(1);
