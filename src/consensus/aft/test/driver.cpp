@@ -6,7 +6,8 @@
 #include "driver.h"
 
 #include "ccf/ds/hash.h"
-
+#include "networking_api.h"
+#include <chrono>
 #include <cassert>
 #include <fstream>
 #include <iostream>
@@ -14,6 +15,20 @@
 #include <string>
 
 using namespace std;
+
+static void print_data(uint8_t* ptr, size_t msg_size) {
+   fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      __func__);
+    for (auto i = 0ULL; i < msg_size; i++) {
+      fmt::print("{}", static_cast<int>(ptr[i]));
+    }
+    fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      __func__);
+  }
 
 std::unique_ptr<threading::ThreadMessaging>
   threading::ThreadMessaging::singleton = nullptr;
@@ -25,6 +40,162 @@ namespace threading
 
 constexpr auto shash = ccf::ds::fnv_1a<size_t>;
 
+int main(int argc, char* argv[])
+{
+  threading::ThreadMessaging::init(1);
+
+  std::map<ccf::NodeId, network_stack::connectivity_description> my_connections;
+  my_connections.insert(std::make_pair(
+    ccf::NodeId("0"), network_stack::connectivity_description()));
+  my_connections.insert(std::make_pair(
+    ccf::NodeId("1"), network_stack::connectivity_description()));
+  my_connections.insert(std::make_pair(
+    ccf::NodeId("2"), network_stack::connectivity_description()));
+
+  my_connections[ccf::NodeId("0")].nid = ccf::NodeId("0");
+  my_connections[ccf::NodeId("0")].ip = "10.5.0.6";
+  my_connections[ccf::NodeId("0")].base_listening_port = 1800;
+  my_connections[ccf::NodeId("0")].base_sending_port = 1900;
+
+  my_connections[ccf::NodeId("1")].nid = ccf::NodeId("1");
+  my_connections[ccf::NodeId("1")].ip = "10.5.0.6";
+  my_connections[ccf::NodeId("1")].base_listening_port = 2800;
+  my_connections[ccf::NodeId("1")].base_sending_port = 2900;
+
+  my_connections[ccf::NodeId("2")].nid = ccf::NodeId("2");
+  my_connections[ccf::NodeId("2")].ip = "10.5.0.6";
+  my_connections[ccf::NodeId("2")].base_listening_port = 3800;
+  my_connections[ccf::NodeId("2")].base_sending_port = 3900;
+
+  std::string node_id;
+  std::cin >> node_id;
+
+  uint64_t lineno = 0;
+  #if 0
+  fmt::print(
+    "=*=*=*==*=*=*==*=*=*==*=*=*= make_shared<RaftDriver>() "
+    "=*=*=*==*=*=*==*=*=*==*=*=*=\n");
+  #endif
+
+  auto driver = make_shared<RaftDriver>(node_id);
+  auto start = std::chrono::high_resolution_clock::now();
+  if (ccf::NodeId(node_id) == ccf::NodeId("0"))
+  {
+    driver->make_primary(
+      ccf::NodeId(node_id),
+      my_connections[ccf::NodeId("0")].ip,
+      my_connections[ccf::NodeId("0")].base_listening_port);
+    driver->become_primary();
+    driver->create_new_nodes(std::vector<std::string>{"1"});
+    // driver->create_start_node(ccf::NodeId("0"), 0);
+    auto data = std::make_shared<std::vector<uint8_t>>();
+    auto& vec = *(data.get());
+    #if 0
+    fmt::print("{}: data to be sent -> ", __func__);
+    for (auto i = 0ULL; i < 64; i++) {
+      vec.push_back('a');
+      fmt::print("{}", vec[i]);
+    }
+    #endif
+    //fmt::print("\n");
+            
+
+  for (auto i = 0ULL; i < 8; i ++) {
+    driver->replicate_commitable("2", data, 0);
+        driver->periodic_listening_acks(ccf::NodeId("1"));
+  }
+//    driver->periodic_listening(ccf::NodeId("1"));
+
+    driver->close_connections(ccf::NodeId("0"));
+    //    driver->close_connections(ccf::NodeId("0"));
+
+
+  }
+  else
+  {
+    driver->make_follower(
+      ccf::NodeId(node_id),
+      my_connections[ccf::NodeId("1")].ip,
+      my_connections[ccf::NodeId("1")].base_listening_port);
+      int count = 0;
+      for (auto i = 0ULL; i < 8; i ++) {
+
+        count += driver->periodic_listening(ccf::NodeId("0"));
+      }
+    driver->periodic_listening(ccf::NodeId("0"));
+    count++;
+    fmt::print("{} count={}\n", __func__, count);
+    //    driver->close_connections(ccf::NodeId("0"));
+            driver->close_connections(ccf::NodeId("1"));
+
+
+
+  }
+      auto end = std::chrono::high_resolution_clock::now();
+// Calculate the duration
+    std::chrono::duration<double> duration = end - start;
+
+
+  fmt::print("{}: time elapsed={}s\n", __func__, duration.count());
+
+#if 0
+  threading::ThreadMessaging::init(1);
+  fmt::print(
+    "=*=*=*==*=*=*==*=*=*==*=*=*= driver->create_start_node(0, 0); "
+    "=*=*=*==*=*=*==*=*=*==*=*=*=\n");
+
+  driver->create_start_node("0", lineno++);
+  fmt::print(
+    "=*=*=*==*=*=*==*=*=*==*=*=*= driver->trust_nodes(2, (1, 2), 1); "
+    "=*=*=*==*=*=*==*=*=*==*=*=*=\n");
+
+  driver->trust_nodes("2", {"1", "2"}, lineno++);
+  fmt::print(
+    "=*=*=*==*=*=*==*=*=*==*=*=*= start workload "
+    "=*=*=*==*=*=*==*=*=*==*=*=*=\n");
+  auto nb_cmds = 0;
+  std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(64);
+  for (;;)
+  {
+    if (nb_cmds == 1)
+      break;
+    auto data_v = std::make_shared<std::vector<uint8_t>>();
+    // std::copy(data.get(), data.get() + 64, data_v->begin());
+    auto term = driver->get_term(ccf::NodeId("0"));
+    fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= replicate_commitable lineno={}"
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      lineno);
+    driver->replicate_commitable(std::to_string(term), data_v, lineno++);
+    fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= loop_until_sync lineno={}"
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      (lineno - 1));
+    fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= commit_idxs before sync lineno={}"
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      (lineno - 1));
+    driver->print_commit_idx(ccf::NodeId("0"));
+    driver->print_commit_idx(ccf::NodeId("1"));
+    driver->print_commit_idx(ccf::NodeId("2"));
+
+    driver->loop_until_sync_quorum(lineno++);
+    fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= commit_idxs after sync lineno={} "
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      (lineno - 1));
+    driver->print_commit_idx(ccf::NodeId("0"));
+    driver->print_commit_idx(ccf::NodeId("1"));
+    driver->print_commit_idx(ccf::NodeId("2"));
+
+    nb_cmds++;
+  }
+#endif
+
+  return 0;
+}
+
+#if 0
 int main(int argc, char** argv)
 {
   const regex delim{","};
@@ -39,11 +210,11 @@ int main(int argc, char** argv)
 
   // Log all raft steps to stdout (python wrapper raft_scenario_runner.py
   // filters them).
-#ifdef CCF_RAFT_TRACING
+#  ifdef CCF_RAFT_TRACING
   ccf::logger::config::add_json_console_logger();
-#else
+#  else
   ccf::logger::config::add_text_console_logger();
-#endif
+#  endif
   ccf::logger::config::level() = LoggerLevel::DEBUG;
 
   threading::ThreadMessaging::init(1);
@@ -80,13 +251,13 @@ int main(int argc, char** argv)
       // Terminate early if four or more '=' appear on a line.
       break;
     }
-#ifdef CCF_RAFT_TRACING
+#  ifdef CCF_RAFT_TRACING
     if (!line.empty())
     {
       std::cout << "{\"tag\": \"raft_trace\", \"cmd\": \"" << line << "\"}"
                 << std::endl;
     }
-#endif
+#  endif
     // Steps which don't alter state don't need to recheck invariants
     bool skip_invariants = false;
 
@@ -220,14 +391,30 @@ int main(int argc, char** argv)
         driver->dispatch_single(items[1], items[2]);
         break;
       case shash("replicate"):
+        static int occurence_replication = 0;
+        fmt::print(
+          "[{}] replicate start {}\n\n\n\n\n\n\n\n",
+          __func__,
+          occurence_replication);
         assert(items.size() == 3);
         data = std::make_shared<std::vector<uint8_t>>(
           items[2].begin(), items[2].end());
         driver->replicate(items[1], data, lineno);
+        fmt::print(
+          "[{}] replicate end {}\n\n\n\n\n\n\n\n\n",
+          __func__,
+          occurence_replication);
+        occurence_replication++;
         break;
       case shash("emit_signature"):
+        static int occurence = 0;
+        fmt::print(
+          "[{}] emit_signature start {}\n\n\n\n\n\n\n\n", __func__, occurence);
         assert(items.size() == 2);
         driver->emit_signature(items[1], lineno);
+        fmt::print(
+          "[{}] emit_signature end {}\n\n\n\n\n\n\n\n\n", __func__, occurence);
+        occurence++;
         break;
       case shash("disconnect"):
         assert(items.size() == 3);
@@ -311,3 +498,4 @@ int main(int argc, char** argv)
 
   return 0;
 }
+#endif
