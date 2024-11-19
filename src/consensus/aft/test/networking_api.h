@@ -11,7 +11,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <unordered_map>
-
+#include <netinet/tcp.h>
+#include <sys/socket.h>
  
 
 namespace socket_layer {
@@ -148,6 +149,12 @@ public:
       fmt::print("{}: error creating the socket\n", __func__);
       return -1;
     }
+    int flag = 1;
+    int result = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int));
+    if (result < 0) {
+      fmt::print("{}: error setting up the socket\n", __func__);
+      return -1;
+    }
 
     // Define the server address
     struct sockaddr_in server_addr;
@@ -235,6 +242,12 @@ public:
     {
       fmt::print("{}: error creating the socket\n", __func__);
       return;
+    }
+     int flag = 1;
+    int result = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int));
+    if (result < 0) {
+      fmt::print("{}: error setting up the socket\n", __func__);
+      return ;
     }
 
     const int port = std::stoi(peer_service);

@@ -119,7 +119,6 @@ int main(int argc, char* argv[])
       my_connections[ccf::NodeId("1")].base_listening_port);
       int count = 0;
       for (auto i = 0ULL; i < k_num_requests; i ++) {
-
         count += driver->periodic_listening(ccf::NodeId("0"));
       }
     driver->periodic_listening(ccf::NodeId("0"));
