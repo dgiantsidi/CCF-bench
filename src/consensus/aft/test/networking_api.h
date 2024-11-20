@@ -393,7 +393,7 @@ public:
         msg_type_sz,
         sizeof(type));
 
-    auto msg_size = size*2; // + msg_type_sz;
+    auto msg_size = size; // + msg_type_sz;
     auto msg_ptr = std::make_unique<uint8_t[]>(msg_size);
 
     if (msg_type == aft::RaftMsgType::raft_append_entries)
