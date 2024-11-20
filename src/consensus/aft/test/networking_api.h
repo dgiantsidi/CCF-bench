@@ -317,12 +317,12 @@ public:
     return v;
   }
 
-  uint64_t get_msg_type_from_header_sz(const uint8_t* serialized_data, size_t sz) {
+  std::tuple<uint64_t, size_t> get_msg_type_from_header_sz(const uint8_t* serialized_data, size_t sz) {
     if (read<aft::RaftMsgType>(serialized_data, sz) == aft::RaftMsgType::raft_append_entries) {
-      return aft::RaftMsgType::raft_append_entries;
+      return {aft::RaftMsgType::raft_append_entries, sizeof(aft::AppendEntries)};
     }
     else if (read<aft::RaftMsgType>(serialized_data, sz) == aft::RaftMsgType::raft_append_entries_response) {
-        return aft::RaftMsgType::raft_append_entries_response;
+        return {aft::RaftMsgType::raft_append_entries_response, sizeof(aft::AppendEntriesResponse)};
     }
     #if 0
     if (sz == sizeof(aft::AppendEntries))
@@ -338,17 +338,18 @@ public:
     const uint8_t* data,
     size_t size) override
   {
+    auto [msg_type, specific_msg_type_sz] = get_msg_type_from_header_sz(data, size);
+
     size_t msg_type_sz = sizeof (aft::RaftMsgType);
-    auto msg_size = size+msg_type_sz;
+    auto msg_size = size+msg_type_sz + specific_msg_type_sz;
     auto msg_ptr = std::make_unique<uint8_t[]>(msg_size);
 
-    auto msg_type = get_msg_type_from_header_sz(data, size);
 
     if (msg_type == aft::RaftMsgType::raft_append_entries) {
       //fmt::print("{} ---> aft::RaftMsgType::raft_append_entries\n", __func__);
     }
-    ::memcpy(msg_ptr.get(), &msg_type, msg_type_sz);
-    ::memcpy(msg_ptr.get()+msg_type_sz, data, size);
+    ::memcpy(msg_ptr.get()+msg_type_sz, &msg_type, specific_msg_type_sz);
+    ::memcpy(msg_ptr.get()+msg_type_sz+specific_msg_type_sz, data, size);
 #if 0
     fmt::print("{}: to={} of type={}\n", __func__, to, (type == ccf::NodeMsgType::consensus_msg) ? "ccf::NodeMsgType::consensus_msg" : "other type");
     if (type == aft::RaftMsgType::raft_append_entries) {
