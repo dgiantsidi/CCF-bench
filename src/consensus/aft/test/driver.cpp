@@ -4,11 +4,13 @@
 #define VERBOSE_RAFT_LOGGING
 
 #include "driver.h"
-#include "config.hpp"
+
 #include "ccf/ds/hash.h"
+#include "config.hpp"
 #include "networking_api.h"
-#include <chrono>
+
 #include <cassert>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -16,19 +18,21 @@
 
 using namespace std;
 
-static void print_data(uint8_t* ptr, size_t msg_size) {
-   fmt::print(
-      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
-      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
-      __func__);
-    for (auto i = 0ULL; i < msg_size; i++) {
-      fmt::print("{}", static_cast<int>(ptr[i]));
-    }
-    fmt::print(
-      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
-      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
-      __func__);
+static void print_data(uint8_t* ptr, size_t msg_size)
+{
+  fmt::print(
+    "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
+    "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+    __func__);
+  for (auto i = 0ULL; i < msg_size; i++)
+  {
+    fmt::print("{}", static_cast<int>(ptr[i]));
   }
+  fmt::print(
+    "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
+    "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+    __func__);
+}
 
 std::unique_ptr<threading::ThreadMessaging>
   threading::ThreadMessaging::singleton = nullptr;
@@ -71,11 +75,11 @@ int main(int argc, char* argv[])
   std::cin >> node_id;
 
   uint64_t lineno = 0;
-  #if 0
+#if 0
   fmt::print(
     "=*=*=*==*=*=*==*=*=*==*=*=*= make_shared<RaftDriver>() "
     "=*=*=*==*=*=*==*=*=*==*=*=*=\n");
-  #endif
+#endif
 
   auto driver = make_shared<RaftDriver>(node_id);
   auto start = std::chrono::high_resolution_clock::now();
@@ -90,30 +94,27 @@ int main(int argc, char* argv[])
     // driver->create_start_node(ccf::NodeId("0"), 0);
     auto data = std::make_shared<std::vector<uint8_t>>();
     auto& vec = *(data.get());
-    #if 0
+#if 0
     fmt::print("{}: data to be sent -> ", __func__);
     for (auto i = 0ULL; i < 64; i++) {
       vec.push_back('a');
       fmt::print("{}", vec[i]);
     }
-    #endif
-    //fmt::print("\n");
-            
+#endif
+    // fmt::print("\n");
 
-  int acks = 0;
-  for (auto i = 0ULL; i < k_num_requests; i ++) {
-        driver->replicate_commitable("2", data, 0);
-        acks += driver->periodic_listening_acks(ccf::NodeId("1"));
+    int acks = 0;
+    for (auto i = 0ULL; i < k_num_requests; i++)
+    {
+      driver->replicate_commitable("2", data, 0);
+      acks += driver->periodic_listening_acks(ccf::NodeId("1"));
+      fmt::print("{} acks={}\n", __func__, acks);
+    }
 
-  }
-  
-
-//    driver->periodic_listening(ccf::NodeId("1"));
+    //    driver->periodic_listening(ccf::NodeId("1"));
 
     driver->close_connections(ccf::NodeId("0"));
     //    driver->close_connections(ccf::NodeId("0"));
-  fmt::print("{} acks={}\n", __func__, acks);
-
   }
   else
   {
@@ -121,28 +122,31 @@ int main(int argc, char* argv[])
       ccf::NodeId(node_id),
       my_connections[ccf::NodeId("1")].ip,
       my_connections[ccf::NodeId("1")].base_listening_port);
-      int count = 0;
-      for (auto i = 0ULL; i < k_num_requests; i ++) {
-        for (;;) {
-          count += driver->periodic_listening(ccf::NodeId("0"));
-            fmt::print("{} recv_msg_count={}\n", __func__, count);
-        }
+    int count = 0;
+    for (auto i = 0ULL; i < k_num_requests; i++)
+    {
+      for (;;)
+      {
+        count += driver->periodic_listening(ccf::NodeId("0"));
+        fmt::print("{} recv_msg_count={}\n", __func__, count);
       }
+    }
     driver->periodic_listening(ccf::NodeId("0"));
     count++;
     fmt::print("{} count={}\n", __func__, count);
     //    driver->close_connections(ccf::NodeId("0"));
-            driver->close_connections(ccf::NodeId("1"));
-
-
-
+    driver->close_connections(ccf::NodeId("1"));
   }
-      auto end = std::chrono::high_resolution_clock::now();
-// Calculate the duration
-    std::chrono::duration<double> duration = end - start;
+  auto end = std::chrono::high_resolution_clock::now();
+  // Calculate the duration
+  std::chrono::duration<double> duration = end - start;
 
-
-  fmt::print("{}: time elapsed={}s, tput={} op/s, avg latency={} ms\n", __func__, duration.count(), (1.0*k_num_requests)/(1.0*duration.count()), ((1000.0*duration.count())/(1.0*k_num_requests)));
+  fmt::print(
+    "{}: time elapsed={}s, tput={} op/s, avg latency={} ms\n",
+    __func__,
+    duration.count(),
+    (1.0 * k_num_requests) / (1.0 * duration.count()),
+    ((1000.0 * duration.count()) / (1.0 * k_num_requests)));
 
 #if 0
   threading::ThreadMessaging::init(1);

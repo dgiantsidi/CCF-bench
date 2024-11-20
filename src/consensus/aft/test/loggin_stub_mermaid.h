@@ -39,7 +39,7 @@ struct LedgerStubProxy_Mermaid : public aft::LedgerStubProxy
     ccf::kv::Term term,
     ccf::kv::Version index) override
   {
-    #if 0
+#if 0
     fmt::print(
       "{}->>{}: [ledger] appending: term={} index={} -> data: {}\n",
       _id,
@@ -47,7 +47,7 @@ struct LedgerStubProxy_Mermaid : public aft::LedgerStubProxy
       term,
       index,
       stringify(data));
-    #endif
+#endif
     aft::LedgerStubProxy::put_entry(data, globally_committable, term, index);
   }
 
@@ -70,7 +70,7 @@ struct LoggingStubStore_Mermaid : public aft::LoggingStubStoreConfig
 
   void rollback(const ccf::kv::TxID& tx_id, aft::Term t) override
   {
-    #if 0
+#if 0
     fmt::print(
       "{}->>{}: [KV] rolling back to {}.{}, in term {}\n",
       _id,
@@ -78,7 +78,7 @@ struct LoggingStubStore_Mermaid : public aft::LoggingStubStoreConfig
       tx_id.term,
       tx_id.version,
       t);
-    #endif
+#endif
     aft::LoggingStubStoreConfig::rollback(tx_id, t);
   }
 
@@ -88,6 +88,5 @@ struct LoggingStubStore_Mermaid : public aft::LoggingStubStoreConfig
     aft::LoggingStubStoreConfig::initialise_term(t);
   }
 };
-
 
 using TRaft = aft::Aft<LedgerStubProxy_Mermaid>;

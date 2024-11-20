@@ -1,24 +1,24 @@
 #pragma once
-#include "node/node_to_node.h"
 #include "loggin_stub_mermaid.h"
+#include "node/node_to_node.h"
+
 #include <arpa/inet.h>
 #include <cstring>
 #include <fmt/printf.h>
 #include <iostream>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <stdint.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <unordered_map>
-#include <netinet/tcp.h>
-#include <sys/socket.h>
- 
 
-namespace socket_layer {
-
-  static void print_data(const uint8_t* ptr, size_t msg_size) {
-    #if 0
+namespace socket_layer
+{
+  static void print_data(const uint8_t* ptr, size_t msg_size)
+  {
+#if 0
    fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
@@ -30,43 +30,49 @@ namespace socket_layer {
       "\n=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-      #endif
+#endif
   }
 
-  void send_to_socket(const int& socket, std::unique_ptr<uint8_t[]> msg, size_t msg_sz) {
-    //fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
+  void send_to_socket(
+    const int& socket, std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
+  {
+    // fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz,
+    // socket);
 
-    #if 0
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    #endif
+#endif
     print_data(msg.get(), msg_sz);
     int len = 0, offset = 0;
     int remaining = msg_sz;
-    for (;;) {
+    for (;;)
+    {
       len = write(socket, msg.get() + offset, remaining);
       offset += len;
       remaining -= offset;
       if (remaining == 0)
         break;
     }
-    #if 0
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    #endif
+#endif
   }
 
-
-  std::tuple<std::unique_ptr<uint8_t[]>, size_t> get_from_socket(const int& socket, size_t sz) {
+  std::tuple<std::unique_ptr<uint8_t[]>, size_t> get_from_socket(
+    const int& socket, size_t sz)
+  {
     // fmt::print("{}: --> socket={} sz={}\n", __func__, socket, sz);
-    int len = 0, offset =0;
+    int len = 0, offset = 0;
     int remaining = sz;
     std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(remaining);
-    for (;;) {
+    for (;;)
+    {
       len = read(socket, data.get() + offset, remaining);
       offset += len;
       remaining -= offset;
@@ -78,13 +84,11 @@ namespace socket_layer {
   }
 };
 
-
 #if 0
 static inline uint16_t __bswap_16(uint16_t x) {
     return (x >> 8) | (x << 8);
 }
 #endif
-
 
 class network_stack : public ccf::NodeToNode
 {
@@ -110,8 +114,7 @@ class network_stack : public ccf::NodeToNode
   };
 
 public:
-  network_stack()
-  { }
+  network_stack() {}
 
   std::weak_ptr<TRaft> raft_copy;
 
@@ -129,13 +132,11 @@ public:
   using MessageList = std::deque<std::pair<ccf::NodeId, std::vector<uint8_t>>>;
   MessageList messages;
 
-
-  void register_ledger_getter(std::shared_ptr<TRaft> raft) {
+  void register_ledger_getter(std::shared_ptr<TRaft> raft)
+  {
     raft_copy = raft;
   }
-  void print()
-  {
-  }
+  void print() {}
 
   bool connect_to_peer(
     const std::string& host_,
@@ -151,8 +152,10 @@ public:
       return -1;
     }
     int flag = 1;
-    int result = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int));
-    if (result < 0) {
+    int result =
+      setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
+    if (result < 0)
+    {
       fmt::print("{}: error setting up the socket\n", __func__);
       return -1;
     }
@@ -191,7 +194,12 @@ public:
     auto& sending_handle = node_connections_map[peer_id]->sending_handle;
     sending_handle = sockfd;
     fmt::print(
-      "{}  --> ({}) {}:{} @ socket={}\n", __func__, peer_id, peer_ip, peer_port, sending_handle);
+      "{}  --> ({}) {}:{} @ socket={}\n",
+      __func__,
+      peer_id,
+      peer_ip,
+      peer_port,
+      sending_handle);
 
     return 1;
   }
@@ -229,7 +237,8 @@ public:
       __func__,
       client_sock,
       inet_ntoa(client_addr.sin_addr),
-      ntohs(client_addr.sin_port), peer_id);
+      ntohs(client_addr.sin_port),
+      peer_id);
     listening_handle = client_sock;
   }
 
@@ -244,11 +253,13 @@ public:
       fmt::print("{}: error creating the socket\n", __func__);
       return;
     }
-     int flag = 1;
-    int result = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char *)&flag, sizeof(int));
-    if (result < 0) {
+    int flag = 1;
+    int result =
+      setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
+    if (result < 0)
+    {
       fmt::print("{}: error setting up the socket\n", __func__);
-      return ;
+      return;
     }
 
     const int port = std::stoi(peer_service);
@@ -262,7 +273,11 @@ public:
     if (bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1)
     {
       fmt::print(
-        "{}: error binding the socket --> {} {}:{}\n", __func__, std::strerror(errno), peer_hostname, peer_service);
+        "{}: error binding the socket --> {} {}:{}\n",
+        __func__,
+        std::strerror(errno),
+        peer_hostname,
+        peer_service);
       close(sockfd);
       return;
     }
@@ -277,12 +292,11 @@ public:
     node_connections_map[peer_id]->listening_handle = sockfd;
   }
 
-
   void close_channel(const ccf::NodeId& peer_id) override
   {
     if (node_connections_map.find(peer_id) == node_connections_map.end())
       fmt::print("{} not connections foudn for peer={}\n", __func__, peer_id);
-      return;
+    return;
 
     if (node_connections_map[peer_id]->listening_handle > 0)
       close(node_connections_map[peer_id]->listening_handle);
@@ -304,13 +318,16 @@ public:
 #endif
   }
 
-  
   template <class T>
   T read(const uint8_t* data, size_t size)
   {
     if (size < sizeof(T))
     {
-      fmt::print("{} --> error: Insufficient space (read<T>: {} < {})", __func__, size, sizeof(T));
+      fmt::print(
+        "{} --> error: Insufficient space (read<T>: {} < {})",
+        __func__,
+        size,
+        sizeof(T));
     }
 
     T v;
@@ -318,23 +335,36 @@ public:
     return v;
   }
 
-  std::tuple<uint64_t, size_t> get_msg_type_from_header_sz(const uint8_t* serialized_data, size_t sz) {
-    if (read<aft::RaftMsgType>(serialized_data, sz) == aft::RaftMsgType::raft_append_entries) {
-    /*  auto ae = *(aft::AppendEntries*)serialized_data;
-      fmt::print("{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, .leader_commit_idx={}, .term_of_idx={}\n",
-      __func__, ae.idx, ae.prev_idx, ae.term, ae.prev_term, ae.leader_commit_idx, ae.term_of_idx);
-      */
-      return {aft::RaftMsgType::raft_append_entries, sizeof(aft::AppendEntries)};
+  std::tuple<uint64_t, size_t> get_msg_type_from_header_sz(
+    const uint8_t* serialized_data, size_t sz)
+  {
+    if (
+      read<aft::RaftMsgType>(serialized_data, sz) ==
+      aft::RaftMsgType::raft_append_entries)
+    {
+      /*  auto ae = *(aft::AppendEntries*)serialized_data;
+        fmt::print("{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={},
+        .leader_commit_idx={}, .term_of_idx={}\n",
+        __func__, ae.idx, ae.prev_idx, ae.term, ae.prev_term,
+        ae.leader_commit_idx, ae.term_of_idx);
+        */
+      return {
+        aft::RaftMsgType::raft_append_entries, sizeof(aft::AppendEntries)};
     }
-    else if (read<aft::RaftMsgType>(serialized_data, sz) == aft::RaftMsgType::raft_append_entries_response) {
-        return {aft::RaftMsgType::raft_append_entries_response, sizeof(aft::AppendEntriesResponse)};
+    else if (
+      read<aft::RaftMsgType>(serialized_data, sz) ==
+      aft::RaftMsgType::raft_append_entries_response)
+    {
+      return {
+        aft::RaftMsgType::raft_append_entries_response,
+        sizeof(aft::AppendEntriesResponse)};
     }
-    #if 0
+#if 0
     if (sz == sizeof(aft::AppendEntries))
         return aft::RaftMsgType::raft_append_entries;
       if (sz == sizeof(aft::AppendEntriesResponse))
         return aft::RaftMsgType::raft_append_entries_response;
-    #endif
+#endif
   }
 
   bool send_authenticated(
@@ -343,30 +373,46 @@ public:
     const uint8_t* data,
     size_t size) override
   {
-    auto [msg_type, specific_msg_type_sz] = get_msg_type_from_header_sz(data, size);
+    auto [msg_type, specific_msg_type_sz] =
+      get_msg_type_from_header_sz(data, size);
 
-    if (specific_msg_type_sz != size) {
-      fmt::print("{} --> specific_msg_type_sz={} and size={}\n", __func__, specific_msg_type_sz, size);
+    if (specific_msg_type_sz != size)
+    {
+      fmt::print(
+        "{} --> specific_msg_type_sz={} and size={}\n",
+        __func__,
+        specific_msg_type_sz,
+        size);
     }
-    size_t msg_type_sz = sizeof (ccf::NodeMsgType::consensus_msg);
+    size_t msg_type_sz = sizeof(ccf::NodeMsgType::consensus_msg);
     if (sizeof(type) != msg_type_sz)
-      fmt::print("{} --> msg_type_sz={} and sizeof(type)={}\n", __func__, msg_type_sz, sizeof(type));
+      fmt::print(
+        "{} --> msg_type_sz={} and sizeof(type)={}\n",
+        __func__,
+        msg_type_sz,
+        sizeof(type));
 
     auto msg_size = size; // + msg_type_sz;
     auto msg_ptr = std::make_unique<uint8_t[]>(msg_size);
 
-
-    if (msg_type == aft::RaftMsgType::raft_append_entries) {
+    if (msg_type == aft::RaftMsgType::raft_append_entries)
+    {
       auto ae = *(aft::AppendEntries*)data;
-      fmt::print("{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, .leader_commit_idx={}, .term_of_idx={}\n",
-        __func__, ae.idx, ae.prev_idx, ae.term, ae.prev_term, ae.leader_commit_idx, ae.term_of_idx);
+      fmt::print(
+        "{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, "
+        ".leader_commit_idx={}, .term_of_idx={}\n",
+        __func__,
+        ae.idx,
+        ae.prev_idx,
+        ae.term,
+        ae.prev_term,
+        ae.leader_commit_idx,
+        ae.term_of_idx);
     }
-    ::memcpy(msg_ptr.get() , data, size);
+    ::memcpy(msg_ptr.get(), data, size);
     // ::memcpy(msg_ptr.get() , &type, sizeof(type));
     // ::memcpy(msg_ptr.get() + sizeof(type), data, size);
 
-
-   
     send_msg(to, std::move(msg_ptr), msg_size);
 
     return true;
@@ -387,13 +433,24 @@ public:
     const uint8_t*& data,
     size_t& size) override
   {
-    if (read<aft::RaftMsgType>(header.data(), sizeof(aft::AppendEntries)) == aft::RaftMsgType::raft_append_entries) {
+    if (
+      read<aft::RaftMsgType>(header.data(), sizeof(aft::AppendEntries)) ==
+      aft::RaftMsgType::raft_append_entries)
+    {
       auto ae = *(aft::AppendEntries*)(header.data());
-    
-      fmt::print("{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, .leader_commit_idx={}, .term_of_idx={}\n",
-        __func__, ae.idx, ae.prev_idx, ae.term, ae.prev_term, ae.leader_commit_idx, ae.term_of_idx);
+
+      fmt::print(
+        "{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, "
+        ".leader_commit_idx={}, .term_of_idx={}\n",
+        __func__,
+        ae.idx,
+        ae.prev_idx,
+        ae.term,
+        ae.prev_term,
+        ae.leader_commit_idx,
+        ae.term_of_idx);
     }
-    
+
     return true;
   }
 
@@ -471,7 +528,8 @@ public:
 private:
   void send_msg(node_id to, std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
   {
-    // fmt::print("{}: --> to {} {} bytes (sizeof(aft::RaftMsgType)={})\n", __func__, to, msg_sz, sizeof(aft::RaftMsgType));
+    // fmt::print("{}: --> to {} {} bytes (sizeof(aft::RaftMsgType)={})\n",
+    // __func__, to, msg_sz, sizeof(aft::RaftMsgType));
     const uint8_t* data = msg.get();
     aft::RaftMsgType type = serialized::peek<aft::RaftMsgType>(data, msg_sz);
 
@@ -479,5 +537,3 @@ private:
     socket_layer::send_to_socket(socket, std::move(msg), msg_sz);
   }
 };
-
-

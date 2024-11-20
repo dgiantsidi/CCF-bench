@@ -27,7 +27,6 @@ namespace aft
 
     virtual void init(Index, Index) {}
 
-
     virtual void put_entry(
       const std::vector<uint8_t>& original,
       bool globally_committable,
@@ -35,7 +34,7 @@ namespace aft
       ccf::kv::Version index)
     {
       std::lock_guard<std::mutex> lock(ledger_access);
-      
+
       // The payload that we eventually deserialise must include the
       // ledger entry as well as the View and Index that identify it, and
       // whether this is committable. In the real entries, they are nested in
@@ -61,8 +60,6 @@ namespace aft
 
       combined.insert(combined.end(), original.begin(), original.end());
 
-    
-      
       ledger.push_back(combined);
     }
 
@@ -74,7 +71,7 @@ namespace aft
 
     static std::vector<uint8_t> get_entry(const uint8_t*& data, size_t& size)
     {
-      // fmt::print("{}\n", __func__);
+      fmt::print("{}\n", __func__);
       const auto entry_size = serialized::read<size_t>(data, size);
       std::vector<uint8_t> entry(data, data + entry_size);
       serialized::skip(data, size, entry_size);

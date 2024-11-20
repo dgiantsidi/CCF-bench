@@ -4,9 +4,9 @@
 
 #include "ccf/ds/logger.h"
 #include "consensus/aft/raft.h"
+#include "loggin_stub_mermaid.h"
 #include "logging_stub.h"
 #include "networking_api.h"
-#include "loggin_stub_mermaid.h"
 
 #include <chrono>
 #include <random>
@@ -25,8 +25,6 @@
 #  define RAFT_DRIVER_PRINT(...) \
     std::cout << "<RaftDriver>  " << fmt::format(__VA_ARGS__) << std::endl;
 #endif
-
-
 
 using ms = std::chrono::milliseconds;
 using Store = LoggingStubStore_Mermaid;
@@ -66,10 +64,10 @@ private:
     const std::optional<ccf::kv::Configuration::Nodes>& retired_committed =
       std::nullopt)
   {
-  #if 0
+#if 0
     fmt::print(
       "{} --> term={}\tcommittable={}\n", __func__, term_s, committable);
-  #endif
+#endif
     const auto opt = find_primary_in_term(term_s, lineno);
     if (!opt.has_value())
     {
@@ -80,11 +78,11 @@ private:
       return;
     }
     const auto& [term, node_id] = *opt;
-    //fmt::print("{} --> primary found is node_id={}\n", __func__, node_id);
+    // fmt::print("{} --> primary found is node_id={}\n", __func__, node_id);
 
     auto& raft = _nodes.at(node_id).raft;
     const auto idx = raft->get_last_idx() + 1;
-    #if 0
+#if 0
     fmt::print(
       "{}->>{}: replicate {}.{} = {} [{}]\n",
       node_id,
@@ -93,8 +91,7 @@ private:
       idx,
       stringify(data),
       configuration.has_value() ? "reconfiguration" : "raw");
-    #endif
-
+#endif
 
     aft::ReplicatedDataType type = aft::ReplicatedDataType::raw;
     auto hooks = std::make_shared<ccf::kv::ConsensusHookPtrs>();
@@ -138,9 +135,10 @@ private:
   {
     auto kv = std::make_shared<Store>(node_id);
     const ccf::consensus::Configuration settings{{"10ms"}, {"100ms"}};
-    std::shared_ptr<ccf::NodeToNode> net_stack = std::make_shared<network_stack>();
-    auto state =  std::make_shared<aft::State>(node_id);
-    //state->current_view = (node_id == ccf::NodeId("0")) ? 0 : 2;
+    std::shared_ptr<ccf::NodeToNode> net_stack =
+      std::make_shared<network_stack>();
+    auto state = std::make_shared<aft::State>(node_id);
+    // state->current_view = (node_id == ccf::NodeId("0")) ? 0 : 2;
 
     auto raft = std::make_shared<TRaft>(
       settings,
@@ -172,22 +170,23 @@ public:
 
   void become_primary()
   {
-    #if 0
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    #endif
+#endif
     _nodes[ccf::NodeId("0")].raft->force_become_primary();
-    #if 0
+#if 0
     fmt::print(
       "\n=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    #endif
+#endif
   }
 
-  void close_connections(ccf::NodeId peer_id) {
+  void close_connections(ccf::NodeId peer_id)
+  {
     network_stack* net = channel_stub_proxy(*(_nodes.at(peer_id).raft.get()));
     net->close_channel(peer_id);
   }
@@ -197,12 +196,12 @@ public:
     const std::string& peer_hostname,
     const int& port)
   {
-    #if 0
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    #endif
+#endif
     add_node(my_nid);
     auto raft = _nodes.at(my_nid).raft.get();
     // fmt::print("{}: last_idx={}\n", __func__, raft->get_last_idx());
@@ -214,13 +213,13 @@ public:
       peer_hostname, std::to_string(port), ccf::NodeId("1"), "10.5.0.7", 2800);
 
     net->accept_connection(ccf::NodeId("0"));
-    
-    #if 0
+
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    #endif
+#endif
   }
 
   void make_follower(
@@ -228,14 +227,14 @@ public:
     const std::string& peer_hostname,
     const int& port)
   {
-    #if 0
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    #endif
+#endif
     add_node(my_nid);
-   
+
     auto raft = _nodes.at(my_nid).raft.get();
     // fmt::print("{}: last_idx={}\n", __func__, raft->get_last_idx());
 
@@ -245,12 +244,12 @@ public:
 
     net->connect_to_peer(
       peer_hostname, std::to_string(port), ccf::NodeId("0"), "10.5.0.6", 1800);
-    #if 0
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    #endif
+#endif
   }
   ccf::NodeId my_nid;
   // Note: deprecated, to be removed when the last scenario using it is removed
@@ -291,19 +290,19 @@ public:
     ccf::kv::Configuration::Nodes configuration;
     // add_node(start_node_id);
     configuration.try_emplace(start_node_id);
-    #if 0
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    #endif
+#endif
     _nodes[start_node_id].raft->force_become_primary();
-    #if 0
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-      #endif
+#endif
     _replicate("2", {}, lineno, false, configuration);
     RAFT_DRIVER_PRINT(
       "Note over {}: Node {} created",
@@ -983,7 +982,7 @@ public:
     std::shared_ptr<std::vector<uint8_t>> data,
     const size_t lineno)
   {
-    #if 0
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
@@ -995,14 +994,14 @@ public:
       fmt::print("{}", (char)(vec[i]));
     }
     fmt::print("\n");
-    #endif
+#endif
     _replicate(term_s, *data, lineno, true);
-    #if 0
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    #endif
+#endif
   }
 
   void disconnect(ccf::NodeId left, ccf::NodeId right)
@@ -1104,7 +1103,8 @@ public:
     {
       const auto& node_id = it->first;
       auto& raft = it->second.raft;
-      // fmt::print("========= {} for node_id={} =========\n", __func__, node_id);
+      // fmt::print("========= {} for node_id={} =========\n", __func__,
+      // node_id);
       if (raft->get_view() != target_term)
       {
         discrepancies[node_id].push_back(fmt::format(
@@ -1199,55 +1199,62 @@ public:
     }
   }
 
-  int periodic_listening(ccf::NodeId src_node) {
-    #if 0
+  int periodic_listening(ccf::NodeId src_node)
+  {
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    #endif
+#endif
     auto& my_raft = _nodes.at(my_nid).raft;
     network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
 
-    auto& incomming_socket = net->node_connections_map[my_nid]->listening_handle;
-    auto [data, data_sz] = socket_layer::get_from_socket(incomming_socket, sizeof(aft::AppendEntries));
+    auto& incomming_socket =
+      net->node_connections_map[my_nid]->listening_handle;
+    auto [data, data_sz] = socket_layer::get_from_socket(
+      incomming_socket, sizeof(aft::AppendEntries));
 
     // std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(57);
     // fmt::print("{}: data_sz={}\n", __func__, data_sz);
-    _nodes.at(my_nid).raft->recv_message(src_node, data.get(), sizeof(aft::AppendEntries));
-    #if 0
+    _nodes.at(my_nid).raft->recv_message(
+      src_node, data.get(), sizeof(aft::AppendEntries));
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    #endif
-      return 1;
+#endif
+    return 1;
   }
 
-   int periodic_listening_acks(ccf::NodeId src_node) {
-    #if 0
+  int periodic_listening_acks(ccf::NodeId src_node)
+  {
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    #endif
+#endif
     auto& my_raft = _nodes.at(my_nid).raft;
     network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
 
-    auto& incomming_socket = net->node_connections_map[my_nid]->listening_handle;
-    auto [data, data_sz] = socket_layer::get_from_socket(incomming_socket, sizeof(aft::AppendEntriesResponse));
+    auto& incomming_socket =
+      net->node_connections_map[my_nid]->listening_handle;
+    auto [data, data_sz] = socket_layer::get_from_socket(
+      incomming_socket, sizeof(aft::AppendEntriesResponse));
 
     // std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(57);
     // fmt::print("{}: data_sz={}\n", __func__, data_sz);
-    _nodes.at(my_nid).raft->recv_message(src_node, data.get(), sizeof(aft::AppendEntriesResponse));
-    #if 0
+    _nodes.at(my_nid).raft->recv_message(
+      src_node, data.get(), sizeof(aft::AppendEntriesResponse));
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    #endif
+#endif
     return 1;
-
   }
 
   void loop_until_sync_quorum(const size_t lineno)
