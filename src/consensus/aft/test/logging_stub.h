@@ -71,7 +71,7 @@ namespace aft
 
     static std::vector<uint8_t> get_entry(const uint8_t*& data, size_t& size)
     {
-      fmt::print("{}\n", __func__);
+      // fmt::print("{}\n", __func__);
       const auto entry_size = serialized::read<size_t>(data, size);
       std::vector<uint8_t> entry(data, data + entry_size);
       serialized::skip(data, size, entry_size);

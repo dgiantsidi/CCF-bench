@@ -397,6 +397,7 @@ public:
 
     if (msg_type == aft::RaftMsgType::raft_append_entries)
     {
+#if 0
       auto ae = *(aft::AppendEntries*)data;
       fmt::print(
         "{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, "
@@ -408,6 +409,7 @@ public:
         ae.prev_term,
         ae.leader_commit_idx,
         ae.term_of_idx);
+#endif
     }
     ::memcpy(msg_ptr.get(), data, size);
     // ::memcpy(msg_ptr.get() , &type, sizeof(type));
@@ -438,7 +440,7 @@ public:
       aft::RaftMsgType::raft_append_entries)
     {
       auto ae = *(aft::AppendEntries*)(header.data());
-
+#if 0
       fmt::print(
         "{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, "
         ".leader_commit_idx={}, .term_of_idx={}\n",
@@ -449,6 +451,11 @@ public:
         ae.prev_term,
         ae.leader_commit_idx,
         ae.term_of_idx);
+#endif
+    }
+    else
+    {
+      fmt::print("{} error\n", __func__)
     }
 
     return true;
