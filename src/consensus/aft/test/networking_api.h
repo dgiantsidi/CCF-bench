@@ -366,6 +366,7 @@ public:
       if (sz == sizeof(aft::AppendEntriesResponse))
         return aft::RaftMsgType::raft_append_entries_response;
 #endif
+  return {-1, -1};
   }
 
   bool send_authenticated(
