@@ -61,7 +61,7 @@ namespace socket_layer {
 
 
   std::tuple<std::unique_ptr<uint8_t[]>, size_t> get_from_socket(const int& socket, size_t sz) {
-    // fmt::print("{}: --> socket={} sz={}\n", __func__, socket,sz);
+    fmt::print("{}: --> socket={} sz={}\n", __func__, socket, sz);
     int len = 0, offset =0;
     int remaining = sz;
     std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(remaining);
@@ -319,6 +319,9 @@ public:
 
   std::tuple<uint64_t, size_t> get_msg_type_from_header_sz(const uint8_t* serialized_data, size_t sz) {
     if (read<aft::RaftMsgType>(serialized_data, sz) == aft::RaftMsgType::raft_append_entries) {
+      auto ae = *(aft::AppendEntries*)serialized_data;
+      fmt::print("{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, .leader_commit_idx={}, .term_of_idx={}\n",
+      __func__, ae.idx, ae.prev_idx, ae.term, ae.prev_term, ae.leader_commit_idx, ae.term_of_idx);
       return {aft::RaftMsgType::raft_append_entries, sizeof(aft::AppendEntries)};
     }
     else if (read<aft::RaftMsgType>(serialized_data, sz) == aft::RaftMsgType::raft_append_entries_response) {
@@ -340,75 +343,27 @@ public:
   {
     auto [msg_type, specific_msg_type_sz] = get_msg_type_from_header_sz(data, size);
 
-    size_t msg_type_sz = sizeof (aft::RaftMsgType);
-    auto msg_size = size+msg_type_sz + specific_msg_type_sz;
+    if (specific_msg_type_sz != size) {
+      fmt::print("{} --> specific_msg_type_sz={} and size={}\n", __func__, specific_msg_type_sz, size);
+    }
+    size_t msg_type_sz = sizeof (ccf::NodeMsgType::consensus_msg);
+    if (sizeof(type) != msg_type_sz)
+      fmt::print("{} --> msg_type_sz={} and sizeof(type)={}\n", __func__, msg_type_sz, sizeof(type));
+
+    auto msg_size = size; // + msg_type_sz;
     auto msg_ptr = std::make_unique<uint8_t[]>(msg_size);
 
 
     if (msg_type == aft::RaftMsgType::raft_append_entries) {
-      //fmt::print("{} ---> aft::RaftMsgType::raft_append_entries\n", __func__);
+      auto ae = *(aft::AppendEntries*)data;
+      fmt::print("{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, .leader_commit_idx={}, .term_of_idx={}\n",
+        __func__, ae.idx, ae.prev_idx, ae.term, ae.prev_term, ae.leader_commit_idx, ae.term_of_idx);
     }
-    ::memcpy(msg_ptr.get()+sizeof (aft::RaftMsgType), data, size);
-    //::memcpy(msg_ptr.get()+msg_type_sz+specific_msg_type_sz, data, size);
-#if 0
-    fmt::print("{}: to={} of type={}\n", __func__, to, (type == ccf::NodeMsgType::consensus_msg) ? "ccf::NodeMsgType::consensus_msg" : "other type");
-    if (type == aft::RaftMsgType::raft_append_entries) {
- 
-    auto ae = *(aft::AppendEntries*)data;
-    /*
-     AppendEntries ae{
-        {},
-        {.idx = end_idx, .prev_idx = prev_idx},
-        .term = state->current_view,
-        .prev_term = prev_term,
-        .leader_commit_idx = state->commit_idx,
-        .term_of_idx = term_of_idx,
-      };
-    */
-    ::memcpy(msg_ptr.get(), data, size); // FIXME:
-    auto locked_ptr = raft_copy.lock();
-    if (locked_ptr) {
-        const auto payload_opt = locked_ptr->ledger->get_append_entries_payload(ae);
-      if (payload_opt.has_value()) {
-        fmt::print("\n");
-        for (auto i = 0ULL; i < payload_opt->size(); i++) {
-          fmt::print("{}", (char)((payload_opt.value())[i]));
-        }
-        fmt::print("\n");
-        auto serialized_data = std::make_unique<uint8_t[]>(payload_opt->size());
+    ::memcpy(msg_ptr.get() , data, size);
+    // ::memcpy(msg_ptr.get() , &type, sizeof(type));
+    // ::memcpy(msg_ptr.get() + sizeof(type), data, size);
 
-      }
 
-    }
-    else {
-      fmt::print("{} entry in the ledger did not found\n", __func__);
-    }
-    
-    }
-    else if (type == aft::RaftMsgType::raft_append_entries_response) {
-
-    }
-    else if (type == aft::RaftMsgType::raft_append_entries_signed_response)
-    {
-
-    }
-    else if (type == aft::RaftMsgType::raft_request_vote)
-    {
-
-    }
-    else if (type == aft::RaftMsgType::raft_request_vote_response)
-    {
-
-    }
-    else if (type == aft::RaftMsgType::raft_propose_request_vote) {
-
-    }
-    else {
-
-    }
-    #endif
-    socket_layer::print_data(data, msg_size);
-    socket_layer::print_data(msg_ptr.get(), msg_size);
    
     send_msg(to, std::move(msg_ptr), msg_size);
 
@@ -431,23 +386,12 @@ public:
     size_t& size) override
   {
     if (read<aft::RaftMsgType>(header.data(), sizeof(aft::AppendEntries)) == aft::RaftMsgType::raft_append_entries) {
-        auto ae = *(aft::AppendEntries*)(header.data());
-    #if 0
-     AppendEntries ae{
-        {},
-        {.idx = end_idx, .prev_idx = prev_idx},
-        .term = state->current_view,
-        .prev_term = prev_term,
-        .leader_commit_idx = state->commit_idx,
-        .term_of_idx = term_of_idx,
-      };
-    #endif
-    fmt::print("{} --> .idx={}, .prev_idx={}, .term={}, .leader_commit_idx={}, .term_of_idx={}\n",
-      __func__, ae.idx, ae.prev_idx, ae.term, ae.prev_term, ae.leader_commit_idx, ae.term_of_idx);
+      auto ae = *(aft::AppendEntries*)(header.data());
+    
+      fmt::print("{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, .leader_commit_idx={}, .term_of_idx={}\n",
+        __func__, ae.idx, ae.prev_idx, ae.term, ae.prev_term, ae.leader_commit_idx, ae.term_of_idx);
     }
-    // TODO: implement me!
-    // fmt::print(">{}: from={}\n", __func__, from);
-    socket_layer::print_data(data, size);
+    
     return true;
   }
 
