@@ -34,7 +34,7 @@ namespace socket_layer {
   }
 
   void send_to_socket(const int& socket, std::unique_ptr<uint8_t[]> msg, size_t msg_sz) {
-    fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
+    //fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
 
     #if 0
     fmt::print(
@@ -62,7 +62,7 @@ namespace socket_layer {
 
 
   std::tuple<std::unique_ptr<uint8_t[]>, size_t> get_from_socket(const int& socket, size_t sz) {
-    fmt::print("{}: --> socket={} sz={}\n", __func__, socket, sz);
+    // fmt::print("{}: --> socket={} sz={}\n", __func__, socket, sz);
     int len = 0, offset =0;
     int remaining = sz;
     std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(remaining);
@@ -320,9 +320,10 @@ public:
 
   std::tuple<uint64_t, size_t> get_msg_type_from_header_sz(const uint8_t* serialized_data, size_t sz) {
     if (read<aft::RaftMsgType>(serialized_data, sz) == aft::RaftMsgType::raft_append_entries) {
-      auto ae = *(aft::AppendEntries*)serialized_data;
+    /*  auto ae = *(aft::AppendEntries*)serialized_data;
       fmt::print("{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, .leader_commit_idx={}, .term_of_idx={}\n",
       __func__, ae.idx, ae.prev_idx, ae.term, ae.prev_term, ae.leader_commit_idx, ae.term_of_idx);
+      */
       return {aft::RaftMsgType::raft_append_entries, sizeof(aft::AppendEntries)};
     }
     else if (read<aft::RaftMsgType>(serialized_data, sz) == aft::RaftMsgType::raft_append_entries_response) {

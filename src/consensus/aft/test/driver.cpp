@@ -100,17 +100,19 @@ int main(int argc, char* argv[])
     //fmt::print("\n");
             
 
+  int acks = 0;
   for (auto i = 0ULL; i < k_num_requests; i ++) {
-    for (;;) {
-    driver->replicate_commitable("2", data, 0);
-        driver->periodic_listening_acks(ccf::NodeId("1"));
-    }
+        driver->replicate_commitable("2", data, 0);
+        acks += driver->periodic_listening_acks(ccf::NodeId("1"));
+
   }
+  
+
 //    driver->periodic_listening(ccf::NodeId("1"));
 
     driver->close_connections(ccf::NodeId("0"));
     //    driver->close_connections(ccf::NodeId("0"));
-
+  fmt::print("{} acks={}\n", __func__, acks);
 
   }
   else
@@ -123,7 +125,7 @@ int main(int argc, char* argv[])
       for (auto i = 0ULL; i < k_num_requests; i ++) {
         for (;;) {
           count += driver->periodic_listening(ccf::NodeId("0"));
-            fmt::print("{} count={}\n", __func__, count);
+            fmt::print("{} recv_msg_count={}\n", __func__, count);
         }
       }
     driver->periodic_listening(ccf::NodeId("0"));
