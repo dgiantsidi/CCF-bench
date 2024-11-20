@@ -348,8 +348,8 @@ public:
     if (msg_type == aft::RaftMsgType::raft_append_entries) {
       //fmt::print("{} ---> aft::RaftMsgType::raft_append_entries\n", __func__);
     }
-    ::memcpy(msg_ptr.get()+msg_type_sz, &msg_type, specific_msg_type_sz);
-    ::memcpy(msg_ptr.get()+msg_type_sz+specific_msg_type_sz, data, size);
+    ::memcpy(msg_ptr.get()+sizeof (aft::RaftMsgType), data, size);
+    //::memcpy(msg_ptr.get()+msg_type_sz+specific_msg_type_sz, data, size);
 #if 0
     fmt::print("{}: to={} of type={}\n", __func__, to, (type == ccf::NodeMsgType::consensus_msg) ? "ccf::NodeMsgType::consensus_msg" : "other type");
     if (type == aft::RaftMsgType::raft_append_entries) {
