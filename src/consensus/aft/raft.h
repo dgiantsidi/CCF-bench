@@ -535,8 +535,8 @@ namespace aft
       const std::unordered_set<ccf::NodeId>& new_learner_nodes = {},
       const std::unordered_set<ccf::NodeId>& new_retired_nodes = {}) override
     {
-      RAFT_DEBUG_FMT(
-        "Configurations: add new configuration at {}: {{{}}}", idx, conf);
+      fmt::print(
+        "Configurations: add new configuration at {}: {{{}}}\n", idx, conf);
 
       assert(new_learner_nodes.empty());
 
@@ -638,16 +638,16 @@ namespace aft
 
       if (state->leadership_state != ccf::kv::LeadershipState::Leader)
       {
-        RAFT_DEBUG_FMT(
-          "Failed to replicate {} items: not leader", entries.size());
+        fmt::print(
+          "Failed to replicate {} items: not leader\n", entries.size());
         rollback(state->last_idx);
         return false;
       }
 
       if (term != state->current_view)
       {
-        RAFT_DEBUG_FMT(
-          "Failed to replicate {} items at term {}, current term is {}",
+        fmt::print(
+          "Failed to replicate {} items at term {}, current term is {}\n",
           entries.size(),
           term,
           state->current_view);
@@ -656,14 +656,14 @@ namespace aft
 
       if (is_retired_committed())
       {
-        RAFT_DEBUG_FMT(
-          "Failed to replicate {} items: node retirement is complete",
+        fmt::print(
+          "Failed to replicate {} items: node retirement is complete\n",
           entries.size());
         rollback(state->last_idx);
         return false;
       }
 
-      RAFT_DEBUG_FMT("Replicating {} entries", entries.size());
+      fmt::print("Replicating {} entries\n", entries.size());
 
       for (auto& [index, data, is_globally_committable, hooks] : entries)
       {
@@ -672,8 +672,8 @@ namespace aft
         if (index != state->last_idx + 1)
           return false;
 
-        RAFT_DEBUG_FMT(
-          "Replicated on leader {}: {}{} ({} hooks)",
+        fmt::print(
+          "Replicated on leader {}: {}{} ({} hooks)\n",
           state->node_id,
           index,
           (globally_committable ? " committable" : ""),
@@ -729,7 +729,7 @@ namespace aft
           entry_size_not_limited = 0;
           for (const auto& it : all_other_nodes)
           {
-            RAFT_DEBUG_FMT("Sending updates to follower {}", it.first);
+            fmt::print("Sending updates to follower {}\n", it.first);
             send_append_entries(it.first, it.second.sent_idx + 1);
           }
         }
@@ -805,12 +805,12 @@ namespace aft
       }
       catch (const ccf::NodeToNode::DroppedMessageException& e)
       {
-        RAFT_INFO_FMT("Dropped invalid message from {}", e.from);
+        fmt::print("Dropped invalid message from {}\n", e.from);
         return;
       }
       catch (const serialized::InsufficientSpaceException& ise)
       {
-        RAFT_FAIL_FMT("Failed to parse message: {}", ise.what());
+        fmt::print("Failed to parse message: {}\n", ise.what());
         return;
       }
       catch (const std::exception& e)
@@ -859,8 +859,8 @@ namespace aft
             }
             if (search->second.last_ack_timeout >= election_timeout)
             {
-              RAFT_DEBUG_FMT(
-                "No ack received from {} in last {}",
+              fmt::print(
+                "No ack received from {} in last {}\n",
                 node.first,
                 election_timeout);
               backup_ack_timeout_count++;
@@ -882,9 +882,9 @@ namespace aft
           // active configuration in which it has heard back from a majority of
           // backups within an election timeout.
           // Also see CheckQuorum action in tla/ccfraft.tla.
-          RAFT_INFO_FMT(
+          fmt::print(
             "Stepping down as leader {}: No ack received from a majority of "
-            "backups in last {}",
+            "backups in last {}\n",
             state->node_id,
             election_timeout);
           become_follower();
@@ -926,8 +926,8 @@ namespace aft
         term_of_probe = state->view_history.view_at(probe_index);
       }
 
-      RAFT_TRACE_FMT(
-        "Looking for match with {}.{}, from {}.{}, best answer is {}",
+      fmt::print(
+        "Looking for match with {}.{}, from {}.{}, best answer is {}\n",
         tx_id.view,
         tx_id.seqno,
         state->view_history.view_at(state->last_idx),
@@ -979,9 +979,9 @@ namespace aft
 
     void send_append_entries(const ccf::NodeId& to, Index start_idx)
     {
-      RAFT_TRACE_FMT(
+      fmt::print(
         "Sending append entries to node {} in batches of {}, covering the "
-        "range {} -> {}",
+        "range {} -> {}\n",
         to,
         entries_batch_size,
         start_idx,
@@ -1012,7 +1012,7 @@ namespace aft
       do
       {
         end_idx = calculate_end_index(start_idx);
-        RAFT_TRACE_FMT("Sending sub range {} -> {}", start_idx, end_idx);
+        fmt::print("Sending sub range {} -> {}\n", start_idx, end_idx);
         send_append_entries_range(to, start_idx, end_idx);
         start_idx = std::min(end_idx + 1, state->last_idx);
       } while (end_idx != state->last_idx);
@@ -1265,9 +1265,9 @@ namespace aft
               // term.
               // This log is emitted as a canary, for what we hope is an
               // unreachable branch. If it is ever seen we should revisit this.
-              LOG_ROLLBACK_INFO_FMT(
+              fmt::print(
                 "Ignoring conflicting AppendEntries. Retaining {} entries, "
-                "beginning with {}.{}.",
+                "beginning with {}.{}.\n",
                 state->last_idx - (i - 1),
                 local_term,
                 i);
