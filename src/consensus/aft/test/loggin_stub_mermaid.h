@@ -39,7 +39,7 @@ struct LedgerStubProxy_Mermaid : public aft::LedgerStubProxy
     ccf::kv::Term term,
     ccf::kv::Version index) override
   {
-#if 0
+#if 1
     fmt::print(
       "{}->>{}: [ledger] appending: term={} index={} -> data: {}\n",
       _id,
@@ -53,7 +53,7 @@ struct LedgerStubProxy_Mermaid : public aft::LedgerStubProxy
 
   void truncate(aft::Index idx) override
   {
-    // fmt::print("{}->>{}: [ledger] truncating to {}\n", _id, _id, idx);
+    fmt::print("{}->>{}: [ledger] truncating to {}\n", _id, _id, idx);
     aft::LedgerStubProxy::truncate(idx);
   }
 };
@@ -70,7 +70,7 @@ struct LoggingStubStore_Mermaid : public aft::LoggingStubStoreConfig
 
   void rollback(const ccf::kv::TxID& tx_id, aft::Term t) override
   {
-#if 0
+#if 1
     fmt::print(
       "{}->>{}: [KV] rolling back to {}.{}, in term {}\n",
       _id,
