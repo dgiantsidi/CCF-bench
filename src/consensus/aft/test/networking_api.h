@@ -429,6 +429,21 @@ public:
     const uint8_t*& data,
     size_t& size) override
   {
+    if (read<aft::RaftMsgType>(header.data(), sizeof(aft::AppendEntries)) == aft::RaftMsgType::raft_append_entries) {
+        auto ae = *(aft::AppendEntries*)(header.data());
+    #if 0
+     AppendEntries ae{
+        {},
+        {.idx = end_idx, .prev_idx = prev_idx},
+        .term = state->current_view,
+        .prev_term = prev_term,
+        .leader_commit_idx = state->commit_idx,
+        .term_of_idx = term_of_idx,
+      };
+    #endif
+    fmt::print("{} --> .idx={}, .prev_idx={}, .term={}, .leader_commit_idx={}, .term_of_idx={}\n",
+      __func__, ae.idx, ae.prev_idx, ae.term, ae.prev_term, ae.leader_commit_idx, ae.term_of_idx);
+    }
     // TODO: implement me!
     // fmt::print(">{}: from={}\n", __func__, from);
     socket_layer::print_data(data, size);
