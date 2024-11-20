@@ -34,12 +34,13 @@ namespace socket_layer {
   }
 
   void send_to_socket(const int& socket, std::unique_ptr<uint8_t[]> msg, size_t msg_sz) {
+    fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
+
     #if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
     #endif
     print_data(msg.get(), msg_sz);
     int len = 0, offset = 0;
