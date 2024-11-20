@@ -1286,7 +1286,9 @@ namespace aft
         std::vector<uint8_t> entry;
         try
         {
+          fmt::print("**START** {} --> size={}\n", __func__, size);
           entry = LedgerProxy::get_entry(data, size);
+          fmt::print("**END** {} --> size={}\n", __func__, size);
         }
         catch (const std::logic_error& e)
         {
