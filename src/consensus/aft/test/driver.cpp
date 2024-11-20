@@ -101,8 +101,10 @@ int main(int argc, char* argv[])
             
 
   for (auto i = 0ULL; i < k_num_requests; i ++) {
+    for (;;) {
     driver->replicate_commitable("2", data, 0);
         driver->periodic_listening_acks(ccf::NodeId("1"));
+    }
   }
 //    driver->periodic_listening(ccf::NodeId("1"));
 
@@ -119,7 +121,10 @@ int main(int argc, char* argv[])
       my_connections[ccf::NodeId("1")].base_listening_port);
       int count = 0;
       for (auto i = 0ULL; i < k_num_requests; i ++) {
-        count += driver->periodic_listening(ccf::NodeId("0"));
+        for (;;) {
+          count += driver->periodic_listening(ccf::NodeId("0"));
+            fmt::print("{} count={}\n", __func__, count);
+        }
       }
     driver->periodic_listening(ccf::NodeId("0"));
     count++;
