@@ -2,7 +2,7 @@
 #include "ccf/ds/logger.h"
 #include "consensus/aft/raft.h"
 #include "logging_stub.h"
-#include "networking_api.h"
+//#include "networking_api.h"
 
 #include <chrono>
 #include <random>

@@ -1,6 +1,5 @@
 #pragma once
-#include "loggin_stub_mermaid.h"
-#include "node/node_to_node.h"
+
 
 #include <arpa/inet.h>
 #include <cstring>
@@ -13,6 +12,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <unordered_map>
+#include "loggin_stub_mermaid.h"
+#include "node/node_to_node.h"
 
 namespace socket_layer
 {
@@ -453,11 +454,7 @@ public:
         ae.term_of_idx);
 #endif
     }
-    else
-    {
-      fmt::print("{} error\n", __func__)
-    }
-
+   
     return true;
   }
 
