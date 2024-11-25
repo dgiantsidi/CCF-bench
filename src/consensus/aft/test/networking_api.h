@@ -424,6 +424,7 @@ public:
     }
     else
     {
+      fmt::print("{} -> msg_size={}\n", __func__, msg_size);
       msg_ptr = std::make_unique<uint8_t[]>(msg_size);
     }
     ::memcpy(msg_ptr.get(), data, size);

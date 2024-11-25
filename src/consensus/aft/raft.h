@@ -1303,7 +1303,10 @@ namespace aft
         }
 
         ccf::kv::TxID expected{r.term_of_idx, i};
+        fmt::print("**START** {}: deserialize --> size={}\n", __func__, size);
+
         auto ds = store->deserialize(entry, public_only, expected);
+        fmt::print("**END** {}: deserialize --> size={}\n", __func__, size);
         if (ds == nullptr)
         {
           fmt::print(
@@ -1485,6 +1488,7 @@ namespace aft
     void send_append_entries_response_nack(
       ccf::NodeId to, const ccf::TxID& rejected)
     {
+      fmt::print("{} ---> to node={}\n", __func__, to);
       const auto response_idx = find_highest_possible_match(rejected);
       const auto response_term = get_term_internal(response_idx);
 
@@ -1508,7 +1512,7 @@ namespace aft
       aft::Index response_idx)
     {
       fmt::print(
-        "Send append entries response from {} to {} for index {}: {}\n",
+        "> Send append entries response from {} to {} for index {}: {}\n",
         state->node_id,
         to,
         response_idx,
