@@ -548,6 +548,12 @@ namespace aft
         retired_committed_entries.end());
     }
 
+    std::string stringify(const std::vector<uint8_t>& v, size_t max_size = 24ul)
+    {
+      auto size = std::min(v.size(), max_size);
+      return fmt::format(
+        "[{} bytes] {}", v.size(), std::string(v.begin(), v.begin() + size));
+    }
     virtual std::unique_ptr<ccf::kv::AbstractExecutionWrapper> deserialize(
       const std::vector<uint8_t>& data,
       bool public_only = false,
@@ -559,12 +565,17 @@ namespace aft
         data.size(),
         public_only);
 
+      stringify(data, data.size());
       // Set reconfiguration hook if there are any new nodes
       // Read wrapping term and version
       auto data_ = data.data();
       auto size = data.size();
       const auto committable = serialized::read<bool>(data_, size);
-      fmt::print("{} ->>> committable={} size={}\n", __PRETTY_FUNCTION__, committable, size);
+      fmt::print(
+        "{} ->>> committable={} size={}\n",
+        __PRETTY_FUNCTION__,
+        committable,
+        size);
       serialized::read<aft::Term>(data_, size);
       fmt::print(
         "{} ->>> reading term size_left={}\n", __PRETTY_FUNCTION__, size);
@@ -576,7 +587,12 @@ namespace aft
         version,
         size);
 
-      fmt::print("{} --> committable={}, kv_version={}, size={}\n", __func__, committable, version, size);
+      fmt::print(
+        "{} --> committable={}, kv_version={}, size={}\n",
+        __func__,
+        committable,
+        version,
+        size);
       ReplicatedData r = nlohmann::json::parse(std::span{data_, size});
       fmt::print("{} -> passed the dangerous point\n", __func__);
       ccf::kv::ConsensusHookPtrs hooks = {};
