@@ -548,7 +548,7 @@ namespace aft
         retired_committed_entries.end());
     }
 
-    std::string stringify(const std::vector<uint8_t>& v, size_t max_size = 24ul)
+    std::string stringify(const std::vector<uint8_t>& v, size_t max_size = 100ul)
     {
       auto size = std::min(v.size(), max_size);
       return fmt::format(
