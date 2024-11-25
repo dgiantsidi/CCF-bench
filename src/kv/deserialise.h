@@ -180,6 +180,7 @@ namespace ccf::kv
 
     const std::vector<uint8_t>& get_entry() override
     {
+      fmt::print("{}\n", __PRETTY_FUNCTION__);
       return data;
     }
 
