@@ -801,6 +801,7 @@ namespace ccf::kv
       bool public_only = false,
       const std::optional<TxID>& expected_txid = std::nullopt) override
     {
+      fmt::print("{}->data.size()={}, public_only={}\n", __func__, data.size(), public_only);
       auto exec = std::make_unique<CFTExecutionWrapper>(
         this, get_history(), std::move(data), public_only, expected_txid);
       return exec;
