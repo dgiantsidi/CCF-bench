@@ -65,7 +65,14 @@ namespace aft
       }
 
       combined.insert(combined.end(), original.begin(), original.end());
-
+      fmt::print(
+        "{} ---> globally_committable={}, term={}, index={}, "
+        "combined_size={}\n",
+        __func__,
+        globally_committable,
+        term,
+        index,
+        combined.size());
       ledger.push_back(combined);
     }
 

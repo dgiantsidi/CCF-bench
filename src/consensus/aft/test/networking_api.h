@@ -71,17 +71,57 @@ namespace socket_layer
     fmt::print("{}: --> socket={} sz={}\n", __func__, socket, sz);
     int len = 0, offset = 0;
     int remaining = sz;
-    std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(remaining);
+    int total_bytes = sz;
+    std::unique_ptr<uint8_t[]> header_buf =
+      std::make_unique<uint8_t[]>(remaining);
     for (;;)
     {
-      len = read(socket, data.get() + offset, remaining);
+      len = read(socket, header_buf.get() + offset, remaining);
       offset += len;
       remaining -= offset;
       if (remaining == 0)
         break;
     }
-    print_data(data.get(), offset);
-    return {std::move(data), offset};
+    len = 0;
+    remaining = payload_sz;
+    std::unique_ptr<uint8_t[]> size_buf =
+      std::make_unique<uint8_t[]>(remaining);
+    offset = 0;
+    for (;;)
+    {
+      len = read(socket, size_buf.get() + offset, remaining);
+      offset += len;
+      remaining -= offset;
+      if (remaining == 0)
+        break;
+    }
+    size_t sz_val;
+    ::memcpy(&sz_val, size_buf.get(), payload_sz);
+    fmt::print("{}-> payload_sz={}\n", __func__, sz_val);
+    total_bytes += sz_val;
+    std::unique_ptr<uint8_t[]> serialized_msg =
+      std::make_unique<uint8_t[]>(total_bytes);
+    ::memcpy(serialized_msg.get(), header_buf.get(), sz);
+    if (sz_val > 0)
+    {
+      std::unique_ptr<uint8_t[]> payload_buf =
+        std::make_unique<uint8_t[]>(remaining);
+      len = 0;
+      remaining = sz_val;
+      offset = 0;
+      for (;;)
+      {
+        len = read(socket, size_buf.get() + offset, remaining);
+        offset += len;
+        remaining -= offset;
+        if (remaining == 0)
+          break;
+      }
+      ::memcpy(serialized_msg.get() + sz, size_buf.get(), sz_val);
+    }
+    // TODO: consume the sz_val payload;
+    print_data(serialized_msg.get(), total_bytes);
+    return {std::move(serialized_msg), total_bytes};
   }
 };
 
@@ -422,21 +462,27 @@ public:
         auto entry = s_ptr->ledger->get_entry_by_idx(ae.idx);
         if (entry.has_value())
         {
-          msg_ptr =
-            std::make_unique<uint8_t[]>(msg_size + entry.value().size());
+          msg_ptr = std::make_unique<uint8_t[]>(
+            msg_size + payload_sz + entry.value().size());
           size_t size_of_payload = entry.value().size();
           ::memcpy(msg_ptr.get(), data, size);
+          ::memcpy(msg_ptr.get() + size, &(size_of_payload), payload_sz);
           ::memcpy(
-            msg_ptr.get() + size, entry.value().data(), entry.value().size());
-          send_msg(to, std::move(msg_ptr), size + entry.value().size());
+            msg_ptr.get() + size + payload_sz,
+            entry.value().data(),
+            entry.value().size());
+          send_msg(
+            to, std::move(msg_ptr), size + entry.value().size() + payload_sz);
           return true;
         }
         else
         {
           fmt::print("{} --> entry.has_value() = false\n", __func__);
-          msg_ptr = std::make_unique<uint8_t[]>(msg_size);
+          msg_ptr = std::make_unique<uint8_t[]>(msg_size + payload_sz);
           ::memcpy(msg_ptr.get(), data, size);
-          send_msg(to, std::move(msg_ptr), size);
+          size_t empty_payload = 0;
+          ::memcpy(msg_ptr.get() + size, &empty_payload, payload_sz);
+          send_msg(to, std::move(msg_ptr), size + payload_sz);
           return true;
         }
       }
@@ -449,10 +495,12 @@ public:
     else
     {
       fmt::print("{} -> msg_size={}\n", __func__, msg_size);
-      msg_ptr = std::make_unique<uint8_t[]>(msg_size);
+      msg_ptr = std::make_unique<uint8_t[]>(msg_size + payload_sz);
     }
     ::memcpy(msg_ptr.get(), data, size);
-    send_msg(to, std::move(msg_ptr), msg_size);
+    size_t empty_payload = 0;
+    ::memcpy(msg_ptr.get() + size, &empty_payload, payload_sz);
+    send_msg(to, std::move(msg_ptr), msg_size + payload_sz);
     return true;
   }
 
