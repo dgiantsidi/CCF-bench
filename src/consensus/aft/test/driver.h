@@ -1216,7 +1216,7 @@ public:
       incomming_socket, sizeof(aft::AppendEntries) + 64);
 
     // std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(57);
-    fmt::print("{}: data_sz={}\n", __func__, data_sz);
+    fmt::print("{}: data_sz={} get_from_socket={}\n", __func__, data_sz, (sizeof(aft::AppendEntries) + 64));
     _nodes.at(my_nid).raft->recv_message(
       src_node, data.get(), sizeof(aft::AppendEntries) + 64);
 #if 0
