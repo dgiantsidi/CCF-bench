@@ -1,5 +1,7 @@
 #pragma once
 
+#include "loggin_stub_mermaid.h"
+#include "node/node_to_node.h"
 
 #include <arpa/inet.h>
 #include <cstring>
@@ -12,8 +14,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <unordered_map>
-#include "loggin_stub_mermaid.h"
-#include "node/node_to_node.h"
 
 namespace socket_layer
 {
@@ -366,7 +366,7 @@ public:
       if (sz == sizeof(aft::AppendEntriesResponse))
         return aft::RaftMsgType::raft_append_entries_response;
 #endif
-  return {-1, -1};
+    return {-1, -1};
   }
 
   bool send_authenticated(
@@ -385,20 +385,21 @@ public:
         __func__,
         specific_msg_type_sz,
         size);
-        exit(-1);
+      exit(-1);
     }
     size_t msg_type_sz = sizeof(ccf::NodeMsgType::consensus_msg);
-    if (sizeof(type) != msg_type_sz) {
+    if (sizeof(type) != msg_type_sz)
+    {
       fmt::print(
         "{} --> msg_type_sz={} and sizeof(type)={}\n",
         __func__,
         msg_type_sz,
         sizeof(type));
-        exit(-1);
+      exit(-1);
     }
 
     auto msg_size = size; // + msg_type_sz;
-    auto data_sz =  64;
+    auto data_sz = 64;
 
     std::unique_ptr<uint8_t[]> msg_ptr;
 
@@ -416,10 +417,14 @@ public:
         ae.prev_term,
         ae.leader_commit_idx,
         ae.term_of_idx);
-        msg_ptr = std::make_unique<uint8_t[]>(msg_size+data_sz);
+      msg_ptr = std::make_unique<uint8_t[]>(msg_size + data_sz);
 
-        ::memset(msg_ptr.get() + size, 'd', data_sz);
+      ::memset(msg_ptr.get() + size, 'd', data_sz);
 #endif
+    }
+    else
+    {
+      msg_ptr = std::make_unique<uint8_t[]>(msg_size);
     }
     ::memcpy(msg_ptr.get(), data, size);
     // ::memcpy(msg_ptr.get() , &type, sizeof(type));
@@ -427,9 +432,10 @@ public:
 
     if (msg_type == aft::RaftMsgType::raft_append_entries)
     {
-      send_msg(to, std::move(msg_ptr), msg_size+data_sz);
+      send_msg(to, std::move(msg_ptr), msg_size + data_sz);
     }
-    else {
+    else
+    {
       send_msg(to, std::move(msg_ptr), msg_size);
     }
     return true;
@@ -468,7 +474,7 @@ public:
         ae.term_of_idx);
 #endif
     }
-   
+
     return true;
   }
 
