@@ -1,5 +1,6 @@
 #pragma once
 
+#include "config.hpp"
 #include "loggin_stub_mermaid.h"
 #include "node/node_to_node.h"
 
@@ -460,20 +461,20 @@ public:
       get_msg_type_from_header_sz(header.data(), header.size());
     if (msg_type == aft::RaftMsgType::raft_append_entries)
     {
-
       auto ae = *(aft::AppendEntries*)(header.data());
 #if 1
       fmt::print(
-        "{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, "
-        ".leader_commit_idx={}, .term_of_idx={} (header.data()=={}=={}==sizeof(aft::AppendEntries)),
-        data.size()={}\n",
+        "{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, .prev_term={}, .leader_commit_idx = {}, .term_of_idx = {}, header.data()={},  sizeof(aft::AppendEntries)={}, data.size()={}\n",
         __func__,
         ae.idx,
         ae.prev_idx,
         ae.term,
         ae.prev_term,
         ae.leader_commit_idx,
-        ae.term_of_idx, header.size(), sizeof(aft::AppendEntries), size);
+        ae.term_of_idx,
+        header.size(),
+        sizeof(aft::AppendEntries),
+        size);
 #endif
     }
 
