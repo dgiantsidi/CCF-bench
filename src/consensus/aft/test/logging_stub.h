@@ -554,6 +554,8 @@ namespace aft
       return fmt::format(
         "[{} bytes] {}", v.size(), std::string(v.begin(), v.begin() + size));
     }
+
+  
     virtual std::unique_ptr<ccf::kv::AbstractExecutionWrapper> deserialize(
       const std::vector<uint8_t>& data,
       bool public_only = false,
@@ -593,7 +595,7 @@ namespace aft
         committable,
         version,
         size);
-      ReplicatedData r = nlohmann::json::parse(std::span{data_, size});
+      ReplicatedData r = {.type = ReplicatedDataType::raw };// nlohmann::json::parse(std::span{data_, size});
       fmt::print("{} -> passed the dangerous point\n", __func__);
       ccf::kv::ConsensusHookPtrs hooks = {};
       if (r.type == ReplicatedDataType::reconfiguration)
