@@ -1090,13 +1090,13 @@ namespace aft
       std::unique_lock<ccf::pal::Mutex> guard(state->lock);
 
       fmt::print(
-        "Received append entries: {}.{} to {}.{} (from {} in term {})\n",
+        "Received append entries: {}.{} to {}.{} (from {} in term {}) data_sz={}\n",
         r.prev_term,
         r.prev_idx,
         r.term_of_idx,
         r.idx,
         from,
-        r.term);
+        r.term, size);
 
 #ifdef CCF_RAFT_TRACING
       nlohmann::json j = {};

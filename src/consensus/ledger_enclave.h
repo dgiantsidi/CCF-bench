@@ -25,11 +25,13 @@ namespace consensus
      */
     static std::vector<uint8_t> get_entry(const uint8_t*& data, size_t& size)
     {
+      fmt::print("{} -> size={}\n", __func__, size);
       auto header =
         serialized::peek<ccf::kv::SerialisedEntryHeader>(data, size);
       size_t entry_size = ccf::kv::serialised_entry_header_size + header.size;
       std::vector<uint8_t> entry(data, data + entry_size);
       serialized::skip(data, size, entry_size);
+      fmt::print("entry.size() = {}\n", entry_size);
       return entry;
     }
 
