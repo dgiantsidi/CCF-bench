@@ -565,7 +565,7 @@ namespace aft
         data.size(),
         public_only);
 
-      stringify(data, data.size());
+      fmt::print("{}->{}\n", __func__, stringify(data, data.size()));
       // Set reconfiguration hook if there are any new nodes
       // Read wrapping term and version
       auto data_ = data.data();
