@@ -1303,7 +1303,7 @@ namespace aft
         }
 
         ccf::kv::TxID expected{r.term_of_idx, i};
-        fmt::print("**START** {}: deserialize --> size={}\n", __func__, size);
+        fmt::print("**START** {}: deserialize --> size={}\n", __func__, entry.size());
 
         auto ds = store->deserialize(entry, public_only, expected);
         fmt::print("**END** {}: deserialize --> size={}\n", __func__, size);

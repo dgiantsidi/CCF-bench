@@ -564,8 +564,18 @@ namespace aft
       auto data_ = data.data();
       auto size = data.size();
       const auto committable = serialized::read<bool>(data_, size);
+      fmt::print("{} ->>> committable={}\n", __PRETTY_FUNCTION__, committable);
       serialized::read<aft::Term>(data_, size);
+      fmt::print(
+        "{} ->>> reading term size_left={}\n", __PRETTY_FUNCTION__, size);
+
       auto version = serialized::read<ccf::kv::Version>(data_, size);
+      fmt::print(
+        "{} ->>> version={} size_left={}\n",
+        __PRETTY_FUNCTION__,
+        version,
+        size);
+
       ReplicatedData r = nlohmann::json::parse(std::span{data_, size});
       ccf::kv::ConsensusHookPtrs hooks = {};
       if (r.type == ReplicatedDataType::reconfiguration)
