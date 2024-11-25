@@ -385,17 +385,22 @@ public:
         __func__,
         specific_msg_type_sz,
         size);
+        exit(-1);
     }
     size_t msg_type_sz = sizeof(ccf::NodeMsgType::consensus_msg);
-    if (sizeof(type) != msg_type_sz)
+    if (sizeof(type) != msg_type_sz) {
       fmt::print(
         "{} --> msg_type_sz={} and sizeof(type)={}\n",
         __func__,
         msg_type_sz,
         sizeof(type));
+        exit(-1);
+    }
 
     auto msg_size = size; // + msg_type_sz;
-    auto msg_ptr = std::make_unique<uint8_t[]>(msg_size);
+    auto data_sz =  64;
+
+    std::unique_ptr<uint8_t[]> msg_ptr;
 
     if (msg_type == aft::RaftMsgType::raft_append_entries)
     {
@@ -411,14 +416,22 @@ public:
         ae.prev_term,
         ae.leader_commit_idx,
         ae.term_of_idx);
+        msg_ptr = std::make_unique<uint8_t[]>(msg_size+data_sz);
+
+        ::memset(msg_ptr.get() + size, 'd', data_sz);
 #endif
     }
     ::memcpy(msg_ptr.get(), data, size);
     // ::memcpy(msg_ptr.get() , &type, sizeof(type));
     // ::memcpy(msg_ptr.get() + sizeof(type), data, size);
 
-    send_msg(to, std::move(msg_ptr), msg_size);
-
+    if (msg_type == aft::RaftMsgType::raft_append_entries)
+    {
+      send_msg(to, std::move(msg_ptr), msg_size+data_sz);
+    }
+    else {
+      send_msg(to, std::move(msg_ptr), msg_size);
+    }
     return true;
   }
 
