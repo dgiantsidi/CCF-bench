@@ -74,6 +74,7 @@ namespace aft
 #if 1
       fmt::print("{} --> size={}\n", __func__, size);
       const auto entry_size = serialized::read<size_t>(data, size);
+      fmt::print("{} --> entry_size={}\n", __func__, entry_size);
       std::vector<uint8_t> entry(data, data + entry_size);
       serialized::skip(data, size, entry_size);
 #endif
