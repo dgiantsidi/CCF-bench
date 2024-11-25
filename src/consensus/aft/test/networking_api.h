@@ -38,8 +38,7 @@ namespace socket_layer
   void send_to_socket(
     const int& socket, std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
   {
-    // fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz,
-    // socket);
+    fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
 
 #if 0
     fmt::print(
@@ -417,13 +416,14 @@ public:
         ae.prev_term,
         ae.leader_commit_idx,
         ae.term_of_idx);
-      auto entry = raft_copy.lock()->ledger->get_entry_by_idx(ae.idx);
-      msg_ptr =
-        std::make_unique<uint8_t[]>(msg_size + payload_sz_entry + payload_sz);
-      size_t size_of_payload = payload_sz;
-      ::memcpy(msg_ptr.get() + size, &size_of_payload, payload_sz_entry);
-      ::memset(msg_ptr.get() + size + payload_sz_entry, 'd', payload_sz);
 #endif
+      auto entry = raft_copy.lock()->ledger->get_entry_by_idx(ae.idx);
+      msg_ptr = std::make_unique<uint8_t[]>(msg_size + entry.value().size());
+      size_t size_of_payload = entry.value().size();
+      ::memcpy(
+        msg_ptr.get() + size, entry.value().data(), entry.value().size());
+      send_msg(to, std::move(msg_ptr), size + entry.value().size());
+      return true;
     }
     else
     {
@@ -431,18 +431,7 @@ public:
       msg_ptr = std::make_unique<uint8_t[]>(msg_size);
     }
     ::memcpy(msg_ptr.get(), data, size);
-    // ::memcpy(msg_ptr.get() , &type, sizeof(type));
-    // ::memcpy(msg_ptr.get() + sizeof(type), data, size);
-
-    if (msg_type == aft::RaftMsgType::raft_append_entries)
-    {
-      send_msg(
-        to, std::move(msg_ptr), msg_size + payload_sz + payload_sz_entry);
-    }
-    else
-    {
-      send_msg(to, std::move(msg_ptr), msg_size);
-    }
+    send_msg(to, std::move(msg_ptr), msg_size);
     return true;
   }
 
