@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-std::string stringify(const std::vector<uint8_t>& v, size_t max_size = 15ul)
+std::string stringify(const std::vector<uint8_t>& v, size_t max_size = 24ul)
 {
   auto size = std::min(v.size(), max_size);
   return fmt::format(

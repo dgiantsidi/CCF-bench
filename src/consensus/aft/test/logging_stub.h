@@ -564,7 +564,7 @@ namespace aft
       auto data_ = data.data();
       auto size = data.size();
       const auto committable = serialized::read<bool>(data_, size);
-      fmt::print("{} ->>> committable={}\n", __PRETTY_FUNCTION__, committable);
+      fmt::print("{} ->>> committable={} size={}\n", __PRETTY_FUNCTION__, committable, size);
       serialized::read<aft::Term>(data_, size);
       fmt::print(
         "{} ->>> reading term size_left={}\n", __PRETTY_FUNCTION__, size);
