@@ -982,21 +982,22 @@ public:
     std::shared_ptr<std::vector<uint8_t>> data,
     const size_t lineno)
   {
-#if 0
+#if 1
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
-    
-      std::vector<uint8_t>& vec = *(data.get());
+
+    std::vector<uint8_t>& vec = *(data.get());
     fmt::print("{}: data->size()={}\n", __func__, vec.size());
-    for (auto i = 0ULL; i < vec.size(); i++) {
+    for (auto i = 0ULL; i < vec.size(); i++)
+    {
       fmt::print("{}", (char)(vec[i]));
     }
     fmt::print("\n");
 #endif
     _replicate(term_s, *data, lineno, true);
-#if 0
+#if 1
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",

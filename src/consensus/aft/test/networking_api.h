@@ -417,29 +417,31 @@ public:
         ae.leader_commit_idx,
         ae.term_of_idx);
 #endif
-      if (auto s_ptr = raft_copy.lock()) {
+      if (auto s_ptr = raft_copy.lock())
+      {
         auto entry = s_ptr->ledger->get_entry_by_idx(ae.idx);
-        if (entry.has_value()) {
-          msg_ptr = std::make_unique<uint8_t[]>(msg_size + entry.value().size());
+        if (entry.has_value())
+        {
+          msg_ptr =
+            std::make_unique<uint8_t[]>(msg_size + entry.value().size());
           size_t size_of_payload = entry.value().size();
+          ::memcpy(msg_ptr.get(), data, size);
           ::memcpy(
-          msg_ptr.get(), data, size);
-          ::memcpy(
-          msg_ptr.get() + size, entry.value().data(), entry.value().size());
-        send_msg(to, std::move(msg_ptr), size + entry.value().size());
-        return true;
+            msg_ptr.get() + size, entry.value().data(), entry.value().size());
+          send_msg(to, std::move(msg_ptr), size + entry.value().size());
+          return true;
         }
-        else {
+        else
+        {
           fmt::print("{} --> entry.has_value() = false\n", __func__);
           msg_ptr = std::make_unique<uint8_t[]>(msg_size);
-          ::memcpy(
-          msg_ptr.get(), data, size);
-        send_msg(to, std::move(msg_ptr), size);
-        return true;
+          ::memcpy(msg_ptr.get(), data, size);
+          send_msg(to, std::move(msg_ptr), size);
+          return true;
         }
-      
       }
-      else {
+      else
+      {
         fmt::print("{} -> raft_copy error\n", __func__);
         return false;
       }

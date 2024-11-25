@@ -33,7 +33,12 @@ namespace aft
       ccf::kv::Term term,
       ccf::kv::Version index)
     {
-      fmt::print("{} ---> globally_committable={}, term={}, index={}\n", __func__, globally_committable, term, index);
+      fmt::print(
+        "{} ---> globally_committable={}, term={}, index={}\n",
+        __func__,
+        globally_committable,
+        term,
+        index);
       std::lock_guard<std::mutex> lock(ledger_access);
 
       // The payload that we eventually deserialise must include the
