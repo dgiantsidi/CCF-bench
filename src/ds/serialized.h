@@ -60,6 +60,7 @@ namespace serialized
   {
     if (size < sizeof(T))
     {
+      fmt::print("{} Insufficient space (read<T>: {} < {} typename={})", __PRETTY_FUNCTION__, size, sizeof(T), typeid(T).name());
       throw InsufficientSpaceException(
         fmt::format("Insufficient space (read<T>: {} < {})", size, sizeof(T)));
     }

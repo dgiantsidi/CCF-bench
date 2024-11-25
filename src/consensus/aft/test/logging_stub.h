@@ -469,6 +469,8 @@ namespace aft
       bool public_only = false,
       const std::optional<ccf::kv::TxID>& expected_txid = std::nullopt)
     {
+      fmt::print("{}-> data.size()={}, public_only={}\n", __PRETTY_FUNCTION__, data.size(), public_only);
+
       ccf::kv::ConsensusHookPtrs hooks = {};
       return std::make_unique<ExecutionWrapper>(
         data, expected_txid, std::move(hooks));
@@ -534,6 +536,8 @@ namespace aft
       bool public_only = false,
       const std::optional<ccf::kv::TxID>& expected_txid = std::nullopt) override
     {
+      fmt::print("{} ->>> data.size()={}, public_only={}\n", __PRETTY_FUNCTION__, data.size(), public_only);
+
       // Set reconfiguration hook if there are any new nodes
       // Read wrapping term and version
       auto data_ = data.data();
