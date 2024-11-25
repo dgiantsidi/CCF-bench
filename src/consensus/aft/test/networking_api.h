@@ -417,7 +417,9 @@ public:
         ae.prev_term,
         ae.leader_commit_idx,
         ae.term_of_idx);
-      msg_ptr = std::make_unique<uint8_t[]>(msg_size + payload_sz_entry + payload_sz);
+      auto entry = raft_copy.lock()->ledger->get_entry_by_idx(ae.idx);
+      msg_ptr =
+        std::make_unique<uint8_t[]>(msg_size + payload_sz_entry + payload_sz);
       size_t size_of_payload = payload_sz;
       ::memcpy(msg_ptr.get() + size, &size_of_payload, payload_sz_entry);
       ::memset(msg_ptr.get() + size + payload_sz_entry, 'd', payload_sz);
@@ -434,7 +436,8 @@ public:
 
     if (msg_type == aft::RaftMsgType::raft_append_entries)
     {
-      send_msg(to, std::move(msg_ptr), msg_size + payload_sz + payload_sz_entry);
+      send_msg(
+        to, std::move(msg_ptr), msg_size + payload_sz + payload_sz_entry);
     }
     else
     {
