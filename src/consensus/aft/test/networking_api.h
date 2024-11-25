@@ -399,7 +399,7 @@ public:
       exit(-1);
     }
 
-    auto msg_size = size; // + msg_type_sz;
+    auto msg_size = size;
 
     std::unique_ptr<uint8_t[]> msg_ptr;
 
@@ -417,9 +417,10 @@ public:
         ae.prev_term,
         ae.leader_commit_idx,
         ae.term_of_idx);
-      msg_ptr = std::make_unique<uint8_t[]>(msg_size + payload_sz);
-
-      ::memset(msg_ptr.get() + size, 'd', payload_sz);
+      msg_ptr = std::make_unique<uint8_t[]>(msg_size + payload_sz_entry + payload_sz);
+      size_t size_of_payload = payload_sz;
+      ::memcpy(msg_ptr.get() + size, &size_of_payload, payload_sz_entry);
+      ::memset(msg_ptr.get() + size + payload_sz_entry, 'd', payload_sz);
 #endif
     }
     else
@@ -433,7 +434,7 @@ public:
 
     if (msg_type == aft::RaftMsgType::raft_append_entries)
     {
-      send_msg(to, std::move(msg_ptr), msg_size + payload_sz);
+      send_msg(to, std::move(msg_ptr), msg_size + payload_sz + payload_sz_entry);
     }
     else
     {
