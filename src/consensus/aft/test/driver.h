@@ -1213,12 +1213,12 @@ public:
     auto& incomming_socket =
       net->node_connections_map[my_nid]->listening_handle;
     auto [data, data_sz] = socket_layer::get_from_socket(
-      incomming_socket, sizeof(aft::AppendEntries) + 64);
+      incomming_socket, sizeof(aft::AppendEntries) + payload_sz);
 
     // std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(57);
-    fmt::print("{}: data_sz={} get_from_socket={}\n", __func__, data_sz, (sizeof(aft::AppendEntries) + 64));
+    fmt::print("{}: data_sz={} get_from_socket={}\n", __func__, data_sz, (sizeof(aft::AppendEntries) + payload_sz));
     _nodes.at(my_nid).raft->recv_message(
-      src_node, data.get(), sizeof(aft::AppendEntries) + 64);
+      src_node, data.get(), sizeof(aft::AppendEntries) + payload_sz);
 #if 1
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "

@@ -399,7 +399,6 @@ public:
     }
 
     auto msg_size = size; // + msg_type_sz;
-    auto data_sz = 64;
 
     std::unique_ptr<uint8_t[]> msg_ptr;
 
@@ -417,9 +416,9 @@ public:
         ae.prev_term,
         ae.leader_commit_idx,
         ae.term_of_idx);
-      msg_ptr = std::make_unique<uint8_t[]>(msg_size + data_sz);
+      msg_ptr = std::make_unique<uint8_t[]>(msg_size + payload_sz);
 
-      ::memset(msg_ptr.get() + size, 'd', data_sz);
+      ::memset(msg_ptr.get() + size, 'd', payload_sz);
 #endif
     }
     else
@@ -433,7 +432,7 @@ public:
 
     if (msg_type == aft::RaftMsgType::raft_append_entries)
     {
-      send_msg(to, std::move(msg_ptr), msg_size + data_sz);
+      send_msg(to, std::move(msg_ptr), msg_size + payload_sz);
     }
     else
     {
@@ -457,22 +456,24 @@ public:
     const uint8_t*& data,
     size_t& size) override
   {
-    if (
-      read<aft::RaftMsgType>(header.data(), sizeof(aft::AppendEntries)) ==
-      aft::RaftMsgType::raft_append_entries)
+    auto [msg_type, specific_msg_type_sz] =
+      get_msg_type_from_header_sz(header.data(), header.size());
+    if (msg_type == aft::RaftMsgType::raft_append_entries)
     {
+
       auto ae = *(aft::AppendEntries*)(header.data());
 #if 1
       fmt::print(
         "{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, "
-        ".leader_commit_idx={}, .term_of_idx={}\n",
+        ".leader_commit_idx={}, .term_of_idx={} (header.data()=={}=={}==sizeof(aft::AppendEntries)),
+        data.size()={}\n",
         __func__,
         ae.idx,
         ae.prev_idx,
         ae.term,
         ae.prev_term,
         ae.leader_commit_idx,
-        ae.term_of_idx);
+        ae.term_of_idx, header.size(), sizeof(aft::AppendEntries), size);
 #endif
     }
 
