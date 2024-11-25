@@ -33,6 +33,7 @@ namespace aft
       ccf::kv::Term term,
       ccf::kv::Version index)
     {
+      fmt::print("{} ---> globally_committable={}, term={}, index={}\n", __func__, globally_committable, term, index);
       std::lock_guard<std::mutex> lock(ledger_access);
 
       // The payload that we eventually deserialise must include the
@@ -84,7 +85,7 @@ namespace aft
     std::optional<std::vector<uint8_t>> get_entry_by_idx(size_t idx)
     {
       std::lock_guard<std::mutex> lock(ledger_access);
-
+      fmt::print("{} -> idx={}\n", __func__, idx);
       // Ledger indices are 1-based, hence the -1
       if (idx > 0 && idx <= ledger.size())
       {

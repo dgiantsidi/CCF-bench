@@ -5,4 +5,4 @@
 
 constexpr int k_num_requests = 4; // 500000;
 constexpr int payload_sz = 0;
-constexpr int payload_sz_entry = sizeof(size_t) + sizeof(ccf::kv::Term) + sizeof(ccf::kv::Version); //<payload_size><term><kv_version>;
+constexpr int payload_sz_entry = sizeof(size_t) + sizeof(bool)+ sizeof(ccf::kv::Term) + sizeof(ccf::kv::Version); //<payload_size><term><kv_version>;

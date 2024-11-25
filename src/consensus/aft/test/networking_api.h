@@ -40,7 +40,7 @@ namespace socket_layer
   {
     fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
 
-#if 0
+#if 1
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
@@ -57,7 +57,7 @@ namespace socket_layer
       if (remaining == 0)
         break;
     }
-#if 0
+#if 1
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
@@ -68,7 +68,7 @@ namespace socket_layer
   std::tuple<std::unique_ptr<uint8_t[]>, size_t> get_from_socket(
     const int& socket, size_t sz)
   {
-    // fmt::print("{}: --> socket={} sz={}\n", __func__, socket, sz);
+    fmt::print("{}: --> socket={} sz={}\n", __func__, socket, sz);
     int len = 0, offset = 0;
     int remaining = sz;
     std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(remaining);
@@ -417,13 +417,32 @@ public:
         ae.leader_commit_idx,
         ae.term_of_idx);
 #endif
-      auto entry = raft_copy.lock()->ledger->get_entry_by_idx(ae.idx);
-      msg_ptr = std::make_unique<uint8_t[]>(msg_size + entry.value().size());
-      size_t size_of_payload = entry.value().size();
-      ::memcpy(
-        msg_ptr.get() + size, entry.value().data(), entry.value().size());
-      send_msg(to, std::move(msg_ptr), size + entry.value().size());
-      return true;
+      if (auto s_ptr = raft_copy.lock()) {
+        auto entry = s_ptr->ledger->get_entry_by_idx(ae.idx);
+        if (entry.has_value()) {
+          msg_ptr = std::make_unique<uint8_t[]>(msg_size + entry.value().size());
+          size_t size_of_payload = entry.value().size();
+          ::memcpy(
+          msg_ptr.get(), data, size);
+          ::memcpy(
+          msg_ptr.get() + size, entry.value().data(), entry.value().size());
+        send_msg(to, std::move(msg_ptr), size + entry.value().size());
+        return true;
+        }
+        else {
+          fmt::print("{} --> entry.has_value() = false\n", __func__);
+          msg_ptr = std::make_unique<uint8_t[]>(msg_size);
+          ::memcpy(
+          msg_ptr.get(), data, size);
+        send_msg(to, std::move(msg_ptr), size);
+        return true;
+        }
+      
+      }
+      else {
+        fmt::print("{} -> raft_copy error\n", __func__);
+        return false;
+      }
     }
     else
     {
