@@ -1201,7 +1201,7 @@ public:
 
   int periodic_listening(ccf::NodeId src_node)
   {
-#if 0
+#if 1
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
@@ -1219,7 +1219,7 @@ public:
     fmt::print("{}: data_sz={} get_from_socket={}\n", __func__, data_sz, (sizeof(aft::AppendEntries) + 64));
     _nodes.at(my_nid).raft->recv_message(
       src_node, data.get(), sizeof(aft::AppendEntries) + 64);
-#if 0
+#if 1
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
@@ -1230,7 +1230,7 @@ public:
 
   int periodic_listening_acks(ccf::NodeId src_node)
   {
-#if 0
+#if 1
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
@@ -1248,7 +1248,7 @@ public:
     // fmt::print("{}: data_sz={}\n", __func__, data_sz);
     _nodes.at(my_nid).raft->recv_message(
       src_node, data.get(), sizeof(aft::AppendEntriesResponse));
-#if 0
+#if 1
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
