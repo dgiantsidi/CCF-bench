@@ -464,7 +464,9 @@ public:
       auto ae = *(aft::AppendEntries*)(header.data());
 #if 1
       fmt::print(
-        "{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, .prev_term={}, .leader_commit_idx = {}, .term_of_idx = {}, header.data()={},  sizeof(aft::AppendEntries)={}, data.size()={}\n",
+        "{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, "
+        ".prev_term={}, .leader_commit_idx = {}, .term_of_idx = {}, "
+        "header.data()={},  sizeof(aft::AppendEntries)={}, data.size()={}\n",
         __func__,
         ae.idx,
         ae.prev_idx,
