@@ -576,7 +576,9 @@ namespace aft
         version,
         size);
 
+      fmt::print("{} --> committable={}, kv_version={}, size={}\n", __func__, committable, version, size);
       ReplicatedData r = nlohmann::json::parse(std::span{data_, size});
+      fmt::print("{} -> passed the dangerous point\n", __func__);
       ccf::kv::ConsensusHookPtrs hooks = {};
       if (r.type == ReplicatedDataType::reconfiguration)
       {
