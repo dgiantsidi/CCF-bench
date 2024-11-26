@@ -1286,9 +1286,9 @@ namespace aft
         std::vector<uint8_t> entry;
         try
         {
-          fmt::print("**START** {} --> size={}\n", __func__, size);
+         // fmt::print("**START** {} --> size={}\n", __func__, size);
           entry = LedgerProxy::get_entry(data, size);
-          fmt::print("**END** {} --> size={}\n", __func__, size);
+         // fmt::print("**END** {} --> size={}\n", __func__, size);
         }
         catch (const std::logic_error& e)
         {
@@ -1303,10 +1303,10 @@ namespace aft
         }
 
         ccf::kv::TxID expected{r.term_of_idx, i};
-        fmt::print("**START** {}: deserialize --> size={}\n", __func__, entry.size());
+      //  fmt::print("**START** {}: deserialize --> size={}\n", __func__, entry.size());
 
         auto ds = store->deserialize(entry, public_only, expected);
-        fmt::print("**END** {}: deserialize --> size={}\n", __func__, size);
+      //  fmt::print("**END** {}: deserialize --> size={}\n", __func__, size);
         if (ds == nullptr)
         {
           fmt::print(

@@ -33,12 +33,6 @@ namespace aft
       ccf::kv::Term term,
       ccf::kv::Version index)
     {
-      fmt::print(
-        "{} ---> globally_committable={}, term={}, index={}\n",
-        __func__,
-        globally_committable,
-        term,
-        index);
       std::lock_guard<std::mutex> lock(ledger_access);
 
       // The payload that we eventually deserialise must include the
@@ -65,6 +59,7 @@ namespace aft
       }
 
       combined.insert(combined.end(), original.begin(), original.end());
+#if 0
       fmt::print(
         "{} ---> globally_committable={}, term={}, index={}, "
         "combined_size={}\n",
@@ -73,6 +68,7 @@ namespace aft
         term,
         index,
         combined.size());
+#endif
       ledger.push_back(combined);
     }
 
@@ -85,12 +81,12 @@ namespace aft
     static std::vector<uint8_t> get_entry(const uint8_t*& data, size_t& size)
     {
 #if 1
-      fmt::print("{} --> size={}\n", __func__, size);
+      // fmt::print("{} --> size={}\n", __func__, size);
       const auto entry_size = serialized::read<size_t>(data, size);
-      fmt::print("{} --> entry_size={}\n", __func__, entry_size);
+      // fmt::print("{} --> entry_size={}\n", __func__, entry_size);
       std::vector<uint8_t> entry(data, data + entry_size);
       serialized::skip(data, size, entry_size);
-      fmt::print("{} ---> data.size() should be 0={}\n", __func__, size);
+      // fmt::print("{} ---> data.size() should be 0={}\n", __func__, size);
 #endif
       return entry;
     }
@@ -101,11 +97,13 @@ namespace aft
       // Ledger indices are 1-based, hence the -1
       if (idx > 0 && idx <= ledger.size())
       {
+#if 0
         fmt::print(
           "{} -> idx={} entry_size={}\n",
           __func__,
           idx,
           ledger[idx - 1].size());
+#endif
         return ledger[idx - 1];
       }
 

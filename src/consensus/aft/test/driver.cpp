@@ -125,9 +125,8 @@ int main(int argc, char* argv[])
     int count = 0;
     for (auto i = 0ULL; i < k_num_requests; i++)
     {
-    
-        count += driver->periodic_listening(ccf::NodeId("0"));
-        // fmt::print("{} recv_msg_count={}\n", __func__, count);
+      count += driver->periodic_listening(ccf::NodeId("0"));
+      // fmt::print("{} recv_msg_count={}\n", __func__, count);
     }
     driver->periodic_listening(ccf::NodeId("0"));
     count++;
