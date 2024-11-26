@@ -97,10 +97,10 @@ namespace aft
     std::optional<std::vector<uint8_t>> get_entry_by_idx(size_t idx)
     {
       std::lock_guard<std::mutex> lock(ledger_access);
-      fmt::print("{} -> idx={}\n", __func__, idx);
       // Ledger indices are 1-based, hence the -1
       if (idx > 0 && idx <= ledger.size())
       {
+        fmt::print("{} -> idx={} entry_size={}\n", __func__, idx, ledger[idx-1].size());
         return ledger[idx - 1];
       }
 
