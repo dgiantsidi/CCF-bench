@@ -38,9 +38,8 @@ namespace socket_layer
   void send_to_socket(
     const int& socket, std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
   {
-    fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
-
-#if 1
+#if 0
+fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
@@ -57,7 +56,7 @@ namespace socket_layer
       if (remaining == 0)
         break;
     }
-#if 1
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",

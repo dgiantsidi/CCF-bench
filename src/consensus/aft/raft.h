@@ -1088,7 +1088,7 @@ namespace aft
       size_t size)
     {
       std::unique_lock<ccf::pal::Mutex> guard(state->lock);
-
+#if 0
       fmt::print(
         "Received append entries: {}.{} to {}.{} (from {} in term {}) data_sz={}\n",
         r.prev_term,
@@ -1097,7 +1097,7 @@ namespace aft
         r.idx,
         from,
         r.term, size);
-
+#endif
 #ifdef CCF_RAFT_TRACING
       nlohmann::json j = {};
       j["function"] = "recv_append_entries";
@@ -1208,14 +1208,14 @@ namespace aft
           state->last_idx);
         return;
       }
-
+#if 0
       fmt::print(
         "Recv append entries to {} from {} for index {} and previous index {}\n",
         state->node_id,
         from,
         r.idx,
         r.prev_idx);
-
+#endif
       std::vector<std::tuple<
         std::unique_ptr<ccf::kv::AbstractExecutionWrapper>,
         ccf::kv::Version>>
