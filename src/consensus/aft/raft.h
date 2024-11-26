@@ -1651,12 +1651,13 @@ namespace aft
         node->second.match_idx =
           std::max(node->second.match_idx, r.last_log_idx);
       }
-
+      #if 0
       fmt::print(
         "Recv append entries response to {} from {} for index {}: success\n",
         state->node_id,
         from,
         r.last_log_idx);
+      #endif
       update_commit();
     }
 
