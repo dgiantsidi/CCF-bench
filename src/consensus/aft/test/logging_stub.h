@@ -90,6 +90,7 @@ namespace aft
       fmt::print("{} --> entry_size={}\n", __func__, entry_size);
       std::vector<uint8_t> entry(data, data + entry_size);
       serialized::skip(data, size, entry_size);
+      fmt::print("{} ---> data.size() should be 0={}\n", __func__, size);
 #endif
       return entry;
     }

@@ -418,27 +418,8 @@ public:
     auto [msg_type, specific_msg_type_sz] =
       get_msg_type_from_header_sz(data, size);
 
-    if (specific_msg_type_sz != size)
-    {
-      fmt::print(
-        "{} --> specific_msg_type_sz={} and size={}\n",
-        __func__,
-        specific_msg_type_sz,
-        size);
-      exit(-1);
-    }
-    size_t msg_type_sz = sizeof(ccf::NodeMsgType::consensus_msg);
-    if (sizeof(type) != msg_type_sz)
-    {
-      fmt::print(
-        "{} --> msg_type_sz={} and sizeof(type)={}\n",
-        __func__,
-        msg_type_sz,
-        sizeof(type));
-      exit(-1);
-    }
 
-    auto msg_size = size;
+    auto header_msg_size = size;
 
     std::unique_ptr<uint8_t[]> msg_ptr;
 
@@ -463,26 +444,28 @@ public:
         if (entry.has_value())
         {
           msg_ptr = std::make_unique<uint8_t[]>(
-            msg_size + payload_sz + entry.value().size());
+            header_msg_size + payload_sz + entry.value().size());
           size_t size_of_payload = entry.value().size();
-          ::memcpy(msg_ptr.get(), data, size);
+          fmt::print("{} --> entry.size()={}\n", __func__, size_of_payload);
+
+          ::memcpy(msg_ptr.get(), data, header_msg_size);
           ::memcpy(msg_ptr.get() + size, &(size_of_payload), payload_sz);
           ::memcpy(
-            msg_ptr.get() + size + payload_sz,
+            msg_ptr.get() + header_msg_size + payload_sz,
             entry.value().data(),
             entry.value().size());
           send_msg(
-            to, std::move(msg_ptr), size + entry.value().size() + payload_sz);
+            to, std::move(msg_ptr), header_msg_size + entry.value().size() + payload_sz);
           return true;
         }
         else
         {
           fmt::print("{} --> entry.has_value() = false\n", __func__);
-          msg_ptr = std::make_unique<uint8_t[]>(msg_size + payload_sz);
+          msg_ptr = std::make_unique<uint8_t[]>(header_msg_size + payload_sz);
           ::memcpy(msg_ptr.get(), data, size);
           size_t empty_payload = 0;
-          ::memcpy(msg_ptr.get() + size, &empty_payload, payload_sz);
-          send_msg(to, std::move(msg_ptr), size + payload_sz);
+          ::memcpy(msg_ptr.get() + header_msg_size, &empty_payload, payload_sz);
+          send_msg(to, std::move(msg_ptr), header_msg_size + payload_sz);
           return true;
         }
       }
@@ -494,13 +477,13 @@ public:
     }
     else
     {
-      fmt::print("{} -> msg_size={}\n", __func__, msg_size);
-      msg_ptr = std::make_unique<uint8_t[]>(msg_size + payload_sz);
+      fmt::print("{} -> header_msg_size={}\n", __func__, header_msg_size);
+      msg_ptr = std::make_unique<uint8_t[]>(header_msg_size + payload_sz);
     }
-    ::memcpy(msg_ptr.get(), data, size);
+    ::memcpy(msg_ptr.get(), data, header_msg_size);
     size_t empty_payload = 0;
-    ::memcpy(msg_ptr.get() + size, &empty_payload, payload_sz);
-    send_msg(to, std::move(msg_ptr), msg_size + payload_sz);
+    ::memcpy(msg_ptr.get() + header_msg_size, &empty_payload, payload_sz);
+    send_msg(to, std::move(msg_ptr), header_msg_size + payload_sz);
     return true;
   }
 
@@ -621,8 +604,8 @@ private:
   {
     // fmt::print("{}: --> to {} {} bytes (sizeof(aft::RaftMsgType)={})\n",
     // __func__, to, msg_sz, sizeof(aft::RaftMsgType));
-    const uint8_t* data = msg.get();
-    aft::RaftMsgType type = serialized::peek<aft::RaftMsgType>(data, msg_sz);
+   // const uint8_t* data = msg.get();
+   // aft::RaftMsgType type = serialized::peek<aft::RaftMsgType>(data, msg_sz);
 
     auto& socket = node_connections_map[to]->sending_handle;
     socket_layer::send_to_socket(socket, std::move(msg), msg_sz);
