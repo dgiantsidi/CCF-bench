@@ -101,6 +101,10 @@ if(KV_STATE_RB)
   add_compile_definitions(KV_STATE_RB)
 endif()
 
+if (USE_AUTHENTICATOR) 
+  set(AUTHENTICATOR "1")
+endif()
+
 if(SAN)
   # Set the compiler flags for AddressSanitizer
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g -O1 -fno-omit-frame-pointer")
