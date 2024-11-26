@@ -577,7 +577,7 @@ namespace aft
       // Read wrapping term and version
       auto data_ = data.data();
       auto size = data.size();
-      auto r2 = nlohmann::json::parse(std::span{
+      ReplicatedData r2 = nlohmann::json::parse(std::span{
         data_ + 17, size - 17}); // this is extra (@dimitra should be removed)
       fmt::print(
         "{} (data_+17)={} (size-17)={} r2.type={}\n",
