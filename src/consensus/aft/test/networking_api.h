@@ -65,61 +65,70 @@ namespace socket_layer
 #endif
   }
 
+  std::tuple<std::unique_ptr<uint8_t[]>, size_t> read_from_socket(
+    const int& socket, size_t sz)
+  {
+    int len = 0, offset = 0;
+    int remaining = sz;
+    std::unique_ptr<uint8_t[]> data_buf =
+      std::make_unique<uint8_t[]>(remaining);
+    for (;;)
+    {
+      len = read(socket, data_buf.get() + offset, remaining);
+      offset += len;
+      remaining -= len;
+      if (remaining == 0)
+        return {std::move(data_buf), sz};
+    }
+    return {std::move(std::make_unique<uint8_t[]>(0)), 0};
+  }
+
   std::tuple<std::unique_ptr<uint8_t[]>, size_t> get_from_socket(
     const int& socket, size_t sz)
   {
-    fmt::print("{}: --> socket={} sz={}\n", __func__, socket, sz);
-    int len = 0, offset = 0;
-    int remaining = sz;
-    int total_bytes = sz;
-    std::unique_ptr<uint8_t[]> header_buf =
-      std::make_unique<uint8_t[]>(remaining);
-    for (;;)
+    auto [header_buf, header_sz] = read_from_socket(socket, sz);
+    if (header_sz != sz)
     {
-      len = read(socket, header_buf.get() + offset, remaining);
-      offset += len;
-      remaining -= offset;
-      if (remaining == 0)
-        break;
+      fmt::print(
+        "{} -> error header_sz={} and sz={}\n", __func__, header_sz, sz);
+      exit(-1);
     }
-    len = 0;
-    remaining = payload_sz;
-    std::unique_ptr<uint8_t[]> size_buf =
-      std::make_unique<uint8_t[]>(remaining);
-    offset = 0;
-    for (;;)
+    fmt::print("{} --> socket={} header_sz={}B\n", __func__, socket, header_sz);
+    int total_bytes = header_sz;
+    auto [payload_sz_buf, pload_sz] = read_from_socket(socket, payload_sz);
+    if (pload_sz != payload_sz)
     {
-      len = read(socket, size_buf.get() + offset, remaining);
-      offset += len;
-      remaining -= offset;
-      if (remaining == 0)
-        break;
+      fmt::print(
+        "{} -> error payload_sz={} and pload_sz={}\n",
+        __func__,
+        payload_sz,
+        pload_sz);
+      exit(-1);
     }
     size_t sz_val;
-    ::memcpy(&sz_val, size_buf.get(), payload_sz);
-    fmt::print("{}-> payload_sz={}\n", __func__, sz_val);
+    ::memcpy(&sz_val, payload_sz_buf.get(), payload_sz);
+    fmt::print(
+      "{} --> socket={} paylaod_sz={} payload={}\n",
+      __func__,
+      socket,
+      payload_sz,
+      sz_val);
+    auto [entry_buf, entry_sz] = read_from_socket(socket, sz_val);
+    if (entry_sz != sz_val)
+    {
+      fmt::print(
+        "{} -> error entry_sz={} and sz_val={}\n", __func__, entry_sz, sz_val);
+      exit(-1);
+    }
     total_bytes += sz_val;
     std::unique_ptr<uint8_t[]> serialized_msg =
       std::make_unique<uint8_t[]>(total_bytes);
-    ::memcpy(serialized_msg.get(), header_buf.get(), sz);
-    if (sz_val > 0)
+    ::memcpy(serialized_msg.get(), header_buf.get(), header_sz);
+    if (entry_sz > 0)
     {
-      std::unique_ptr<uint8_t[]> payload_buf =
-        std::make_unique<uint8_t[]>(remaining);
-      len = 0;
-      remaining = sz_val;
-      offset = 0;
-      for (;;)
-      {
-        len = read(socket, size_buf.get() + offset, remaining);
-        offset += len;
-        remaining -= offset;
-        if (remaining == 0)
-          break;
-      }
-      ::memcpy(serialized_msg.get() + sz, size_buf.get(), sz_val);
+      ::memcpy(serialized_msg.get() + header_sz, entry_buf.get(), entry_sz);
     }
-    // TODO: consume the sz_val payload;
+    fmt::print("{} --> socket={} entry_sz={}\n", __func__, socket, entry_sz);
     print_data(serialized_msg.get(), total_bytes);
     return {std::move(serialized_msg), total_bytes};
   }
