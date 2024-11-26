@@ -19,6 +19,8 @@ namespace authentication
 
   void init()
   {
+    fmt::print("{} -> initialize OpenSSL library\n", __func__);
+
     // Initialise OpenSSL library
     OpenSSL_add_all_algorithms();
     ERR_load_crypto_strings();

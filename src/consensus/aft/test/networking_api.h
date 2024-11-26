@@ -635,10 +635,10 @@ private:
   void send_msg(node_id to, std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
   {
     auto& socket = node_connections_map[to]->sending_handle;
-    auto [hash, hash_len] = authentication::get_hash(msg.get(), msg_sz);
 
-    if (hash_len > 0)
+    if (authentication::is_enabled())
     {
+      auto [hash, hash_len] = authentication::get_hash(msg.get(), msg_sz);
       auto hashed_msg = std::make_unique<uint8_t[]>(hash_len + msg_sz);
       ::memcpy(hashed_msg.get(), msg.get(), msg_sz);
       ::memcpy(hashed_msg.get() + msg_sz, hash.get(), hash_len);
