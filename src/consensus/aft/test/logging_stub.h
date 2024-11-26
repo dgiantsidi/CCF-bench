@@ -583,10 +583,9 @@ namespace aft
         "{} (data_+17)={} (size-17)={} r2.type={}\n",
         __func__,
         reinterpret_cast<uintptr_t>(data_ + 17),
-        (size - 17),
-        r2.dump(4));
+        (size - 17));
       fmt::print("{}->{}\n", __func__, stringify(data, data.size()));
-
+      std::cout << r2.dump() << "\n";
       const auto committable = serialized::read<bool>(data_, size);
       fmt::print(
         "{} ->>> committable={} size={}\n",
