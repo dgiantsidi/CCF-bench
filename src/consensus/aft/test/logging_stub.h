@@ -579,6 +579,7 @@ namespace aft
       auto size = data.size();
       auto r2 = nlohmann::json::parse(
         std::span{data_+17, size-17}); // this is extra (@dimitra should be removed)
+      fmt::print("{} (data_+17)={} (size-17)={}\n", __func__, reinterpret_cast<uintptr_t>(data_+17), (size-17));
       fmt::print("{}->{}\n", __func__, stringify(data, data.size()));
 
       const auto committable = serialized::read<bool>(data_, size);
@@ -606,6 +607,7 @@ namespace aft
         size);
       ReplicatedData r = {.type = ReplicatedDataType::raw}; // nlohmann::json::parse(std::span{data_,
                                                             // size});
+      fmt::print("{} (data_)={} (size)={}\n", __func__, reinterpret_cast<uintptr_t>(data_), (size));
       r = nlohmann::json::parse(std::span{data_, size});
       fmt::print("{} -> passed the dangerous point\n", __func__);
       ccf::kv::ConsensusHookPtrs hooks = {};
