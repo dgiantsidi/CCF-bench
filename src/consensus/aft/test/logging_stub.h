@@ -577,7 +577,7 @@ namespace aft
       // Read wrapping term and version
       auto data_ = data.data();
       auto size = data.size();
-      auto r = nlohmann::json::parse(
+      auto r2 = nlohmann::json::parse(
         std::span{data_, size}); // this is extra (@dimitra should be removed)
       fmt::print("{}->{}\n", __func__, stringify(data, data.size()));
 
