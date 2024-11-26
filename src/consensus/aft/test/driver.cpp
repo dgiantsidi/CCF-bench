@@ -108,12 +108,15 @@ int main(int argc, char* argv[])
     {
       driver->replicate_commitable("2", data, 0);
       acks += driver->periodic_listening_acks(ccf::NodeId("1"));
-      fmt::print("{} acks={}\n", __func__, acks);
+      if (acks % 1000 == 0)
+        fmt::print("{} acks={}\n", __func__, acks);
     }
 
     //    driver->periodic_listening(ccf::NodeId("1"));
 
     driver->close_connections(ccf::NodeId("0"));
+    fmt::print("{} acks={}\n", __func__, acks);
+
     //    driver->close_connections(ccf::NodeId("0"));
   }
   else

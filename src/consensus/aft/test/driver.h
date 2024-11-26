@@ -1218,14 +1218,13 @@ public:
     auto [data, data_sz] = socket_layer::get_from_socket(
       incomming_socket, sizeof(aft::AppendEntries));
 
-    
-    #if 0
+#if 0
     fmt::print(
       "{}: data_sz={} get_from_socket={}\n",
       __func__,
       data_sz,
       (sizeof(aft::AppendEntries)));
-    #endif
+#endif
     _nodes.at(my_nid).raft->recv_message(src_node, data.get(), data_sz);
 #if 0
     fmt::print(

@@ -663,7 +663,7 @@ namespace aft
         return false;
       }
 
-      fmt::print("Replicating {} entries\n", entries.size());
+    //  fmt::print("Replicating {} entries\n", entries.size());
 
       for (auto& [index, data, is_globally_committable, hooks] : entries)
       {
@@ -671,14 +671,14 @@ namespace aft
 
         if (index != state->last_idx + 1)
           return false;
-
+#if 0
         fmt::print(
           "Replicated on leader {}: {}{} ({} hooks)\n",
           state->node_id,
           index,
           (globally_committable ? " committable" : ""),
           hooks->size());
-
+#endif
 #ifdef CCF_RAFT_TRACING
         nlohmann::json j = {};
         j["function"] = "replicate";
@@ -729,7 +729,7 @@ namespace aft
           entry_size_not_limited = 0;
           for (const auto& it : all_other_nodes)
           {
-            fmt::print("Sending updates to follower {}\n", it.first);
+            // fmt::print("Sending updates to follower {}\n", it.first);
             send_append_entries(it.first, it.second.sent_idx + 1);
           }
         }
@@ -979,6 +979,7 @@ namespace aft
 
     void send_append_entries(const ccf::NodeId& to, Index start_idx)
     {
+      #if 0
       fmt::print(
         "Sending append entries to node {} in batches of {}, covering the "
         "range {} -> {}\n",
@@ -986,7 +987,7 @@ namespace aft
         entries_batch_size,
         start_idx,
         state->last_idx);
-
+      #endif
       auto calculate_end_index = [this](Index start) {
         // Cap the end index in 2 ways:
         // - Must contain no more than entries_batch_size entries
@@ -1012,7 +1013,7 @@ namespace aft
       do
       {
         end_idx = calculate_end_index(start_idx);
-        fmt::print("Sending sub range {} -> {}\n", start_idx, end_idx);
+        // fmt::print("Sending sub range {} -> {}\n", start_idx, end_idx);
         send_append_entries_range(to, start_idx, end_idx);
         start_idx = std::min(end_idx + 1, state->last_idx);
       } while (end_idx != state->last_idx);
@@ -1032,7 +1033,7 @@ namespace aft
 
       const auto prev_term = get_term_internal(prev_idx);
       const auto term_of_idx = get_term_internal(end_idx);
-
+#if 0
       fmt::print(
         "Send append entries from {} to {}: ({}.{}, {}.{}] ({})\n",
         state->node_id,
@@ -1042,7 +1043,7 @@ namespace aft
         term_of_idx,
         end_idx,
         state->commit_idx);
-
+#endif
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc99-designator"
       AppendEntries ae{
@@ -1335,7 +1336,7 @@ namespace aft
       for (auto& ae : append_entries)
       {
         auto& [ds, i] = ae;
-        fmt::print("Replicating on follower {}: {}\n", state->node_id, i);
+       // fmt::print("Replicating on follower {}: {}\n", state->node_id, i);
 
 #ifdef CCF_RAFT_TRACING
         nlohmann::json j = {};
@@ -1511,12 +1512,14 @@ namespace aft
       aft::Term response_term,
       aft::Index response_idx)
     {
+      if (answer != AppendEntriesResponseType::OK) {
       fmt::print(
         "> Send append entries response from {} to {} for index {}: {}\n",
         state->node_id,
         to,
         response_idx,
         (answer == AppendEntriesResponseType::OK ? "ACK" : "NACK"));
+      }
 
       AppendEntriesResponse response{
         .term = response_term,
@@ -2280,12 +2283,13 @@ namespace aft
 
         if (new_commit_idx.has_value())
         {
+          #if 0
           fmt::print(
             "In update_commit, new_commit_idx: {}, "
             "last_idx: {}\n",
             new_commit_idx.value(),
             state->last_idx);
-
+          #endif
           const auto term_of_new = get_term_internal(new_commit_idx.value());
           if (term_of_new == state->current_view)
           {
