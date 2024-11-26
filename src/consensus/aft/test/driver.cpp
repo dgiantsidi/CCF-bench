@@ -47,7 +47,7 @@ constexpr auto shash = ccf::ds::fnv_1a<size_t>;
 int main(int argc, char* argv[])
 {
   threading::ThreadMessaging::init(1);
-
+  authentication::init();
   std::map<ccf::NodeId, network_stack::connectivity_description> my_connections;
   my_connections.insert(std::make_pair(
     ccf::NodeId("0"), network_stack::connectivity_description()));
