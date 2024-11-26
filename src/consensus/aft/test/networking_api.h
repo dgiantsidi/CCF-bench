@@ -437,8 +437,9 @@ public:
 
     if (msg_type == aft::RaftMsgType::raft_append_entries)
     {
-#if 0
       auto ae = *(aft::AppendEntries*)data;
+
+#if 0
       fmt::print(
         "{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, "
         ".leader_commit_idx={}, .term_of_idx={}\n",
