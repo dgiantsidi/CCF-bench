@@ -577,6 +577,7 @@ namespace aft
       // Read wrapping term and version
       auto data_ = data.data();
       auto size = data.size();
+      try {
       auto r2 = nlohmann::json::parse(std::span{
         data_ + 17, size - 17}); // this is extra (@dimitra should be removed)
       fmt::print(
@@ -586,6 +587,10 @@ namespace aft
         (size - 17));
       fmt::print("{}->{}\n", __func__, stringify(data, data.size()));
       std::cout << r2.dump() << "\n";
+      }
+      catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
       const auto committable = serialized::read<bool>(data_, size);
       fmt::print(
         "{} ->>> committable={} size={}\n",
