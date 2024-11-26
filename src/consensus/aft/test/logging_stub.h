@@ -566,67 +566,18 @@ namespace aft
       bool public_only = false,
       const std::optional<ccf::kv::TxID>& expected_txid = std::nullopt) override
     {
-      fmt::print(
-        "{} ->>> data.size()={}, public_only={}\n",
-        __PRETTY_FUNCTION__,
-        data.size(),
-        public_only);
-
-      fmt::print("{}->{}\n", __func__, stringify(data, data.size()));
       // Set reconfiguration hook if there are any new nodes
       // Read wrapping term and version
       auto data_ = data.data();
       auto size = data.size();
-      try
-      {
-        auto r2 = nlohmann::json::parse(std::span{
-          data_ + 17, size - 17}); // this is extra (@dimitra should be removed)
-        fmt::print(
-          "{} (data_+17)={} (size-17)={}\n",
-          __func__,
-          reinterpret_cast<uintptr_t>(data_ + 17),
-          (size - 17));
-        fmt::print("{}->{}\n", __func__, stringify(data, data.size()));
-        std::cout << r2.dump() << "\n";
-      }
-      catch (const std::exception& e)
-      {
-        std::cerr << "Error: " << e.what() << std::endl;
-      }
+
       const auto committable = serialized::read<bool>(data_, size);
-      fmt::print(
-        "{} ->>> committable={} size={}\n",
-        __PRETTY_FUNCTION__,
-        committable,
-        size);
+
       serialized::read<aft::Term>(data_, size);
-      fmt::print(
-        "{} ->>> reading term size_left={}\n", __PRETTY_FUNCTION__, size);
 
       auto version = serialized::read<ccf::kv::Version>(data_, size);
-      fmt::print(
-        "{} ->>> version={} size_left={}\n",
-        __PRETTY_FUNCTION__,
-        version,
-        size);
 
-      fmt::print(
-        "{} --> committable={}, kv_version={}, size={}\n",
-        __func__,
-        committable,
-        version,
-        size);
-      ReplicatedData r = {
-        .type =
-          ReplicatedDataType::raw}; // nlohmann::json::parse(std::span{data_,
-                                    // size});
-      fmt::print(
-        "{} (data_)={} (size)={}\n",
-        __func__,
-        reinterpret_cast<uintptr_t>(data_),
-        (size));
-      r = nlohmann::json::parse(std::span{data_, size});
-      fmt::print("{} -> passed the dangerous point\n", __func__);
+      ReplicatedData r = nlohmann::json::parse(std::span{data_, size});
 
       ccf::kv::ConsensusHookPtrs hooks = {};
       if (r.type == ReplicatedDataType::reconfiguration)
@@ -644,7 +595,6 @@ namespace aft
         retired_committed_entries.emplace_back(version, configuration);
       }
 
-      fmt::print("{} -----\n\n\n\n\n", __func__);
       return std::make_unique<ExecutionWrapper>(
         data, expected_txid, std::move(hooks));
     }
