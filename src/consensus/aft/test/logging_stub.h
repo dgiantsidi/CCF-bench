@@ -596,6 +596,7 @@ namespace aft
         version,
         size);
       ReplicatedData r = {.type = ReplicatedDataType::raw };// nlohmann::json::parse(std::span{data_, size});
+      r =  nlohmann::json::parse(std::span{data_, size});
       fmt::print("{} -> passed the dangerous point\n", __func__);
       ccf::kv::ConsensusHookPtrs hooks = {};
       if (r.type == ReplicatedDataType::reconfiguration)
