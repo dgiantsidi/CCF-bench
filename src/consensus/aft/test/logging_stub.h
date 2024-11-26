@@ -577,14 +577,14 @@ namespace aft
       // Read wrapping term and version
       auto data_ = data.data();
       auto size = data.size();
-      ReplicatedData r2 = nlohmann::json::parse(std::span{
+      auto r2 = nlohmann::json::parse(std::span{
         data_ + 17, size - 17}); // this is extra (@dimitra should be removed)
       fmt::print(
         "{} (data_+17)={} (size-17)={} r2.type={}\n",
         __func__,
         reinterpret_cast<uintptr_t>(data_ + 17),
         (size - 17),
-        r2.type);
+        r2.dump(4));
       fmt::print("{}->{}\n", __func__, stringify(data, data.size()));
 
       const auto committable = serialized::read<bool>(data_, size);
