@@ -101,8 +101,11 @@ if(KV_STATE_RB)
   add_compile_definitions(KV_STATE_RB)
 endif()
 
-if (USE_AUTHENTICATOR) 
-  set(AUTHENTICATOR "1")
+if(USE_AUTHENTICATOR)
+message( STATUS
+    "Building with AUTHENTICATOR"
+)
+  add_compile_definitions(AUTHENTICATOR)
 endif()
 
 if(SAN)
