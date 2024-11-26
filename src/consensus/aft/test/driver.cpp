@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
     {
       driver->replicate_commitable("2", data, 0);
       acks += driver->periodic_listening_acks(ccf::NodeId("1"));
-      if (acks % 1000 == 0)
+      if (acks % 50000 == 0)
         fmt::print("{} acks={}\n", __func__, acks);
     }
 

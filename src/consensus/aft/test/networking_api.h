@@ -1,5 +1,6 @@
 #pragma once
 
+#include "authentication_layer.h"
 #include "config.hpp"
 #include "loggin_stub_mermaid.h"
 #include "node/node_to_node.h"
@@ -129,6 +130,22 @@ fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
     if (entry_sz > 0)
     {
       ::memcpy(serialized_msg.get() + header_sz, entry_buf.get(), entry_sz);
+    }
+    if (authentication::is_enabled())
+    {
+      auto [hash, hash_len] =
+        read_from_socket(socket, authentication::get_hash_len());
+      std::unique_ptr<uint8_t[]> original_msg =
+        std::make_unique<uint8_t[]>(total_bytes + payload_sz);
+      ::memcpy(original_msg.get(), header_buf.get(), header_sz);
+      ::memcpy(
+        original_msg.get() + header_sz, payload_sz_buf.get(), payload_sz);
+      ::memcpy(
+        original_msg.get() + header_sz + payload_sz, entry_buf.get(), entry_sz);
+
+      if (!authentication::verify_hash(
+            original_msg.get(), (total_bytes + payload_sz), hash.get()))
+        fmt::print("{} --->> error in verifying the hash\n", __func__);
     }
     // fmt::print("{} --> socket={} entry_sz={}\n", __func__, socket, entry_sz);
     print_data(serialized_msg.get(), total_bytes);
@@ -618,6 +635,17 @@ private:
   void send_msg(node_id to, std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
   {
     auto& socket = node_connections_map[to]->sending_handle;
-    socket_layer::send_to_socket(socket, std::move(msg), msg_sz);
+    auto [hash, hash_len] = authentication::get_hash(msg.get(), msg_sz);
+
+    if (hash_len > 0)
+    {
+      auto hashed_msg = std::make_unique<uint8_t[]>(hash_len + msg_sz);
+      ::memcpy(hashed_msg.get(), msg.get(), msg_sz);
+      ::memcpy(hashed_msg.get() + msg_sz, hash.get(), hash_len);
+      socket_layer::send_to_socket(
+        socket, std::move(hashed_msg), msg_sz + hash_len);
+    }
+    else
+      socket_layer::send_to_socket(socket, std::move(msg), msg_sz);
   }
 };
