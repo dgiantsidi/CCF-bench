@@ -577,9 +577,14 @@ namespace aft
       // Read wrapping term and version
       auto data_ = data.data();
       auto size = data.size();
-      auto r2 = nlohmann::json::parse(
-        std::span{data_+17, size-17}); // this is extra (@dimitra should be removed)
-      fmt::print("{} (data_+17)={} (size-17)={}\n", __func__, reinterpret_cast<uintptr_t>(data_+17), (size-17));
+      auto r2 = nlohmann::json::parse(std::span{
+        data_ + 17, size - 17}); // this is extra (@dimitra should be removed)
+      fmt::print(
+        "{} (data_+17)={} (size-17)={} r2.type={}\n",
+        __func__,
+        reinterpret_cast<uintptr_t>(data_ + 17),
+        (size - 17),
+        r2.type);
       fmt::print("{}->{}\n", __func__, stringify(data, data.size()));
 
       const auto committable = serialized::read<bool>(data_, size);
@@ -605,11 +610,18 @@ namespace aft
         committable,
         version,
         size);
-      ReplicatedData r = {.type = ReplicatedDataType::raw}; // nlohmann::json::parse(std::span{data_,
-                                                            // size});
-      fmt::print("{} (data_)={} (size)={}\n", __func__, reinterpret_cast<uintptr_t>(data_), (size));
+      ReplicatedData r = {
+        .type =
+          ReplicatedDataType::raw}; // nlohmann::json::parse(std::span{data_,
+                                    // size});
+      fmt::print(
+        "{} (data_)={} (size)={}\n",
+        __func__,
+        reinterpret_cast<uintptr_t>(data_),
+        (size));
       r = nlohmann::json::parse(std::span{data_, size});
       fmt::print("{} -> passed the dangerous point\n", __func__);
+
       ccf::kv::ConsensusHookPtrs hooks = {};
       if (r.type == ReplicatedDataType::reconfiguration)
       {
@@ -626,6 +638,7 @@ namespace aft
         retired_committed_entries.emplace_back(version, configuration);
       }
 
+      fmt::print("{} -----\n\n\n\n\n", __func__);
       return std::make_unique<ExecutionWrapper>(
         data, expected_txid, std::move(hooks));
     }
