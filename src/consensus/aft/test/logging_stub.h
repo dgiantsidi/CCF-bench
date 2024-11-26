@@ -101,7 +101,11 @@ namespace aft
       // Ledger indices are 1-based, hence the -1
       if (idx > 0 && idx <= ledger.size())
       {
-        fmt::print("{} -> idx={} entry_size={}\n", __func__, idx, ledger[idx-1].size());
+        fmt::print(
+          "{} -> idx={} entry_size={}\n",
+          __func__,
+          idx,
+          ledger[idx - 1].size());
         return ledger[idx - 1];
       }
 
@@ -549,14 +553,14 @@ namespace aft
         retired_committed_entries.end());
     }
 
-    std::string stringify(const std::vector<uint8_t>& v, size_t max_size = 100ul)
+    std::string stringify(
+      const std::vector<uint8_t>& v, size_t max_size = 100ul)
     {
       auto size = std::min(v.size(), max_size);
       return fmt::format(
         "[{} bytes] {}", v.size(), std::string(v.begin(), v.begin() + size));
     }
 
-  
     virtual std::unique_ptr<ccf::kv::AbstractExecutionWrapper> deserialize(
       const std::vector<uint8_t>& data,
       bool public_only = false,
@@ -573,6 +577,10 @@ namespace aft
       // Read wrapping term and version
       auto data_ = data.data();
       auto size = data.size();
+      auto r = nlohmann::json::parse(
+        std::span{data_, size}); // this is extra (@dimitra should be removed)
+      fmt::print("{}->{}\n", __func__, stringify(data, data.size()));
+
       const auto committable = serialized::read<bool>(data_, size);
       fmt::print(
         "{} ->>> committable={} size={}\n",
@@ -596,8 +604,9 @@ namespace aft
         committable,
         version,
         size);
-      ReplicatedData r = {.type = ReplicatedDataType::raw };// nlohmann::json::parse(std::span{data_, size});
-      r =  nlohmann::json::parse(std::span{data_, size});
+      ReplicatedData r = {.type = ReplicatedDataType::raw}; // nlohmann::json::parse(std::span{data_,
+                                                            // size});
+      r = nlohmann::json::parse(std::span{data_, size});
       fmt::print("{} -> passed the dangerous point\n", __func__);
       ccf::kv::ConsensusHookPtrs hooks = {};
       if (r.type == ReplicatedDataType::reconfiguration)

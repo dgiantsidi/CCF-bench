@@ -418,7 +418,6 @@ public:
     auto [msg_type, specific_msg_type_sz] =
       get_msg_type_from_header_sz(data, size);
 
-
     auto header_msg_size = size;
 
     std::unique_ptr<uint8_t[]> msg_ptr;
@@ -455,7 +454,9 @@ public:
             entry.value().data(),
             entry.value().size());
           send_msg(
-            to, std::move(msg_ptr), header_msg_size + entry.value().size() + payload_sz);
+            to,
+            std::move(msg_ptr),
+            header_msg_size + entry.value().size() + payload_sz);
           return true;
         }
         else
@@ -604,8 +605,8 @@ private:
   {
     // fmt::print("{}: --> to {} {} bytes (sizeof(aft::RaftMsgType)={})\n",
     // __func__, to, msg_sz, sizeof(aft::RaftMsgType));
-   // const uint8_t* data = msg.get();
-   // aft::RaftMsgType type = serialized::peek<aft::RaftMsgType>(data, msg_sz);
+    // const uint8_t* data = msg.get();
+    // aft::RaftMsgType type = serialized::peek<aft::RaftMsgType>(data, msg_sz);
 
     auto& socket = node_connections_map[to]->sending_handle;
     socket_layer::send_to_socket(socket, std::move(msg), msg_sz);
