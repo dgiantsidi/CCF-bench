@@ -1488,7 +1488,7 @@ namespace aft
     void send_append_entries_response_nack(
       ccf::NodeId to, const ccf::TxID& rejected)
     {
-      fmt::print("{} ---> to node={}\n", __func__, to);
+      // fmt::print("{} ---> to node={}\n", __func__, to);
       const auto response_idx = find_highest_possible_match(rejected);
       const auto response_term = get_term_internal(response_idx);
 

@@ -984,7 +984,7 @@ public:
     std::shared_ptr<std::vector<uint8_t>> data,
     const size_t lineno)
   {
-#if 1
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
@@ -999,7 +999,7 @@ public:
     fmt::print("\n");
 #endif
     _replicate(term_s, *data, lineno, true);
-#if 1
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
@@ -1204,7 +1204,7 @@ public:
 
   int periodic_listening(ccf::NodeId src_node)
   {
-#if 1
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
@@ -1225,7 +1225,7 @@ public:
       data_sz,
       (sizeof(aft::AppendEntries)));
     _nodes.at(my_nid).raft->recv_message(src_node, data.get(), data_sz);
-#if 1
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
@@ -1236,7 +1236,7 @@ public:
 
   int periodic_listening_acks(ccf::NodeId src_node)
   {
-#if 1
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
@@ -1254,7 +1254,7 @@ public:
     // fmt::print("{}: data_sz={}\n", __func__, data_sz);
     _nodes.at(my_nid).raft->recv_message(
       src_node, data.get(), sizeof(aft::AppendEntriesResponse));
-#if 1
+#if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",

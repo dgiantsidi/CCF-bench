@@ -93,7 +93,8 @@ namespace socket_layer
         "{} -> error header_sz={} and sz={}\n", __func__, header_sz, sz);
       exit(-1);
     }
-    fmt::print("{} --> socket={} header_sz={}B\n", __func__, socket, header_sz);
+    // fmt::print("{} --> socket={} header_sz={}B\n", __func__, socket,
+    // header_sz);
     int total_bytes = header_sz;
     auto [payload_sz_buf, pload_sz] = read_from_socket(socket, payload_sz);
     if (pload_sz != payload_sz)
@@ -107,12 +108,14 @@ namespace socket_layer
     }
     size_t sz_val;
     ::memcpy(&sz_val, payload_sz_buf.get(), payload_sz);
+#if 0
     fmt::print(
       "{} --> socket={} paylaod_sz={} payload={}\n",
       __func__,
       socket,
       payload_sz,
       sz_val);
+#endif
     auto [entry_buf, entry_sz] = read_from_socket(socket, sz_val);
     if (entry_sz != sz_val)
     {
@@ -128,7 +131,7 @@ namespace socket_layer
     {
       ::memcpy(serialized_msg.get() + header_sz, entry_buf.get(), entry_sz);
     }
-    fmt::print("{} --> socket={} entry_sz={}\n", __func__, socket, entry_sz);
+    // fmt::print("{} --> socket={} entry_sz={}\n", __func__, socket, entry_sz);
     print_data(serialized_msg.get(), total_bytes);
     return {std::move(serialized_msg), total_bytes};
   }
@@ -392,12 +395,13 @@ public:
       read<aft::RaftMsgType>(serialized_data, sz) ==
       aft::RaftMsgType::raft_append_entries)
     {
-      /*  auto ae = *(aft::AppendEntries*)serialized_data;
+#if 0
+        auto ae = *(aft::AppendEntries*)serialized_data;
         fmt::print("{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={},
         .leader_commit_idx={}, .term_of_idx={}\n",
         __func__, ae.idx, ae.prev_idx, ae.term, ae.prev_term,
         ae.leader_commit_idx, ae.term_of_idx);
-        */
+#endif
       return {
         aft::RaftMsgType::raft_append_entries, sizeof(aft::AppendEntries)};
     }
@@ -433,7 +437,7 @@ public:
 
     if (msg_type == aft::RaftMsgType::raft_append_entries)
     {
-#if 1
+#if 0
       auto ae = *(aft::AppendEntries*)data;
       fmt::print(
         "{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, "
@@ -454,7 +458,7 @@ public:
           msg_ptr = std::make_unique<uint8_t[]>(
             header_msg_size + payload_sz + entry.value().size());
           size_t size_of_payload = entry.value().size();
-          fmt::print("{} --> entry.size()={}\n", __func__, size_of_payload);
+          // fmt::print("{} --> entry.size()={}\n", __func__, size_of_payload);
 
           ::memcpy(msg_ptr.get(), data, header_msg_size);
           ::memcpy(msg_ptr.get() + size, &(size_of_payload), payload_sz);
@@ -470,7 +474,7 @@ public:
         }
         else
         {
-          fmt::print("{} --> entry.has_value() = false\n", __func__);
+          // fmt::print("{} --> entry.has_value() = false\n", __func__);
           msg_ptr = std::make_unique<uint8_t[]>(header_msg_size + payload_sz);
           ::memcpy(msg_ptr.get(), data, size);
           size_t empty_payload = 0;
@@ -481,13 +485,14 @@ public:
       }
       else
       {
-        fmt::print("{} -> raft_copy error\n", __func__);
+        fmt::print("{} --> raft_copy is not initialized\n", __func__);
+        exit(-1);
         return false;
       }
     }
     else
     {
-      fmt::print("{} -> header_msg_size={}\n", __func__, header_msg_size);
+      // fmt::print("{} -> header_msg_size={}\n", __func__, header_msg_size);
       msg_ptr = std::make_unique<uint8_t[]>(header_msg_size + payload_sz);
     }
     ::memcpy(msg_ptr.get(), data, header_msg_size);
@@ -517,7 +522,7 @@ public:
     if (msg_type == aft::RaftMsgType::raft_append_entries)
     {
       auto ae = *(aft::AppendEntries*)(header.data());
-#if 1
+#if 0
       fmt::print(
         "{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, "
         ".prev_term={}, .leader_commit_idx = {}, .term_of_idx = {}, "
@@ -612,11 +617,6 @@ public:
 private:
   void send_msg(node_id to, std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
   {
-    // fmt::print("{}: --> to {} {} bytes (sizeof(aft::RaftMsgType)={})\n",
-    // __func__, to, msg_sz, sizeof(aft::RaftMsgType));
-    // const uint8_t* data = msg.get();
-    // aft::RaftMsgType type = serialized::peek<aft::RaftMsgType>(data, msg_sz);
-
     auto& socket = node_connections_map[to]->sending_handle;
     socket_layer::send_to_socket(socket, std::move(msg), msg_sz);
   }
