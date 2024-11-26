@@ -578,7 +578,7 @@ namespace aft
       auto data_ = data.data();
       auto size = data.size();
       auto r2 = nlohmann::json::parse(
-        std::span{data_, size}); // this is extra (@dimitra should be removed)
+        std::span{data_+17, size-17}); // this is extra (@dimitra should be removed)
       fmt::print("{}->{}\n", __func__, stringify(data, data.size()));
 
       const auto committable = serialized::read<bool>(data_, size);
