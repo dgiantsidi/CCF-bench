@@ -184,14 +184,11 @@ public:
 
 public:
   std::map<node_id, std::unique_ptr<connections>> node_connections_map;
-  using MessageList = std::deque<std::pair<ccf::NodeId, std::vector<uint8_t>>>;
-  // MessageList messages;
 
   void register_ledger_getter(std::shared_ptr<TRaft> raft)
   {
     raft_copy = raft;
   }
-  void print() {}
 
   bool connect_to_peer(
     const std::string& host_,
@@ -203,7 +200,7 @@ public:
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1)
     {
-      fmt::print("{}: error creating the socket\n", __func__);
+      fmt::print("{} error creating the socket\n", __func__);
       return -1;
     }
     int flag = 1;
@@ -211,7 +208,7 @@ public:
       setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
     if (result < 0)
     {
-      fmt::print("{}: error setting up the socket\n", __func__);
+      fmt::print("{} error setting up the socket\n", __func__);
       return -1;
     }
 
@@ -230,11 +227,14 @@ public:
       count++;
       sleep(1);
       fmt::print(
-        "{} --> trying to connect to {}:{}\n", __func__, peer_ip, peer_port);
+        "{} ---> trying to connect to {}:{}\n", __func__, peer_ip, peer_port);
       if (count == 10000)
       {
         fmt::print(
-          "{}: error in connecting to {}:{}\n", __func__, peer_ip, peer_port);
+          "{} ---> error in connecting to {}:{}\n",
+          __func__,
+          peer_ip,
+          peer_port);
         close(sockfd);
         return -1;
       }
@@ -242,14 +242,17 @@ public:
 
     if (node_connections_map.find(peer_id) == node_connections_map.end())
     {
-      fmt::print("{}: cannot find connection entry w/ {}\n", __func__, peer_id);
+      fmt::print(
+        "{}: cannot find connection entry with {} so we add one\n",
+        __func__,
+        peer_id);
       node_connections_map.insert(
         std::make_pair(peer_id, std::make_unique<connections>()));
     }
     auto& sending_handle = node_connections_map[peer_id]->sending_handle;
     sending_handle = sockfd;
     fmt::print(
-      "{}  --> ({}) {}:{} @ socket={}\n",
+      "{} ---> ({}) {}:{} at sending socket={}\n",
       __func__,
       peer_id,
       peer_ip,
@@ -264,9 +267,10 @@ public:
     if (node_connections_map.find(peer_id) == node_connections_map.end())
     {
       fmt::print(
-        "{} cannot find listening socket on this connection (w/ {})\n",
+        "{} cannot find listening socket on this connection (with {})\n",
         __func__,
         peer_id);
+      exit(-1);
     }
     auto& listening_handle = node_connections_map[peer_id]->listening_handle;
 
@@ -288,7 +292,7 @@ public:
     }
 
     fmt::print(
-      "{}: connection accepted on {} from {}:{} ({})\n",
+      "{} ---> connection accepted on {} from {}:{} ({})\n",
       __func__,
       client_sock,
       inet_ntoa(client_addr.sin_addr),
@@ -305,7 +309,7 @@ public:
     const int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1)
     {
-      fmt::print("{}: error creating the socket\n", __func__);
+      fmt::print("{} ---> error creating the socket\n", __func__);
       return;
     }
     int flag = 1;
@@ -313,7 +317,7 @@ public:
       setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
     if (result < 0)
     {
-      fmt::print("{}: error setting up the socket\n", __func__);
+      fmt::print("{} ---> error setting up the socket\n", __func__);
       return;
     }
 
@@ -328,7 +332,7 @@ public:
     if (bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1)
     {
       fmt::print(
-        "{}: error binding the socket --> {} {}:{}\n",
+        "{} error(={}) ---> binding the socket in {}:{}\n",
         __func__,
         std::strerror(errno),
         peer_hostname,
@@ -337,7 +341,7 @@ public:
       return;
     }
     fmt::print(
-      "{} created listening socket={} (bound @ {}:{})\n",
+      "{} listening socket={} (bound at {}:{})\n",
       __func__,
       sockfd,
       peer_hostname.c_str(),
@@ -350,7 +354,7 @@ public:
   void close_channel(const ccf::NodeId& peer_id) override
   {
     if (node_connections_map.find(peer_id) == node_connections_map.end())
-      fmt::print("{} not connections foudn for peer={}\n", __func__, peer_id);
+      fmt::print("{} not connections found with peer {}\n", __func__, peer_id);
     return;
 
     if (node_connections_map[peer_id]->listening_handle > 0)
@@ -362,15 +366,9 @@ public:
 
   bool have_channel(const ccf::NodeId& nid) override
   {
-    fmt::print("{} --> node {} \n", __func__, nid);
+    fmt::print("{} with node {} \n", __func__, nid);
 
     return (node_connections_map.find(nid) != node_connections_map.end());
-#if 0
-        if (node_connections_map.find(nid) != node_connections_map.end()) {
-            return true;
-        }
-        return false;
-#endif
   }
 
   template <class T>
@@ -415,12 +413,6 @@ public:
         aft::RaftMsgType::raft_append_entries_response,
         sizeof(aft::AppendEntriesResponse)};
     }
-#if 0
-    if (sz == sizeof(aft::AppendEntries))
-        return aft::RaftMsgType::raft_append_entries;
-      if (sz == sizeof(aft::AppendEntriesResponse))
-        return aft::RaftMsgType::raft_append_entries_response;
-#endif
     return {-1, -1};
   }
 
@@ -461,8 +453,6 @@ public:
           msg_ptr = std::make_unique<uint8_t[]>(
             header_msg_size + payload_sz + entry.value().size());
           size_t size_of_payload = entry.value().size();
-          // fmt::print("{} --> entry.size()={}\n", __func__, size_of_payload);
-
           ::memcpy(msg_ptr.get(), data, header_msg_size);
           ::memcpy(msg_ptr.get() + size, &(size_of_payload), payload_sz);
           ::memcpy(
@@ -477,7 +467,6 @@ public:
         }
         else
         {
-          // fmt::print("{} --> entry.has_value() = false\n", __func__);
           msg_ptr = std::make_unique<uint8_t[]>(header_msg_size + payload_sz);
           ::memcpy(msg_ptr.get(), data, size);
           size_t empty_payload = 0;
@@ -488,14 +477,13 @@ public:
       }
       else
       {
-        fmt::print("{} --> raft_copy is not initialized\n", __func__);
+        fmt::print("{} --> raft_copy is not initialized ..\n", __func__);
         exit(-1);
         return false;
       }
     }
     else
     {
-      // fmt::print("{} -> header_msg_size={}\n", __func__, header_msg_size);
       msg_ptr = std::make_unique<uint8_t[]>(header_msg_size + payload_sz);
     }
     ::memcpy(msg_ptr.get(), data, header_msg_size);
@@ -508,8 +496,7 @@ public:
   bool recv_authenticated_with_load(
     const ccf::NodeId& from, const uint8_t*& data, size_t& size) override
   {
-    fmt::print("{}: from={} \n", __func__, from);
-
+    fmt::print("{} ---> from={} \n", __func__, from);
     // TODO: implement me!
     return true;
   }
@@ -520,12 +507,13 @@ public:
     const uint8_t*& data,
     size_t& size) override
   {
+#if 0
     auto [msg_type, specific_msg_type_sz] =
       get_msg_type_from_header_sz(header.data(), header.size());
     if (msg_type == aft::RaftMsgType::raft_append_entries)
     {
       auto ae = *(aft::AppendEntries*)(header.data());
-#if 0
+
       fmt::print(
         "{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, "
         ".prev_term={}, .leader_commit_idx = {}, .term_of_idx = {}, "
@@ -540,8 +528,8 @@ public:
         header.size(),
         sizeof(aft::AppendEntries),
         size);
-#endif
     }
+#endif
 
     return true;
   }
@@ -549,8 +537,7 @@ public:
   bool recv_channel_message(
     const ccf::NodeId& from, const uint8_t* data, size_t size) override
   {
-    fmt::print("{}: from={} \n", __func__, from);
-
+    fmt::print("{} ---> from={} \n", __func__, from);
     // TODO: implement me!
     return true;
   }
@@ -561,14 +548,14 @@ public:
     ccf::crypto::KeyPairPtr node_kp,
     const std::optional<ccf::crypto::Pem>& node_cert = std::nullopt) override
   {
-    fmt::print("{}: self_id={} \n", __func__, self_id);
-
+    fmt::print("{} ---> self_id={} \n", __func__, self_id);
     // TODO: implement me!
   }
 
   void set_endorsed_node_cert(
     const ccf::crypto::Pem& endorsed_node_cert) override
   {
+    fmt::print("{}\n", __func__);
     // TODO: implement me!
   }
 
@@ -578,8 +565,7 @@ public:
     std::span<const uint8_t> header,
     const std::vector<uint8_t>& data) override
   {
-    fmt::print("{}: to={} \n", __func__, to);
-
+    fmt::print("{} ---> to={} \n", __func__, to);
     // TODO: implement me!
     return true;
   }
@@ -590,31 +576,27 @@ public:
     const uint8_t* data,
     size_t size) override
   {
-    fmt::print("{}: from={} \n", __func__, from);
-
+    fmt::print("{} ---> from={} \n", __func__, from);
     // TODO: implement me!
     return std::vector<uint8_t>{};
   }
 
   void set_message_limit(size_t message_limit) override
   {
-    fmt::print("{}: --> limit={} \n", __func__, message_limit);
-
+    fmt::print("{}, limit={} \n", __func__, message_limit);
     // TODO: implement me!
   }
 
   void set_idle_timeout(std::chrono::milliseconds idle_timeout) override
   {
-    fmt::print("{}: --> {} milliseconds \n", __func__, idle_timeout);
-
+    fmt::print("{} for {} milliseconds \n", __func__, idle_timeout);
     // TODO: implement me!
   }
 
   void tick(std::chrono::milliseconds elapsed) override
   {
-    fmt::print("{}: --> {} milliseconds \n", __func__, elapsed);
-
-    // todo:: implement me
+    fmt::print("{} for {} milliseconds \n", __func__, elapsed);
+    // TODO:: implement me
   }
 
 private:
