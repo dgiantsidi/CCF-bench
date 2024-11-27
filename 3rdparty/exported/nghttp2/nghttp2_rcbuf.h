@@ -31,13 +31,14 @@
 
 #include <nghttp2/nghttp2.h>
 
-struct nghttp2_rcbuf {
+struct nghttp2_rcbuf
+{
   /* custom memory allocator belongs to the mem parameter when
      creating this object. */
-  void *mem_user_data;
+  void* mem_user_data;
   nghttp2_free free;
   /* The pointer to the underlying buffer */
-  uint8_t *base;
+  uint8_t* base;
   /* Size of buffer pointed by |base|. */
   size_t len;
   /* Reference count */
@@ -54,7 +55,7 @@ struct nghttp2_rcbuf {
  * NGHTTP2_ERR_NOMEM:
  *     Out of memory.
  */
-int nghttp2_rcbuf_new(nghttp2_rcbuf **rcbuf_ptr, size_t size, nghttp2_mem *mem);
+int nghttp2_rcbuf_new(nghttp2_rcbuf** rcbuf_ptr, size_t size, nghttp2_mem* mem);
 
 /*
  * Like nghttp2_rcbuf_new(), but initializes the buffer with |src| of
@@ -69,12 +70,15 @@ int nghttp2_rcbuf_new(nghttp2_rcbuf **rcbuf_ptr, size_t size, nghttp2_mem *mem);
  * NGHTTP2_ERR_NOMEM:
  *     Out of memory.
  */
-int nghttp2_rcbuf_new2(nghttp2_rcbuf **rcbuf_ptr, const uint8_t *src,
-                       size_t srclen, nghttp2_mem *mem);
+int nghttp2_rcbuf_new2(
+  nghttp2_rcbuf** rcbuf_ptr,
+  const uint8_t* src,
+  size_t srclen,
+  nghttp2_mem* mem);
 
 /*
  * Frees |rcbuf| itself, regardless of its reference cout.
  */
-void nghttp2_rcbuf_del(nghttp2_rcbuf *rcbuf);
+void nghttp2_rcbuf_del(nghttp2_rcbuf* rcbuf);
 
 #endif /* NGHTTP2_RCBUF_H */

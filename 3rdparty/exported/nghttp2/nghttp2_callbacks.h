@@ -34,7 +34,8 @@
 /*
  * Callback functions.
  */
-struct nghttp2_session_callbacks {
+struct nghttp2_session_callbacks
+{
   /**
    * Callback function invoked when the session wants to send data to
    * the remote peer.  This callback is not necessary if the

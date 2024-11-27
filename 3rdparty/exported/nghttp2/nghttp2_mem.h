@@ -32,14 +32,14 @@
 #include <nghttp2/nghttp2.h>
 
 /* The default, system standard memory allocator */
-nghttp2_mem *nghttp2_mem_default(void);
+nghttp2_mem* nghttp2_mem_default(void);
 
 /* Convenient wrapper functions to call allocator function in
    |mem|. */
-void *nghttp2_mem_malloc(nghttp2_mem *mem, size_t size);
-void nghttp2_mem_free(nghttp2_mem *mem, void *ptr);
-void nghttp2_mem_free2(nghttp2_free free_func, void *ptr, void *mem_user_data);
-void *nghttp2_mem_calloc(nghttp2_mem *mem, size_t nmemb, size_t size);
-void *nghttp2_mem_realloc(nghttp2_mem *mem, void *ptr, size_t size);
+void* nghttp2_mem_malloc(nghttp2_mem* mem, size_t size);
+void nghttp2_mem_free(nghttp2_mem* mem, void* ptr);
+void nghttp2_mem_free2(nghttp2_free free_func, void* ptr, void* mem_user_data);
+void* nghttp2_mem_calloc(nghttp2_mem* mem, size_t nmemb, size_t size);
+void* nghttp2_mem_realloc(nghttp2_mem* mem, void* ptr, size_t size);
 
 #endif /* NGHTTP2_MEM_H */

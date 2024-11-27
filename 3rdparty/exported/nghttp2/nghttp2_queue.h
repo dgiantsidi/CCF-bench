@@ -31,21 +31,23 @@
 
 #include <nghttp2/nghttp2.h>
 
-typedef struct nghttp2_queue_cell {
-  void *data;
-  struct nghttp2_queue_cell *next;
+typedef struct nghttp2_queue_cell
+{
+  void* data;
+  struct nghttp2_queue_cell* next;
 } nghttp2_queue_cell;
 
-typedef struct {
+typedef struct
+{
   nghttp2_queue_cell *front, *back;
 } nghttp2_queue;
 
-void nghttp2_queue_init(nghttp2_queue *queue);
-void nghttp2_queue_free(nghttp2_queue *queue);
-int nghttp2_queue_push(nghttp2_queue *queue, void *data);
-void nghttp2_queue_pop(nghttp2_queue *queue);
-void *nghttp2_queue_front(nghttp2_queue *queue);
-void *nghttp2_queue_back(nghttp2_queue *queue);
-int nghttp2_queue_empty(nghttp2_queue *queue);
+void nghttp2_queue_init(nghttp2_queue* queue);
+void nghttp2_queue_free(nghttp2_queue* queue);
+int nghttp2_queue_push(nghttp2_queue* queue, void* data);
+void nghttp2_queue_pop(nghttp2_queue* queue);
+void* nghttp2_queue_front(nghttp2_queue* queue);
+void* nghttp2_queue_back(nghttp2_queue* queue);
+int nghttp2_queue_empty(nghttp2_queue* queue);
 
 #endif /* NGHTTP2_QUEUE_H */

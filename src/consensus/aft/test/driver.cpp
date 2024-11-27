@@ -119,7 +119,8 @@ int main(int argc, char* argv[])
     (1.0 * k_num_requests) / (1.0 * duration.count()),
     ((1000.0 * duration.count()) / (1.0 * k_num_requests)),
     socket_layer::nb_sends,
-    socket_layer::nb_recvs, driver->get_committed_seqno());
+    socket_layer::nb_recvs,
+    driver->get_committed_seqno());
 
   return 0;
 }

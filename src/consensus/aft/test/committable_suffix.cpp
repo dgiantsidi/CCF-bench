@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the Apache 2.0 License.
 #if 0
-#include "test_common.h"
+#  include "test_common.h"
 
-#define DOCTEST_CONFIG_NO_SHORT_MACRO_NAMES
-#include <doctest/doctest.h>
+#  define DOCTEST_CONFIG_NO_SHORT_MACRO_NAMES
+#  include <doctest/doctest.h>
 
 void keep_messages_for_multiple(
   const std::set<ccf::NodeId>& targets,
@@ -80,20 +80,20 @@ void keep_earliest_append_entries_for_each_target(
   messages = std::move(best_only);
 }
 
-#define TEST_DECLARE_NODE(N) \
-  ccf::NodeId node_id##N(#N); \
-  auto store##N = std::make_shared<Store>(node_id##N); \
-  TRaft r##N( \
-    raft_settings, \
-    std::make_unique<Adaptor>(store##N), \
-    std::make_unique<aft::LedgerStubProxy>(node_id##N), \
-    std::make_shared<aft::ChannelStubProxy>(), \
-    std::make_shared<aft::State>(node_id##N), \
-    nullptr); \
-  r##N.start_ticking(); \
-  initial_config[node_id##N] = {}; \
-  nodes[node_id##N] = &r##N; \
-  auto channels##N = channel_stub_proxy(r##N);
+#  define TEST_DECLARE_NODE(N) \
+    ccf::NodeId node_id##N(#N); \
+    auto store##N = std::make_shared<Store>(node_id##N); \
+    TRaft r##N( \
+      raft_settings, \
+      std::make_unique<Adaptor>(store##N), \
+      std::make_unique<aft::LedgerStubProxy>(node_id##N), \
+      std::make_shared<aft::ChannelStubProxy>(), \
+      std::make_shared<aft::State>(node_id##N), \
+      nullptr); \
+    r##N.start_ticking(); \
+    initial_config[node_id##N] = {}; \
+    nodes[node_id##N] = &r##N; \
+    auto channels##N = channel_stub_proxy(r##N);
 
 /**
   Summary of the behaviour this test aims to explore (for implementation reasons

@@ -41,19 +41,19 @@
 /*
  * nghttp2_extpri_to_uint8 encodes |pri| into uint8_t variable.
  */
-uint8_t nghttp2_extpri_to_uint8(const nghttp2_extpri *extpri);
+uint8_t nghttp2_extpri_to_uint8(const nghttp2_extpri* extpri);
 
 /*
  * nghttp2_extpri_from_uint8 decodes |u8extpri|, which is produced by
  * nghttp2_extpri_to_uint8, intto |extpri|.
  */
-void nghttp2_extpri_from_uint8(nghttp2_extpri *extpri, uint8_t u8extpri);
+void nghttp2_extpri_from_uint8(nghttp2_extpri* extpri, uint8_t u8extpri);
 
 /*
  * nghttp2_extpri_uint8_urgency extracts urgency from |PRI| which is
  * supposed to be constructed by nghttp2_extpri_to_uint8.
  */
-#define nghttp2_extpri_uint8_urgency(PRI)                                      \
+#define nghttp2_extpri_uint8_urgency(PRI) \
   ((uint32_t)((PRI) & ~NGHTTP2_EXTPRI_INC_MASK))
 
 /*

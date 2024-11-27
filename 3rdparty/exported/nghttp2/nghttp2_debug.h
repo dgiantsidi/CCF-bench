@@ -33,10 +33,11 @@
 
 #ifdef DEBUGBUILD
 #  define DEBUGF(...) nghttp2_debug_vprintf(__VA_ARGS__)
-void nghttp2_debug_vprintf(const char *format, ...);
+void nghttp2_debug_vprintf(const char* format, ...);
 #else
-#  define DEBUGF(...)                                                          \
-    do {                                                                       \
+#  define DEBUGF(...) \
+    do \
+    { \
     } while (0)
 #endif
 

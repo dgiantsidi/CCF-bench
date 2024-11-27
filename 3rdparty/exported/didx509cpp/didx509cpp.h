@@ -650,7 +650,8 @@ namespace didx509
               const auto& san_i = ext.at(i);
               switch (san_i->type)
               {
-                case GEN_URI: {
+                case GEN_URI:
+                {
                   ASN1_STRING* x = san_i->d.uniformResourceIdentifier;
                   std::string gen_uri = (const char*)ASN1_STRING_get0_data(x);
                   if (gen_uri == value)
@@ -689,7 +690,8 @@ namespace didx509
         auto base_id = EVP_PKEY_base_id(pk);
         switch (base_id)
         {
-          case EVP_PKEY_RSA: {
+          case EVP_PKEY_RSA:
+          {
             r += "\"kty\":\"RSA\",";
 #if defined(OPENSSL_VERSION_MAJOR) && OPENSSL_VERSION_MAJOR >= 3
             UqEVP_PKEY_CTX ek_ctx(EVP_PKEY_RSA);
@@ -709,7 +711,8 @@ namespace didx509
             r += "\"e\":\"" + to_base64url(ev) + "\"";
             break;
           }
-          case EVP_PKEY_EC: {
+          case EVP_PKEY_EC:
+          {
             r += "\"kty\":\"EC\",";
             r += "\"crv\":\"";
 #if defined(OPENSSL_VERSION_MAJOR) && OPENSSL_VERSION_MAJOR >= 3

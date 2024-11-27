@@ -34,7 +34,8 @@
 /**
  * Configuration options
  */
-typedef enum {
+typedef enum
+{
   /**
    * This option prevents the library from sending WINDOW_UPDATE for a
    * connection automatically.  If this option is set to nonzero, the
@@ -75,7 +76,8 @@ typedef enum {
 /**
  * Struct to store option values for nghttp2_session.
  */
-struct nghttp2_option {
+struct nghttp2_option
+{
   /**
    * NGHTTP2_OPT_MAX_SEND_HEADER_BLOCK_LENGTH
    */

@@ -85,7 +85,8 @@ namespace aft
       bool public_only = false,
       const std::optional<ccf::kv::TxID>& expected_txid = std::nullopt) override
     {
-      // fmt::print("{}-> data.size()={}, public_only={}\n", __func__, data.size(), public_only);
+      // fmt::print("{}-> data.size()={}, public_only={}\n", __func__,
+      // data.size(), public_only);
       auto p = x.lock();
       if (p)
       {

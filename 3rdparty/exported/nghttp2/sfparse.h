@@ -34,7 +34,8 @@
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #if defined(_MSC_VER) && (_MSC_VER < 1800)
@@ -45,48 +46,49 @@ extern "C" {
 #else /* !defined(_MSC_VER) || (_MSC_VER >= 1800) */
 #  include <inttypes.h>
 #endif /* !defined(_MSC_VER) || (_MSC_VER >= 1800) */
-#include <sys/types.h>
 #include <stddef.h>
+#include <sys/types.h>
 
-/**
- * @enum
- *
- * :type:`sf_type` defines value type.
- */
-typedef enum sf_type {
   /**
-   * :enum:`SF_TYPE_BOOLEAN` indicates boolean type.
+   * @enum
+   *
+   * :type:`sf_type` defines value type.
    */
-  SF_TYPE_BOOLEAN,
-  /**
-   * :enum:`SF_TYPE_INTEGER` indicates integer type.
-   */
-  SF_TYPE_INTEGER,
-  /**
-   * :enum:`SF_TYPE_DECIMAL` indicates decimal type.
-   */
-  SF_TYPE_DECIMAL,
-  /**
-   * :enum:`SF_TYPE_STRING` indicates string type.
-   */
-  SF_TYPE_STRING,
-  /**
-   * :enum:`SF_TYPE_TOKEN` indicates token type.
-   */
-  SF_TYPE_TOKEN,
-  /**
-   * :enum:`SF_TYPE_BYTESEQ` indicates byte sequence type.
-   */
-  SF_TYPE_BYTESEQ,
-  /**
-   * :enum:`SF_TYPE_INNER_LIST` indicates inner list type.
-   */
-  SF_TYPE_INNER_LIST,
-  /**
-   * :enum:`SF_TYPE_DATE` indicates date type.
-   */
-  SF_TYPE_DATE
-} sf_type;
+  typedef enum sf_type
+  {
+    /**
+     * :enum:`SF_TYPE_BOOLEAN` indicates boolean type.
+     */
+    SF_TYPE_BOOLEAN,
+    /**
+     * :enum:`SF_TYPE_INTEGER` indicates integer type.
+     */
+    SF_TYPE_INTEGER,
+    /**
+     * :enum:`SF_TYPE_DECIMAL` indicates decimal type.
+     */
+    SF_TYPE_DECIMAL,
+    /**
+     * :enum:`SF_TYPE_STRING` indicates string type.
+     */
+    SF_TYPE_STRING,
+    /**
+     * :enum:`SF_TYPE_TOKEN` indicates token type.
+     */
+    SF_TYPE_TOKEN,
+    /**
+     * :enum:`SF_TYPE_BYTESEQ` indicates byte sequence type.
+     */
+    SF_TYPE_BYTESEQ,
+    /**
+     * :enum:`SF_TYPE_INNER_LIST` indicates inner list type.
+     */
+    SF_TYPE_INNER_LIST,
+    /**
+     * :enum:`SF_TYPE_DATE` indicates date type.
+     */
+    SF_TYPE_DATE
+  } sf_type;
 
 /**
  * @macro
@@ -105,21 +107,22 @@ typedef enum sf_type {
  */
 #define SF_ERR_EOF -2
 
-/**
- * @struct
- *
- * :type:`sf_vec` stores sequence of bytes.
- */
-typedef struct sf_vec {
   /**
-   * :member:`base` points to the beginning of the sequence of bytes.
+   * @struct
+   *
+   * :type:`sf_vec` stores sequence of bytes.
    */
-  uint8_t *base;
-  /**
-   * :member:`len` is the number of bytes contained in this sequence.
-   */
-  size_t len;
-} sf_vec;
+  typedef struct sf_vec
+  {
+    /**
+     * :member:`base` points to the beginning of the sequence of bytes.
+     */
+    uint8_t* base;
+    /**
+     * :member:`len` is the number of bytes contained in this sequence.
+     */
+    size_t len;
+  } sf_vec;
 
 /**
  * @macro
@@ -136,271 +139,275 @@ typedef struct sf_vec {
  */
 #define SF_VALUE_FLAG_ESCAPED_STRING 0x1u
 
-/**
- * @struct
- *
- * :type:`sf_decimal` contains decimal value.
- */
-typedef struct sf_decimal {
   /**
-   * :member:`numer` contains numerator of the decimal value.
-   */
-  int64_t numer;
-  /**
-   * :member:`denom` contains denominator of the decimal value.
-   */
-  int64_t denom;
-} sf_decimal;
-
-/**
- * @struct
- *
- * :type:`sf_value` stores a Structured Field item.  For Inner List,
- * only type is set to :enum:`sf_type.SF_TYPE_INNER_LIST`.  In order
- * to read the items contained in an inner list, call
- * `sf_parser_inner_list`.
- */
-typedef struct sf_value {
-  /**
-   * :member:`type` is the type of the value contained in this
-   * particular object.
-   */
-  sf_type type;
-  /**
-   * :member:`flags` is bitwise OR of one or more of
-   * :macro:`SF_VALUE_FLAG_* <SF_VALUE_FLAG_NONE>`.
-   */
-  uint32_t flags;
-  /**
-   * @anonunion_start
+   * @struct
    *
-   * @sf_value_value
+   * :type:`sf_decimal` contains decimal value.
    */
-  union {
+  typedef struct sf_decimal
+  {
     /**
-     * :member:`boolean` contains boolean value if :member:`type` ==
-     * :enum:`sf_type.SF_TYPE_BOOLEAN`.  1 indicates true, and 0
-     * indicates false.
+     * :member:`numer` contains numerator of the decimal value.
      */
-    int boolean;
+    int64_t numer;
     /**
-     * :member:`integer` contains integer value if :member:`type` is
-     * either :enum:`sf_type.SF_TYPE_INTEGER` or
-     * :enum:`sf_type.SF_TYPE_DATE`.
+     * :member:`denom` contains denominator of the decimal value.
      */
-    int64_t integer;
+    int64_t denom;
+  } sf_decimal;
+
+  /**
+   * @struct
+   *
+   * :type:`sf_value` stores a Structured Field item.  For Inner List,
+   * only type is set to :enum:`sf_type.SF_TYPE_INNER_LIST`.  In order
+   * to read the items contained in an inner list, call
+   * `sf_parser_inner_list`.
+   */
+  typedef struct sf_value
+  {
     /**
-     * :member:`decimal` contains decimal value if :member:`type` ==
-     * :enum:`sf_type.SF_TYPE_DECIMAL`.
+     * :member:`type` is the type of the value contained in this
+     * particular object.
      */
-    sf_decimal decimal;
+    sf_type type;
     /**
-     * :member:`vec` contains sequence of bytes if :member:`type` is
-     * either :enum:`sf_type.SF_TYPE_STRING`,
-     * :enum:`sf_type.SF_TYPE_TOKEN`, or
-     * :enum:`sf_type.SF_TYPE_BYTESEQ`.
+     * :member:`flags` is bitwise OR of one or more of
+     * :macro:`SF_VALUE_FLAG_* <SF_VALUE_FLAG_NONE>`.
+     */
+    uint32_t flags;
+    /**
+     * @anonunion_start
      *
-     * For :enum:`sf_type.SF_TYPE_STRING`, this field contains one or
-     * more escaped characters if :member:`flags` has
-     * :macro:`SF_VALUE_FLAG_ESCAPED_STRING` set.  To unescape the
-     * string, use `sf_unescape`.
-     *
-     * For :enum:`sf_type.SF_TYPE_BYTESEQ`, this field contains base64
-     * encoded string.  To decode this byte string, use
-     * `sf_base64decode`.
-     *
-     * If :member:`vec.len <sf_vec.len>` == 0, :member:`vec.base
-     * <sf_vec.base>` is guaranteed to be NULL.
+     * @sf_value_value
      */
-    sf_vec vec;
-    /**
-     * @anonunion_end
-     */
-  };
-} sf_value;
+    union
+    {
+      /**
+       * :member:`boolean` contains boolean value if :member:`type` ==
+       * :enum:`sf_type.SF_TYPE_BOOLEAN`.  1 indicates true, and 0
+       * indicates false.
+       */
+      int boolean;
+      /**
+       * :member:`integer` contains integer value if :member:`type` is
+       * either :enum:`sf_type.SF_TYPE_INTEGER` or
+       * :enum:`sf_type.SF_TYPE_DATE`.
+       */
+      int64_t integer;
+      /**
+       * :member:`decimal` contains decimal value if :member:`type` ==
+       * :enum:`sf_type.SF_TYPE_DECIMAL`.
+       */
+      sf_decimal decimal;
+      /**
+       * :member:`vec` contains sequence of bytes if :member:`type` is
+       * either :enum:`sf_type.SF_TYPE_STRING`,
+       * :enum:`sf_type.SF_TYPE_TOKEN`, or
+       * :enum:`sf_type.SF_TYPE_BYTESEQ`.
+       *
+       * For :enum:`sf_type.SF_TYPE_STRING`, this field contains one or
+       * more escaped characters if :member:`flags` has
+       * :macro:`SF_VALUE_FLAG_ESCAPED_STRING` set.  To unescape the
+       * string, use `sf_unescape`.
+       *
+       * For :enum:`sf_type.SF_TYPE_BYTESEQ`, this field contains base64
+       * encoded string.  To decode this byte string, use
+       * `sf_base64decode`.
+       *
+       * If :member:`vec.len <sf_vec.len>` == 0, :member:`vec.base
+       * <sf_vec.base>` is guaranteed to be NULL.
+       */
+      sf_vec vec;
+      /**
+       * @anonunion_end
+       */
+    };
+  } sf_value;
 
-/**
- * @struct
- *
- * :type:`sf_parser` is the Structured Field Values parser.  Use
- * `sf_parser_init` to initialize it.
- */
-typedef struct sf_parser {
-  /* all fields are private */
-  const uint8_t *pos;
-  const uint8_t *end;
-  uint32_t state;
-} sf_parser;
+  /**
+   * @struct
+   *
+   * :type:`sf_parser` is the Structured Field Values parser.  Use
+   * `sf_parser_init` to initialize it.
+   */
+  typedef struct sf_parser
+  {
+    /* all fields are private */
+    const uint8_t* pos;
+    const uint8_t* end;
+    uint32_t state;
+  } sf_parser;
 
-/**
- * @function
- *
- * `sf_parser_init` initializes |sfp| with the given buffer pointed by
- * |data| of length |datalen|.
- */
-void sf_parser_init(sf_parser *sfp, const uint8_t *data, size_t datalen);
+  /**
+   * @function
+   *
+   * `sf_parser_init` initializes |sfp| with the given buffer pointed by
+   * |data| of length |datalen|.
+   */
+  void sf_parser_init(sf_parser* sfp, const uint8_t* data, size_t datalen);
 
-/**
- * @function
- *
- * `sf_parser_param` reads a parameter.  If this function returns 0,
- * it stores parameter key and value in |dest_key| and |dest_value|
- * respectively, if they are not NULL.
- *
- * This function does no effort to find duplicated keys.  Same key may
- * be reported more than once.
- *
- * Caller should keep calling this function until it returns negative
- * error code.  If it returns :macro:`SF_ERR_EOF`, all parameters have
- * read, and caller can continue to read rest of the values.  If it
- * returns :macro:`SF_ERR_PARSE_ERROR`, it encountered fatal error
- * while parsing field value.
- */
-int sf_parser_param(sf_parser *sfp, sf_vec *dest_key, sf_value *dest_value);
+  /**
+   * @function
+   *
+   * `sf_parser_param` reads a parameter.  If this function returns 0,
+   * it stores parameter key and value in |dest_key| and |dest_value|
+   * respectively, if they are not NULL.
+   *
+   * This function does no effort to find duplicated keys.  Same key may
+   * be reported more than once.
+   *
+   * Caller should keep calling this function until it returns negative
+   * error code.  If it returns :macro:`SF_ERR_EOF`, all parameters have
+   * read, and caller can continue to read rest of the values.  If it
+   * returns :macro:`SF_ERR_PARSE_ERROR`, it encountered fatal error
+   * while parsing field value.
+   */
+  int sf_parser_param(sf_parser* sfp, sf_vec* dest_key, sf_value* dest_value);
 
-/**
- * @function
- *
- * `sf_parser_dict` reads the next dictionary key and value pair.  If
- * this function returns 0, it stores the key and value in |dest_key|
- * and |dest_value| respectively, if they are not NULL.
- *
- * Caller can optionally read parameters attached to the pair by
- * calling `sf_parser_param`.
- *
- * This function does no effort to find duplicated keys.  Same key may
- * be reported more than once.
- *
- * Caller should keep calling this function until it returns negative
- * error code.  If it returns :macro:`SF_ERR_EOF`, all key and value
- * pairs have been read, and there is nothing left to read.
- *
- * This function returns 0 if it succeeds, or one of the following
- * negative error codes:
- *
- * :macro:`SF_ERR_EOF`
- *     All values in the dictionary have read.
- * :macro:`SF_ERR_PARSE_ERROR`
- *     It encountered fatal error while parsing field value.
- */
-int sf_parser_dict(sf_parser *sfp, sf_vec *dest_key, sf_value *dest_value);
+  /**
+   * @function
+   *
+   * `sf_parser_dict` reads the next dictionary key and value pair.  If
+   * this function returns 0, it stores the key and value in |dest_key|
+   * and |dest_value| respectively, if they are not NULL.
+   *
+   * Caller can optionally read parameters attached to the pair by
+   * calling `sf_parser_param`.
+   *
+   * This function does no effort to find duplicated keys.  Same key may
+   * be reported more than once.
+   *
+   * Caller should keep calling this function until it returns negative
+   * error code.  If it returns :macro:`SF_ERR_EOF`, all key and value
+   * pairs have been read, and there is nothing left to read.
+   *
+   * This function returns 0 if it succeeds, or one of the following
+   * negative error codes:
+   *
+   * :macro:`SF_ERR_EOF`
+   *     All values in the dictionary have read.
+   * :macro:`SF_ERR_PARSE_ERROR`
+   *     It encountered fatal error while parsing field value.
+   */
+  int sf_parser_dict(sf_parser* sfp, sf_vec* dest_key, sf_value* dest_value);
 
-/**
- * @function
- *
- * `sf_parser_list` reads the next list item.  If this function
- * returns 0, it stores the item in |dest| if it is not NULL.
- *
- * Caller can optionally read parameters attached to the item by
- * calling `sf_parser_param`.
- *
- * Caller should keep calling this function until it returns negative
- * error code.  If it returns :macro:`SF_ERR_EOF`, all values in the
- * list have been read, and there is nothing left to read.
- *
- * This function returns 0 if it succeeds, or one of the following
- * negative error codes:
- *
- * :macro:`SF_ERR_EOF`
- *     All values in the list have read.
- * :macro:`SF_ERR_PARSE_ERROR`
- *     It encountered fatal error while parsing field value.
- */
-int sf_parser_list(sf_parser *sfp, sf_value *dest);
+  /**
+   * @function
+   *
+   * `sf_parser_list` reads the next list item.  If this function
+   * returns 0, it stores the item in |dest| if it is not NULL.
+   *
+   * Caller can optionally read parameters attached to the item by
+   * calling `sf_parser_param`.
+   *
+   * Caller should keep calling this function until it returns negative
+   * error code.  If it returns :macro:`SF_ERR_EOF`, all values in the
+   * list have been read, and there is nothing left to read.
+   *
+   * This function returns 0 if it succeeds, or one of the following
+   * negative error codes:
+   *
+   * :macro:`SF_ERR_EOF`
+   *     All values in the list have read.
+   * :macro:`SF_ERR_PARSE_ERROR`
+   *     It encountered fatal error while parsing field value.
+   */
+  int sf_parser_list(sf_parser* sfp, sf_value* dest);
 
-/**
- * @function
- *
- * `sf_parser_item` reads a single item.  If this function returns 0,
- * it stores the item in |dest| if it is not NULL.
- *
- * This function is only used for the field value that consists of a
- * single item.
- *
- * Caller can optionally read parameters attached to the item by
- * calling `sf_parser_param`.
- *
- * Caller should call this function again to make sure that there is
- * nothing left to read.  If this 2nd function call returns
- * :macro:`SF_ERR_EOF`, all data have been processed successfully.
- *
- * This function returns 0 if it succeeds, or one of the following
- * negative error codes:
- *
- * :macro:`SF_ERR_EOF`
- *     There is nothing left to read.
- * :macro:`SF_ERR_PARSE_ERROR`
- *     It encountered fatal error while parsing field value.
- */
-int sf_parser_item(sf_parser *sfp, sf_value *dest);
+  /**
+   * @function
+   *
+   * `sf_parser_item` reads a single item.  If this function returns 0,
+   * it stores the item in |dest| if it is not NULL.
+   *
+   * This function is only used for the field value that consists of a
+   * single item.
+   *
+   * Caller can optionally read parameters attached to the item by
+   * calling `sf_parser_param`.
+   *
+   * Caller should call this function again to make sure that there is
+   * nothing left to read.  If this 2nd function call returns
+   * :macro:`SF_ERR_EOF`, all data have been processed successfully.
+   *
+   * This function returns 0 if it succeeds, or one of the following
+   * negative error codes:
+   *
+   * :macro:`SF_ERR_EOF`
+   *     There is nothing left to read.
+   * :macro:`SF_ERR_PARSE_ERROR`
+   *     It encountered fatal error while parsing field value.
+   */
+  int sf_parser_item(sf_parser* sfp, sf_value* dest);
 
-/**
- * @function
- *
- * `sf_parser_inner_list` reads the next inner list item.  If this
- * function returns 0, it stores the item in |dest| if it is not NULL.
- *
- * Caller can optionally read parameters attached to the item by
- * calling `sf_parser_param`.
- *
- * Caller should keep calling this function until it returns negative
- * error code.  If it returns :macro:`SF_ERR_EOF`, all values in this
- * inner list have been read, and caller can optionally read
- * parameters attached to this inner list by calling
- * `sf_parser_param`.  Then caller can continue to read rest of the
- * values.
- *
- * This function returns 0 if it succeeds, or one of the following
- * negative error codes:
- *
- * :macro:`SF_ERR_EOF`
- *     All values in the inner list have read.
- * :macro:`SF_ERR_PARSE_ERROR`
- *     It encountered fatal error while parsing field value.
- */
-int sf_parser_inner_list(sf_parser *sfp, sf_value *dest);
+  /**
+   * @function
+   *
+   * `sf_parser_inner_list` reads the next inner list item.  If this
+   * function returns 0, it stores the item in |dest| if it is not NULL.
+   *
+   * Caller can optionally read parameters attached to the item by
+   * calling `sf_parser_param`.
+   *
+   * Caller should keep calling this function until it returns negative
+   * error code.  If it returns :macro:`SF_ERR_EOF`, all values in this
+   * inner list have been read, and caller can optionally read
+   * parameters attached to this inner list by calling
+   * `sf_parser_param`.  Then caller can continue to read rest of the
+   * values.
+   *
+   * This function returns 0 if it succeeds, or one of the following
+   * negative error codes:
+   *
+   * :macro:`SF_ERR_EOF`
+   *     All values in the inner list have read.
+   * :macro:`SF_ERR_PARSE_ERROR`
+   *     It encountered fatal error while parsing field value.
+   */
+  int sf_parser_inner_list(sf_parser* sfp, sf_value* dest);
 
-/**
- * @function
- *
- * `sf_unescape` copies |src| to |dest| by removing escapes (``\``).
- * |src| should be the pointer to :member:`sf_value.vec` of type
- * :enum:`sf_type.SF_TYPE_STRING` produced by either `sf_parser_dict`,
- * `sf_parser_list`, `sf_parser_inner_list`, `sf_parser_item`, or
- * `sf_parser_param`, otherwise the behavior is undefined.
- *
- * :member:`dest->base <sf_vec.base>` must point to the buffer that
- * has sufficient space to store the unescaped string.
- *
- * If there is no escape character in |src|, |*src| is assigned to
- * |*dest|.  This includes the case that :member:`src->len
- * <sf_vec.len>` == 0.
- *
- * This function sets the length of unescaped string to
- * :member:`dest->len <sf_vec.len>`.
- */
-void sf_unescape(sf_vec *dest, const sf_vec *src);
+  /**
+   * @function
+   *
+   * `sf_unescape` copies |src| to |dest| by removing escapes (``\``).
+   * |src| should be the pointer to :member:`sf_value.vec` of type
+   * :enum:`sf_type.SF_TYPE_STRING` produced by either `sf_parser_dict`,
+   * `sf_parser_list`, `sf_parser_inner_list`, `sf_parser_item`, or
+   * `sf_parser_param`, otherwise the behavior is undefined.
+   *
+   * :member:`dest->base <sf_vec.base>` must point to the buffer that
+   * has sufficient space to store the unescaped string.
+   *
+   * If there is no escape character in |src|, |*src| is assigned to
+   * |*dest|.  This includes the case that :member:`src->len
+   * <sf_vec.len>` == 0.
+   *
+   * This function sets the length of unescaped string to
+   * :member:`dest->len <sf_vec.len>`.
+   */
+  void sf_unescape(sf_vec* dest, const sf_vec* src);
 
-/**
- * @function
- *
- * `sf_base64decode` decodes Base64 encoded string |src| and writes
- * the result into |dest|.  |src| should be the pointer to
- * :member:`sf_value.vec` of type :enum:`sf_type.SF_TYPE_BYTESEQ`
- * produced by either `sf_parser_dict`, `sf_parser_list`,
- * `sf_parser_inner_list`, `sf_parser_item`, or `sf_parser_param`,
- * otherwise the behavior is undefined.
- *
- * :member:`dest->base <sf_vec.base>` must point to the buffer that
- * has sufficient space to store the decoded byte string.
- *
- * If :member:`src->len <sf_vec.len>` == 0, |*src| is assigned to
- * |*dest|.
- *
- * This function sets the length of decoded byte string to
- * :member:`dest->len <sf_vec.len>`.
- */
-void sf_base64decode(sf_vec *dest, const sf_vec *src);
+  /**
+   * @function
+   *
+   * `sf_base64decode` decodes Base64 encoded string |src| and writes
+   * the result into |dest|.  |src| should be the pointer to
+   * :member:`sf_value.vec` of type :enum:`sf_type.SF_TYPE_BYTESEQ`
+   * produced by either `sf_parser_dict`, `sf_parser_list`,
+   * `sf_parser_inner_list`, `sf_parser_item`, or `sf_parser_param`,
+   * otherwise the behavior is undefined.
+   *
+   * :member:`dest->base <sf_vec.base>` must point to the buffer that
+   * has sufficient space to store the decoded byte string.
+   *
+   * If :member:`src->len <sf_vec.len>` == 0, |*src| is assigned to
+   * |*dest|.
+   *
+   * This function sets the length of decoded byte string to
+   * :member:`dest->len <sf_vec.len>`.
+   */
+  void sf_base64decode(sf_vec* dest, const sf_vec* src);
 
 #ifdef __cplusplus
 }

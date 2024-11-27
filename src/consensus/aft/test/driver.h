@@ -170,8 +170,8 @@ private:
 public:
   RaftDriver(std::string node_id) : my_nid(ccf::NodeId(node_id)){};
 
-  
-  int get_committed_seqno() {
+  int get_committed_seqno()
+  {
     return (_nodes[ccf::NodeId("0")].raft)->get_committed_seqno();
   }
   void become_primary()

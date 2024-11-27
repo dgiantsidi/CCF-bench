@@ -34,11 +34,12 @@
 /* Macros, types and constants for internal use */
 
 /* "less" function, return nonzero if |lhs| is less than |rhs|. */
-typedef int (*nghttp2_less)(const void *lhs, const void *rhs);
+typedef int (*nghttp2_less)(const void* lhs, const void* rhs);
 
 /* Internal error code. They must be in the range [-499, -100],
    inclusive. */
-typedef enum {
+typedef enum
+{
   NGHTTP2_ERR_CREDENTIAL_PENDING = -101,
   NGHTTP2_ERR_IGN_HEADER_BLOCK = -103,
   NGHTTP2_ERR_IGN_PAYLOAD = -104,

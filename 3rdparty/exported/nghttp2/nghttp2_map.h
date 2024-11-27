@@ -30,23 +30,25 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#include <nghttp2/nghttp2.h>
-
 #include "nghttp2_mem.h"
+
+#include <nghttp2/nghttp2.h>
 
 /* Implementation of unordered map */
 
 typedef int32_t nghttp2_map_key_type;
 
-typedef struct nghttp2_map_bucket {
+typedef struct nghttp2_map_bucket
+{
   uint32_t hash;
   nghttp2_map_key_type key;
-  void *data;
+  void* data;
 } nghttp2_map_bucket;
 
-typedef struct nghttp2_map {
-  nghttp2_map_bucket *table;
-  nghttp2_mem *mem;
+typedef struct nghttp2_map
+{
+  nghttp2_map_bucket* table;
+  nghttp2_mem* mem;
   size_t size;
   uint32_t tablelen;
   uint32_t tablelenbits;
@@ -55,14 +57,14 @@ typedef struct nghttp2_map {
 /*
  * Initializes the map |map|.
  */
-void nghttp2_map_init(nghttp2_map *map, nghttp2_mem *mem);
+void nghttp2_map_init(nghttp2_map* map, nghttp2_mem* mem);
 
 /*
  * Deallocates any resources allocated for |map|. The stored entries
  * are not freed by this function. Use nghttp2_map_each_free() to free
  * each entries.
  */
-void nghttp2_map_free(nghttp2_map *map);
+void nghttp2_map_free(nghttp2_map* map);
 
 /*
  * Deallocates each entries using |func| function and any resources
@@ -70,8 +72,8 @@ void nghttp2_map_free(nghttp2_map *map);
  * given the |data| object. The |ptr| will be passed to the |func| as
  * send argument. The return value of the |func| will be ignored.
  */
-void nghttp2_map_each_free(nghttp2_map *map, int (*func)(void *data, void *ptr),
-                           void *ptr);
+void nghttp2_map_each_free(
+  nghttp2_map* map, int (*func)(void* data, void* ptr), void* ptr);
 
 /*
  * Inserts the new |data| with the |key| to the map |map|.
@@ -84,13 +86,13 @@ void nghttp2_map_each_free(nghttp2_map *map, int (*func)(void *data, void *ptr),
  * NGHTTP2_ERR_NOMEM
  *   Out of memory
  */
-int nghttp2_map_insert(nghttp2_map *map, nghttp2_map_key_type key, void *data);
+int nghttp2_map_insert(nghttp2_map* map, nghttp2_map_key_type key, void* data);
 
 /*
  * Returns the data associated by the key |key|.  If there is no such
  * data, this function returns NULL.
  */
-void *nghttp2_map_find(nghttp2_map *map, nghttp2_map_key_type key);
+void* nghttp2_map_find(nghttp2_map* map, nghttp2_map_key_type key);
 
 /*
  * Removes the data associated by the key |key| from the |map|.  The
@@ -102,17 +104,17 @@ void *nghttp2_map_find(nghttp2_map *map, nghttp2_map_key_type key);
  * NGHTTP2_ERR_INVALID_ARGUMENT
  *     The data associated by |key| does not exist.
  */
-int nghttp2_map_remove(nghttp2_map *map, nghttp2_map_key_type key);
+int nghttp2_map_remove(nghttp2_map* map, nghttp2_map_key_type key);
 
 /*
  * Removes all entries from |map|.
  */
-void nghttp2_map_clear(nghttp2_map *map);
+void nghttp2_map_clear(nghttp2_map* map);
 
 /*
  * Returns the number of items stored in the map |map|.
  */
-size_t nghttp2_map_size(nghttp2_map *map);
+size_t nghttp2_map_size(nghttp2_map* map);
 
 /*
  * Applies the function |func| to each data in the |map| with the
@@ -128,9 +130,9 @@ size_t nghttp2_map_size(nghttp2_map *map);
  * Don't use this function to free each data. Use
  * nghttp2_map_each_free() instead.
  */
-int nghttp2_map_each(nghttp2_map *map, int (*func)(void *data, void *ptr),
-                     void *ptr);
+int nghttp2_map_each(
+  nghttp2_map* map, int (*func)(void* data, void* ptr), void* ptr);
 
-void nghttp2_map_print_distance(nghttp2_map *map);
+void nghttp2_map_print_distance(nghttp2_map* map);
 
 #endif /* NGHTTP2_MAP_H */

@@ -29,14 +29,16 @@
 #  include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-#include <nghttp2/nghttp2.h>
 #include "nghttp2_frame.h"
 #include "nghttp2_mem.h"
 
+#include <nghttp2/nghttp2.h>
+
 /* struct used for HEADERS and PUSH_PROMISE frame */
-typedef struct {
+typedef struct
+{
   nghttp2_data_provider data_prd;
-  void *stream_user_data;
+  void* stream_user_data;
   /* error code when request HEADERS is canceled by RST_STREAM while
      it is in queue. */
   uint32_t error_code;
@@ -46,7 +48,8 @@ typedef struct {
 } nghttp2_headers_aux_data;
 
 /* struct used for DATA frame */
-typedef struct {
+typedef struct
+{
   /**
    * The data to be sent for this DATA frame.
    */
@@ -70,7 +73,8 @@ typedef struct {
   uint8_t no_copy;
 } nghttp2_data_aux_data;
 
-typedef enum {
+typedef enum
+{
   NGHTTP2_GOAWAY_AUX_NONE = 0x0,
   /* indicates that session should be terminated after the
      transmission of this frame. */
@@ -82,20 +86,23 @@ typedef enum {
 } nghttp2_goaway_aux_flag;
 
 /* struct used for GOAWAY frame */
-typedef struct {
+typedef struct
+{
   /* bitwise-OR of one or more of nghttp2_goaway_aux_flag. */
   uint8_t flags;
 } nghttp2_goaway_aux_data;
 
 /* struct used for extension frame */
-typedef struct {
+typedef struct
+{
   /* nonzero if this extension frame is serialized by library
      function, instead of user-defined callbacks. */
   uint8_t builtin;
 } nghttp2_ext_aux_data;
 
 /* Additional data which cannot be stored in nghttp2_frame struct */
-typedef union {
+typedef union
+{
   nghttp2_data_aux_data data;
   nghttp2_headers_aux_data headers;
   nghttp2_goaway_aux_data goaway;
@@ -105,7 +112,8 @@ typedef union {
 struct nghttp2_outbound_item;
 typedef struct nghttp2_outbound_item nghttp2_outbound_item;
 
-struct nghttp2_outbound_item {
+struct nghttp2_outbound_item
+{
   nghttp2_frame frame;
   /* Storage for extension frame payload.  frame->ext.payload points
      to this structure to avoid frequent memory allocation. */
@@ -119,7 +127,7 @@ struct nghttp2_outbound_item {
      that the amount of transmission is distributed across streams
      proportional to effective weight (inside a tree). */
   uint64_t cycle;
-  nghttp2_outbound_item *qnext;
+  nghttp2_outbound_item* qnext;
   /* nonzero if this object is queued, except for DATA or HEADERS
      which are attached to stream as item. */
   uint8_t queued;
@@ -130,32 +138,33 @@ struct nghttp2_outbound_item {
  * Don't call nghttp2_outbound_item_free() until frame member is
  * initialized.
  */
-void nghttp2_outbound_item_init(nghttp2_outbound_item *item);
+void nghttp2_outbound_item_init(nghttp2_outbound_item* item);
 
 /*
  * Deallocates resource for |item|. If |item| is NULL, this function
  * does nothing.
  */
-void nghttp2_outbound_item_free(nghttp2_outbound_item *item, nghttp2_mem *mem);
+void nghttp2_outbound_item_free(nghttp2_outbound_item* item, nghttp2_mem* mem);
 
 /*
  * queue for nghttp2_outbound_item.
  */
-typedef struct {
+typedef struct
+{
   nghttp2_outbound_item *head, *tail;
   /* number of items in this queue. */
   size_t n;
 } nghttp2_outbound_queue;
 
-void nghttp2_outbound_queue_init(nghttp2_outbound_queue *q);
+void nghttp2_outbound_queue_init(nghttp2_outbound_queue* q);
 
 /* Pushes |item| into |q| */
-void nghttp2_outbound_queue_push(nghttp2_outbound_queue *q,
-                                 nghttp2_outbound_item *item);
+void nghttp2_outbound_queue_push(
+  nghttp2_outbound_queue* q, nghttp2_outbound_item* item);
 
 /* Pops |item| at the top from |q|.  If |q| is empty, nothing
    happens. */
-void nghttp2_outbound_queue_pop(nghttp2_outbound_queue *q);
+void nghttp2_outbound_queue_pop(nghttp2_outbound_queue* q);
 
 /* Returns the top item. */
 #define nghttp2_outbound_queue_top(Q) ((Q)->head)

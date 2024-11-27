@@ -663,7 +663,7 @@ namespace aft
         return false;
       }
 
-    //  fmt::print("Replicating {} entries\n", entries.size());
+      //  fmt::print("Replicating {} entries\n", entries.size());
 
       for (auto& [index, data, is_globally_committable, hooks] : entries)
       {
@@ -979,7 +979,7 @@ namespace aft
 
     void send_append_entries(const ccf::NodeId& to, Index start_idx)
     {
-      #if 0
+#if 0
       fmt::print(
         "Sending append entries to node {} in batches of {}, covering the "
         "range {} -> {}\n",
@@ -987,7 +987,7 @@ namespace aft
         entries_batch_size,
         start_idx,
         state->last_idx);
-      #endif
+#endif
       auto calculate_end_index = [this](Index start) {
         // Cap the end index in 2 ways:
         // - Must contain no more than entries_batch_size entries
@@ -1202,7 +1202,8 @@ namespace aft
       else if (r.prev_idx > state->last_idx)
       {
         fmt::print(
-          "Recv append entries to {} from {} but prev_idx ({}) > last_idx ({})\n",
+          "Recv append entries to {} from {} but prev_idx ({}) > last_idx "
+          "({})\n",
           state->node_id,
           from,
           r.prev_idx,
@@ -1287,9 +1288,9 @@ namespace aft
         std::vector<uint8_t> entry;
         try
         {
-         // fmt::print("**START** {} --> size={}\n", __func__, size);
+          // fmt::print("**START** {} --> size={}\n", __func__, size);
           entry = LedgerProxy::get_entry(data, size);
-         // fmt::print("**END** {} --> size={}\n", __func__, size);
+          // fmt::print("**END** {} --> size={}\n", __func__, size);
         }
         catch (const std::logic_error& e)
         {
@@ -1304,10 +1305,11 @@ namespace aft
         }
 
         ccf::kv::TxID expected{r.term_of_idx, i};
-      //  fmt::print("**START** {}: deserialize --> size={}\n", __func__, entry.size());
+        //  fmt::print("**START** {}: deserialize --> size={}\n", __func__,
+        //  entry.size());
 
         auto ds = store->deserialize(entry, public_only, expected);
-      //  fmt::print("**END** {}: deserialize --> size={}\n", __func__, size);
+        //  fmt::print("**END** {}: deserialize --> size={}\n", __func__, size);
         if (ds == nullptr)
         {
           fmt::print(
@@ -1336,7 +1338,7 @@ namespace aft
       for (auto& ae : append_entries)
       {
         auto& [ds, i] = ae;
-       // fmt::print("Replicating on follower {}: {}\n", state->node_id, i);
+        // fmt::print("Replicating on follower {}: {}\n", state->node_id, i);
 
 #ifdef CCF_RAFT_TRACING
         nlohmann::json j = {};
@@ -1512,13 +1514,14 @@ namespace aft
       aft::Term response_term,
       aft::Index response_idx)
     {
-      if (answer != AppendEntriesResponseType::OK) {
-      fmt::print(
-        "> Send append entries response from {} to {} for index {}: {}\n",
-        state->node_id,
-        to,
-        response_idx,
-        (answer == AppendEntriesResponseType::OK ? "ACK" : "NACK"));
+      if (answer != AppendEntriesResponseType::OK)
+      {
+        fmt::print(
+          "> Send append entries response from {} to {} for index {}: {}\n",
+          state->node_id,
+          to,
+          response_idx,
+          (answer == AppendEntriesResponseType::OK ? "ACK" : "NACK"));
       }
 
       AppendEntriesResponse response{
@@ -1605,7 +1608,8 @@ namespace aft
         if (r.success == AppendEntriesResponseType::OK)
         {
           fmt::print(
-            "Recv append entries response to {} from {}: stale term ({} != {})\n",
+            "Recv append entries response to {} from {}: stale term ({} != "
+            "{})\n",
             state->node_id,
             from,
             r.term,
@@ -1651,13 +1655,13 @@ namespace aft
         node->second.match_idx =
           std::max(node->second.match_idx, r.last_log_idx);
       }
-      #if 0
+#if 0
       fmt::print(
         "Recv append entries response to {} from {} for index {}: success\n",
         state->node_id,
         from,
         r.last_log_idx);
-      #endif
+#endif
       update_commit();
     }
 
@@ -1738,7 +1742,8 @@ namespace aft
       {
         // Reply false, since we already know the leader in the current term.
         fmt::print(
-          "Recv request vote to {} from {}: leader {} already known in term {}\n",
+          "Recv request vote to {} from {}: leader {} already known in term "
+          "{}\n",
           state->node_id,
           from,
           leader_id.value(),
@@ -2284,13 +2289,13 @@ namespace aft
 
         if (new_commit_idx.has_value())
         {
-          #if 0
+#if 0
           fmt::print(
             "In update_commit, new_commit_idx: {}, "
             "last_idx: {}\n",
             new_commit_idx.value(),
             state->last_idx);
-          #endif
+#endif
           const auto term_of_new = get_term_internal(new_commit_idx.value());
           if (term_of_new == state->current_view)
           {

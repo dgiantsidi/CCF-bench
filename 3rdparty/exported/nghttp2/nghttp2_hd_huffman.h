@@ -31,7 +31,8 @@
 
 #include <nghttp2/nghttp2.h>
 
-typedef enum {
+typedef enum
+{
   /* FSA accepts this state as the end of huffman encoding
      sequence. */
   NGHTTP2_HUFF_ACCEPTED = 1 << 14,
@@ -39,7 +40,8 @@ typedef enum {
   NGHTTP2_HUFF_SYM = 1 << 15,
 } nghttp2_huff_decode_flag;
 
-typedef struct {
+typedef struct
+{
   /* fstate is the current huffman decoding state, which is actually
      the node ID of internal huffman tree with
      nghttp2_huff_decode_flag OR-ed.  We have 257 leaf nodes, but they
@@ -54,12 +56,14 @@ typedef struct {
 
 typedef nghttp2_huff_decode huff_decode_table_type[16];
 
-typedef struct {
+typedef struct
+{
   /* fstate is the current huffman decoding state. */
   uint16_t fstate;
 } nghttp2_hd_huff_decode_context;
 
-typedef struct {
+typedef struct
+{
   /* The number of bits in this code */
   uint32_t nbits;
   /* Huffman code aligned to LSB */
