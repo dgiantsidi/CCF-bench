@@ -401,7 +401,7 @@ public:
     }
     _replicate(term, {}, lineno, false, configuration);
   }
-#endif
+
   // Note: deprecated, to be removed when the last scenario using it is removed
   void replicate_new_configuration(
     const std::string& term_s,
@@ -424,7 +424,7 @@ public:
     _replicate(term_s, {}, lineno, false, configuration);
   }
 
-#if 0
+
   void log(
     ccf::NodeId first,
     ccf::NodeId second,

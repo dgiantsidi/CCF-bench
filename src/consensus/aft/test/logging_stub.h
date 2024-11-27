@@ -347,12 +347,6 @@ namespace aft
       bool public_only = false,
       const std::optional<ccf::kv::TxID>& expected_txid = std::nullopt)
     {
-      fmt::print(
-        "{}-> data.size()={}, public_only={}\n",
-        __PRETTY_FUNCTION__,
-        data.size(),
-        public_only);
-
       ccf::kv::ConsensusHookPtrs hooks = {};
       return std::make_unique<ExecutionWrapper>(
         data, expected_txid, std::move(hooks));
