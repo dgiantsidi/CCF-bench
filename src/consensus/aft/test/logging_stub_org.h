@@ -158,6 +158,145 @@ namespace aft
     void commit(Index idx) {}
   };
 
+#if 1
+  class ChannelStubProxy : public ccf::NodeToNode
+  {
+  public:
+    // Capture what is being sent out
+    // Using a deque so we can both pop from the front and shuffle
+    using MessageList =
+      std::deque<std::pair<ccf::NodeId, std::vector<uint8_t>>>;
+    MessageList messages;
+
+    ChannelStubProxy() {}
+
+    size_t count_messages_with_type(RaftMsgType type)
+    {
+      size_t count = 0;
+      for (const auto& [nid, m] : messages)
+      {
+        const uint8_t* data = m.data();
+        size_t size = m.size();
+
+        if (serialized::peek<RaftMsgType>(data, size) == type)
+        {
+          ++count;
+        }
+      }
+
+      return count;
+    }
+
+    std::optional<std::vector<uint8_t>> pop_first(
+      RaftMsgType type, ccf::NodeId target)
+    {
+      for (auto it = messages.begin(); it != messages.end(); ++it)
+      {
+        const auto [nid, m] = *it;
+        const uint8_t* data = m.data();
+        size_t size = m.size();
+
+        if (serialized::peek<RaftMsgType>(data, size) == type)
+        {
+          if (target == nid)
+          {
+            messages.erase(it);
+            return m;
+          }
+        }
+      }
+
+      return std::nullopt;
+    }
+
+    void associate_node_address(
+      const ccf::NodeId& peer_id,
+      const std::string& peer_hostname,
+      const std::string& peer_service) override
+    {}
+
+    void close_channel(const ccf::NodeId& peer_id) override {}
+
+    void set_endorsed_node_cert(const ccf::crypto::Pem&) override {}
+
+    bool have_channel(const ccf::NodeId& nid) override
+    {
+      return true;
+    }
+
+    bool send_authenticated(
+      const ccf::NodeId& to,
+      ccf::NodeMsgType msg_type,
+      const uint8_t* data,
+      size_t size) override
+    {
+      fmt::print("[{}] to {}\n", __func__, to);
+      std::vector<uint8_t> m(data, data + size);
+      messages.emplace_back(to, std::move(m));
+      return true;
+    }
+
+    bool recv_authenticated(
+      const ccf::NodeId& from_node,
+      std::span<const uint8_t> cb,
+      const uint8_t*& data,
+      size_t& size) override
+    {
+      fmt::print("[{}] from {}\n", __func__, from_node);
+      return true;
+    }
+
+    bool recv_channel_message(
+      const ccf::NodeId& from, const uint8_t* data, size_t size) override
+    {
+      fmt::print("[{}] from {}\n", __func__, from);
+
+      return true;
+    }
+
+    void initialize(
+      const ccf::NodeId& self_id,
+      const ccf::crypto::Pem& service_cert,
+      ccf::crypto::KeyPairPtr node_kp,
+      const std::optional<ccf::crypto::Pem>& node_cert = std::nullopt) override
+    {}
+
+    bool send_encrypted(
+      const ccf::NodeId& to,
+      ccf::NodeMsgType msg_type,
+      std::span<const uint8_t> cb,
+      const std::vector<uint8_t>& data) override
+    {
+      fmt::print("[{}] to {}\n", __func__, to);
+
+      return true;
+    }
+
+    std::vector<uint8_t> recv_encrypted(
+      const ccf::NodeId& fromfpf32,
+      std::span<const uint8_t> cb,
+      const uint8_t* data,
+      size_t size) override
+    {
+      fmt::print("[{}] from {}\n", __func__, fromfpf32);
+
+      return {};
+    }
+
+    void set_message_limit(size_t message_limit) override {}
+    void set_idle_timeout(std::chrono::milliseconds idle_timeout) override {}
+
+    void tick(std::chrono::milliseconds elapsed) override {}
+
+    bool recv_authenticated_with_load(
+      const ccf::NodeId& from, const uint8_t*& data, size_t& size) override
+    {
+      fmt::print("[{}] from {}\n", __func__, from);
+
+      return true;
+    }
+  };
+#endif
   enum class ReplicatedDataType
   {
     raw = 0,
