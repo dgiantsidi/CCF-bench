@@ -56,22 +56,26 @@ int main(int argc, char* argv[])
     fmt::print("{} ---> Starting ...\n", __func__);
     for (auto i = 0ULL; i < 4e6; i++)
     {
-            auto ptr = std::make_unique<uint8_t[]>(16);
+      auto ptr = std::make_unique<uint8_t[]>(16);
 
       socket_layer::send_to_socket(
         net->node_connections_map[ccf::NodeId("1")]->sending_handle,
         std::move(ptr),
         16);
- //   fmt::print("{} --> send, i={}\n", __func__, i);
+      //   fmt::print("{} --> send, i={}\n", __func__, i);
       auto [data, data_sz] = socket_layer::read_from_socket(
         net->node_connections_map[ccf::NodeId("0")]->listening_handle, 16);
-        //if (i%1000 == 0)
-   //         fmt::print("{} --> read, i={}\n", __func__, i);
+      if (i % 10000 == 0)
+        fmt::print("{} --> tx_id={}\n", __func__, i);
     }
     net->close_channel(ccf::NodeId("0"));
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - now;
-    fmt::print("{} ---> experiment took = {} s, tput={} op/s\n", __func__, duration.count(), (1.0*4e6)/duration.count());
+    fmt::print(
+      "{} ---> experiment took = {} s, tput={} op/s\n",
+      __func__,
+      duration.count(),
+      (1.0 * 4e6) / duration.count());
   }
   else
   {
@@ -97,7 +101,7 @@ int main(int argc, char* argv[])
       auto [data, data_sz] = socket_layer::read_from_socket(
         net->node_connections_map[ccf::NodeId("1")]->listening_handle, 16);
       //  fmt::print("{} --> read, i={}\n", __func__, i);
-                  auto ptr = std::make_unique<uint8_t[]>(16);
+      auto ptr = std::make_unique<uint8_t[]>(16);
 
       socket_layer::send_to_socket(
         net->node_connections_map[ccf::NodeId("0")]->sending_handle,
