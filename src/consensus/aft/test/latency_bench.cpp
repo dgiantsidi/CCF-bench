@@ -45,6 +45,12 @@ int main(int argc, char* argv[])
       ccf::NodeId("1"), my_connections[ccf::NodeId("1")].ip, my_connections[ccf::NodeId("1")].base_listening_port);
 
     net->accept_connection(ccf::NodeId("0"));
+
+    auto now = 
+    fmt::print("{} ---> Starting time=1\n", __func__);
+    auto ptr = std::make_unique<uint8_t[]>(16);
+    socket_layer::send_to_socket(net->node_connections_map[ccf::NodeId("0")]->sending_handle, std::move(ptr), 16);
+    net->close_channel(ccf::NodeId("0"));
   }
   else {
     fmt::print("{} ---> client\n", __func__);
@@ -53,5 +59,9 @@ int main(int argc, char* argv[])
 
     net->connect_to_peer(
       my_connections[ccf::NodeId("1")].ip, std::to_string(my_connections[ccf::NodeId("1")].base_listening_port), ccf::NodeId("0"), my_connections[ccf::NodeId("0")].ip, my_connections[ccf::NodeId("0")].base_listening_port);
+    fmt::print("{} ---> Starting time=1\n", __func__);
+    auto [data, data_sz] = socket_layer::read_from_socket(net->node_connections_map[ccf::NodeId("1")]->listening_handle, 16);
+    net->close_channel(ccf::NodeId("1"));
+
   }
 }
