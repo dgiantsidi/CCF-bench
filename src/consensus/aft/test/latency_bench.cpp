@@ -63,6 +63,8 @@ int main(int argc, char* argv[])
         16);
       auto [data, data_sz] = socket_layer::read_from_socket(
         net->node_connections_map[ccf::NodeId("0")]->listening_handle, 16);
+        if (i%1000 == 0)
+            fmt::print("{} --> i={}\n", __func__, i);
     }
     net->close_channel(ccf::NodeId("0"));
     auto end = std::chrono::high_resolution_clock::now();
