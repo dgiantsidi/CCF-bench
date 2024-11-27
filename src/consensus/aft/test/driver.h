@@ -206,11 +206,9 @@ public:
 #endif
     add_node(my_nid);
     auto raft = _nodes.at(my_nid).raft.get();
-    // fmt::print("{}: last_idx={}\n", __func__, raft->get_last_idx());
-    network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
-    net->print();
-    net->associate_node_address(my_nid, peer_hostname, std::to_string(port));
 
+    network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
+    net->associate_node_address(my_nid, peer_hostname, std::to_string(port));
     net->connect_to_peer(
       peer_hostname, std::to_string(port), ccf::NodeId("1"), "10.1.0.4", 2800);
 
