@@ -158,6 +158,7 @@ namespace aft
     void commit(Index idx) {}
   };
 
+#if 0
   class ChannelStubProxy : public ccf::NodeToNode
   {
   public:
@@ -295,7 +296,7 @@ namespace aft
       return true;
     }
   };
-
+#endif
   enum class ReplicatedDataType
   {
     raw = 0,
