@@ -91,13 +91,14 @@ int main(int argc, char* argv[])
     fmt::print("{} ---> Starting time=1\n", __func__);
     sleep(1);
     auto now = std::chrono::high_resolution_clock::now();
-          auto ptr = std::make_unique<uint8_t[]>(16);
 
     for (auto i = 0ULL; i < 4e6; i++)
     {
       auto [data, data_sz] = socket_layer::read_from_socket(
         net->node_connections_map[ccf::NodeId("1")]->listening_handle, 16);
         fmt::print("{} --> read, i={}\n", __func__, i);
+                  auto ptr = std::make_unique<uint8_t[]>(16);
+
       socket_layer::send_to_socket(
         net->node_connections_map[ccf::NodeId("0")]->sending_handle,
         std::move(ptr),
