@@ -990,8 +990,8 @@ if(BUILD_TESTS)
       latency_bench ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/latency_bench.cpp
     )
 
-#    target_link_libraries(raft_driver PRIVATE ccfcrypto.host)
-    target_include_directories(raft_driver PRIVATE src/aft)
+    target_link_libraries(latency_bench PRIVATE ccfcrypto.host)
+    target_include_directories(latency_bench PRIVATE src/aft)
 
     add_test(
       NAME raft_scenario_test
