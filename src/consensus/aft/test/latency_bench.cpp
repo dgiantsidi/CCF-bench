@@ -66,6 +66,8 @@ int main(int argc, char* argv[])
     fmt::print("{} ---> Starting time=1\n", __func__);
     auto [data, data_sz] = socket_layer::read_from_socket(net->node_connections_map[ccf::NodeId("1")]->listening_handle, 16);
     net->close_channel(ccf::NodeId("1"));
+        auto end = std::chrono::high_resolution_clock::now();
+
     std::chrono::duration<double> duration = end - now;
     fmt::print("{} ---> experiment took = {} s\n", __func__, duration.count());
 
