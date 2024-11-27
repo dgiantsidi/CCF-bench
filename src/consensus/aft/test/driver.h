@@ -172,7 +172,7 @@ public:
 
   
   int get_committed_seqno() {
-    return (_nodes[ccf::NodeId("0")].raft->)->get_committed_seqno();
+    return (_nodes[ccf::NodeId("0")].raft)->get_committed_seqno();
   }
   void become_primary()
   {
