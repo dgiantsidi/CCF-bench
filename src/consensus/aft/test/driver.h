@@ -601,7 +601,6 @@ public:
 #  endif
   }
 
-#endif
 
   void connect(ccf::NodeId first, ccf::NodeId second)
   {
@@ -615,7 +614,7 @@ public:
     */
   }
 
-#if 0
+
   void periodic_one(ccf::NodeId node_id, ms ms_)
   {
     // ...
@@ -1011,7 +1010,8 @@ public:
       __func__);
 #endif
   }
-
+  
+#if 0
   void disconnect(ccf::NodeId left, ccf::NodeId right)
   {
     bool noop = true;
@@ -1061,7 +1061,7 @@ public:
       }
     }
   }
-#if 0
+
   void drop_pending_to(ccf::NodeId from, ccf::NodeId to)
   {
     auto from_raft = _nodes.at(from).raft;
