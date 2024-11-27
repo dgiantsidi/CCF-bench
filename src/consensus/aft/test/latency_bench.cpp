@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
     net->close_channel(ccf::NodeId("0"));
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - now;
-    fmt::print("{} ---> experiment took = {} s, tput={} op/s\n", __func__, duration.count(), (1.0*4e6)/duration);
+    fmt::print("{} ---> experiment took = {} s, tput={} op/s\n", __func__, duration.count(), (1.0*4e6)/duration.count());
   }
   else
   {
