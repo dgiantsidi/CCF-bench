@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
         16);
       auto [data, data_sz] = socket_layer::read_from_socket(
         net->node_connections_map[ccf::NodeId("0")]->listening_handle, 16);
-        if (i%1000 == 0)
+        //if (i%1000 == 0)
             fmt::print("{} --> i={}\n", __func__, i);
     }
     net->close_channel(ccf::NodeId("0"));
@@ -93,11 +93,13 @@ int main(int argc, char* argv[])
     {
       auto [data, data_sz] = socket_layer::read_from_socket(
         net->node_connections_map[ccf::NodeId("1")]->listening_handle, 16);
+        fmt::print("{} --> read, i={}\n", __func__, i);
       auto ptr = std::make_unique<uint8_t[]>(16);
       socket_layer::send_to_socket(
         net->node_connections_map[ccf::NodeId("0")]->sending_handle,
         std::move(ptr),
         16);
+          fmt::print("{} --> send, i={}\n", __func__, i);
     }
     net->close_channel(ccf::NodeId("1"));
     auto end = std::chrono::high_resolution_clock::now();
