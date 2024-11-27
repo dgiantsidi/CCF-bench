@@ -46,8 +46,8 @@ int main(int argc, char* argv[])
 
     net->accept_connection(ccf::NodeId("0"));
 
-    auto now = 
-    fmt::print("{} ---> Starting time=1\n", __func__);
+    auto now = std::chrono::high_resolution_clock::now();
+    fmt::print("{} ---> Starting time={}\n", __func__, now);
     auto ptr = std::make_unique<uint8_t[]>(16);
     socket_layer::send_to_socket(net->node_connections_map[ccf::NodeId("0")]->sending_handle, std::move(ptr), 16);
     net->close_channel(ccf::NodeId("0"));
