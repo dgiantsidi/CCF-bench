@@ -170,6 +170,10 @@ private:
 public:
   RaftDriver(std::string node_id) : my_nid(ccf::NodeId(node_id)){};
 
+  
+  int get_committed_seqno() {
+    return (_nodes[ccf::NodeId("0")].raft->)->get_committed_seqno();
+  }
   void become_primary()
   {
 #if 0
@@ -1010,7 +1014,7 @@ public:
       __func__);
 #endif
   }
-  
+
 #if 0
   void disconnect(ccf::NodeId left, ccf::NodeId right)
   {
@@ -1090,6 +1094,7 @@ public:
   }
 
   using Discrepancies = std::map<ccf::NodeId, std::vector<std::string>>;
+
 
   Discrepancies check_state_sync(const std::map<ccf::NodeId, NodeDriver> nodes)
   {
