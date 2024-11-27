@@ -19,8 +19,10 @@
 
 namespace socket_layer
 {
+  // these are stats we keep track of
   uint64_t nb_sends = 0;
   uint64_t nb_recvs = 0;
+
   static void print_data(const uint8_t* ptr, size_t msg_size)
   {
 #if 0
@@ -42,14 +44,7 @@ namespace socket_layer
     const int& socket, std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
   {
     nb_sends++;
-#if 0
-fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
-    fmt::print(
-      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
-      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
-      __func__);
-#endif
-    print_data(msg.get(), msg_sz);
+
     int len = 0, offset = 0;
     int remaining = msg_sz;
     for (;;)
@@ -60,12 +55,6 @@ fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
       if (remaining == 0)
         break;
     }
-#if 0
-    fmt::print(
-      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
-      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
-      __func__);
-#endif
   }
 
   std::tuple<std::unique_ptr<uint8_t[]>, size_t> read_from_socket(
@@ -94,17 +83,16 @@ fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
     if (header_sz != sz)
     {
       fmt::print(
-        "{} -> error header_sz={} and sz={}\n", __func__, header_sz, sz);
+        "{} ---> error header_sz={} and sz={}\n", __func__, header_sz, sz);
       exit(-1);
     }
-    // fmt::print("{} --> socket={} header_sz={}B\n", __func__, socket,
-    // header_sz);
+
     int total_bytes = header_sz;
     auto [payload_sz_buf, pload_sz] = read_from_socket(socket, payload_sz);
     if (pload_sz != payload_sz)
     {
       fmt::print(
-        "{} -> error payload_sz={} and pload_sz={}\n",
+        "{} ---> error payload_sz={} and pload_sz={}\n",
         __func__,
         payload_sz,
         pload_sz);
@@ -112,22 +100,18 @@ fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
     }
     size_t sz_val;
     ::memcpy(&sz_val, payload_sz_buf.get(), payload_sz);
-#if 0
-    fmt::print(
-      "{} --> socket={} paylaod_sz={} payload={}\n",
-      __func__,
-      socket,
-      payload_sz,
-      sz_val);
-#endif
+
     auto [entry_buf, entry_sz] = read_from_socket(socket, sz_val);
     if (entry_sz != sz_val)
     {
       fmt::print(
-        "{} -> error entry_sz={} and sz_val={}\n", __func__, entry_sz, sz_val);
+        "{} ---> error entry_sz={} and sz_val={}\n",
+        __func__,
+        entry_sz,
+        sz_val);
       exit(-1);
     }
-    total_bytes += sz_val;
+    total_bytes += sz_val; // we exclude the sizeof(payload_sz) on purpose
     std::unique_ptr<uint8_t[]> serialized_msg =
       std::make_unique<uint8_t[]>(total_bytes);
     ::memcpy(serialized_msg.get(), header_buf.get(), header_sz);
@@ -135,6 +119,7 @@ fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
     {
       ::memcpy(serialized_msg.get() + header_sz, entry_buf.get(), entry_sz);
     }
+
     if (authentication::is_enabled())
     {
       auto [hash, hash_len] =
@@ -149,28 +134,22 @@ fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
 
       if (!authentication::verify_hash(
             original_msg.get(), (total_bytes + payload_sz), hash.get()))
-        fmt::print("{} --->> error in verifying the hash\n", __func__);
+        fmt::print("{} ---> error in verifying the hash\n", __func__);
     }
-    // fmt::print("{} --> socket={} entry_sz={}\n", __func__, socket, entry_sz);
     print_data(serialized_msg.get(), total_bytes);
     return {std::move(serialized_msg), total_bytes};
   }
 };
 
-#if 0
-static inline uint16_t __bswap_16(uint16_t x) {
-    return (x >> 8) | (x << 8);
-}
-#endif
-
 class network_stack : public ccf::NodeToNode
 {
   using node_id = ccf::NodeId;
-  using conn_handle = int;
+  using conn_handle = int; // this is a socket
 
   struct connections
   {
     connections() : listening_handle(0), sending_handle(0){};
+
     connections(const connections& other)
     {
       listening_handle = other.listening_handle;
@@ -182,6 +161,7 @@ class network_stack : public ccf::NodeToNode
       listening_handle = other.listening_handle;
       sending_handle = other.sending_handle;
     }
+
     conn_handle listening_handle;
     conn_handle sending_handle;
   };
@@ -189,6 +169,8 @@ class network_stack : public ccf::NodeToNode
 public:
   network_stack() {}
 
+  // this is a weak pointer over raft object such that we have access to the
+  // in-memory ledger for constructing the message-to-be-sent
   std::weak_ptr<TRaft> raft_copy;
 
   struct connectivity_description
@@ -203,7 +185,7 @@ public:
 public:
   std::map<node_id, std::unique_ptr<connections>> node_connections_map;
   using MessageList = std::deque<std::pair<ccf::NodeId, std::vector<uint8_t>>>;
-  MessageList messages;
+  // MessageList messages;
 
   void register_ledger_getter(std::shared_ptr<TRaft> raft)
   {
@@ -638,7 +620,6 @@ public:
 private:
   void send_msg(node_id to, std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
   {
-
     auto& socket = node_connections_map[to]->sending_handle;
 
     if (authentication::is_enabled())

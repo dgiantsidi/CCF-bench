@@ -423,6 +423,7 @@ public:
     _replicate(term_s, {}, lineno, false, configuration);
   }
 
+#if 0
   void log(
     ccf::NodeId first,
     ccf::NodeId second,
@@ -581,7 +582,7 @@ public:
       }
     }
 
-#ifdef CCF_RAFT_TRACING
+#  ifdef CCF_RAFT_TRACING
     if (dropped)
     {
       nlohmann::json j = {};
@@ -596,8 +597,10 @@ public:
       j["packet"] = packet;
       RAFT_TRACE_JSON_OUT(j);
     }
-#endif
+#  endif
   }
+
+#endif
 
   void connect(ccf::NodeId first, ccf::NodeId second)
   {
@@ -611,6 +614,7 @@ public:
     */
   }
 
+#if 0
   void periodic_one(ccf::NodeId node_id, ms ms_)
   {
     // ...
@@ -912,7 +916,7 @@ public:
       }
     }
   }
-
+#endif
   std::vector<std::pair<aft::Term, ccf::NodeId>> find_primaries()
   {
     std::vector<std::pair<aft::Term, ccf::NodeId>> primaries;
@@ -1056,7 +1060,7 @@ public:
       }
     }
   }
-
+#if 0
   void drop_pending_to(ccf::NodeId from, ccf::NodeId to)
   {
     auto from_raft = _nodes.at(from).raft;
@@ -1201,15 +1205,9 @@ public:
         "States not in sync on line {}", std::to_string((int)lineno)));
     }
   }
-
+#endif
   int periodic_listening(ccf::NodeId src_node)
   {
-#if 0
-    fmt::print(
-      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
-      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
-      __func__);
-#endif
     auto& my_raft = _nodes.at(my_nid).raft;
     network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
 
@@ -1218,31 +1216,13 @@ public:
     auto [data, data_sz] = socket_layer::get_from_socket(
       incomming_socket, sizeof(aft::AppendEntries));
 
-#if 0
-    fmt::print(
-      "{}: data_sz={} get_from_socket={}\n",
-      __func__,
-      data_sz,
-      (sizeof(aft::AppendEntries)));
-#endif
     _nodes.at(my_nid).raft->recv_message(src_node, data.get(), data_sz);
-#if 0
-    fmt::print(
-      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
-      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
-      __func__);
-#endif
+
     return 1;
   }
 
   int periodic_listening_acks(ccf::NodeId src_node)
   {
-#if 0
-    fmt::print(
-      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
-      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
-      __func__);
-#endif
     auto& my_raft = _nodes.at(my_nid).raft;
     network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
 
@@ -1251,22 +1231,16 @@ public:
     auto [data, data_sz] = socket_layer::get_from_socket(
       incomming_socket, sizeof(aft::AppendEntriesResponse));
 
-    // std::unique_ptr<uint8_t[]> data = std::make_unique<uint8_t[]>(57);
-    // fmt::print("{}: data_sz={}\n", __func__, data_sz);
     _nodes.at(my_nid).raft->recv_message(
       src_node, data.get(), sizeof(aft::AppendEntriesResponse));
-#if 0
-    fmt::print(
-      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
-      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
-      __func__);
-#endif
+
     return 1;
   }
 
+#if 0
   void loop_until_sync_quorum(const size_t lineno)
   {
-#if 0
+#  if 0
     std::pair<aft::Term, ccf::NodeId> term_primary;
     {
       // Find primary in highest term
@@ -1284,7 +1258,7 @@ public:
           fmt::format("Can't currently loop until sync, no primary"));
       }
     }
-#endif
+#  endif
     // const auto& [term, primary] = term_primary;
     const int term = 2;
     ccf::NodeId primary = ccf::NodeId("0");
@@ -1420,6 +1394,7 @@ public:
     return (_nodes.at(node_id).raft)->get_view();
   }
 
+
   void assert_commit_safety(ccf::NodeId node_id, const size_t lineno)
   {
     // Confirm that the index this node considers committed, is present on a
@@ -1535,6 +1510,7 @@ public:
     const std::string& expected,
     bool equal,
     const size_t lineno)
+
   {
     auto details = _nodes.at(node_id).raft->get_details();
     nlohmann::json d = details;
@@ -1570,4 +1546,6 @@ public:
         std::to_string((int)lineno)));
     }
   }
+
+#endif
 };
