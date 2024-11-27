@@ -212,7 +212,7 @@ public:
     net->associate_node_address(my_nid, peer_hostname, std::to_string(port));
 
     net->connect_to_peer(
-      peer_hostname, std::to_string(port), ccf::NodeId("1"), "10.5.0.7", 2800);
+      peer_hostname, std::to_string(port), ccf::NodeId("1"), "10.1.0.4", 2800);
 
     net->accept_connection(ccf::NodeId("0"));
 
@@ -245,7 +245,7 @@ public:
     net->accept_connection(ccf::NodeId("1"));
 
     net->connect_to_peer(
-      peer_hostname, std::to_string(port), ccf::NodeId("0"), "10.5.0.6", 1800);
+      peer_hostname, std::to_string(port), ccf::NodeId("0"), "10.1.0.7", 1800);
 #if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
