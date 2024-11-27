@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
     sleep(1);
     auto ptr = std::make_unique<uint8_t[]>(16);
     socket_layer::send_to_socket(
-      net->node_connections_map[ccf::NodeId("0")]->sending_handle,
+      net->node_connections_map[ccf::NodeId("1")]->sending_handle,
       std::move(ptr),
       16);
     auto [data, data_sz] = socket_layer::read_from_socket(
