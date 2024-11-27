@@ -10,7 +10,7 @@
 #include <map>
 #include <regex>
 #include <string>
-
+constexpr int kreqs = 200000;
 int main(int argc, char* argv[])
 {
   authentication::init();
@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
     sleep(1);
     auto now = std::chrono::high_resolution_clock::now();
     fmt::print("{} ---> Starting ...\n", __func__);
-    for (auto i = 0ULL; i < 200000; i++)
+    for (auto i = 0ULL; i < kreqs; i++)
     {
       auto ptr = std::make_unique<uint8_t[]>(16);
 
@@ -72,10 +72,10 @@ int main(int argc, char* argv[])
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - now;
     fmt::print(
-      "{} ---> experiment took = {} s, tput={} op/s\n",
+      "{} ---> experiment took = {} s, tput={} op/s, avg_latency={} ms\n",
       __func__,
       duration.count(),
-      (1.0 * 4e6) / duration.count());
+      (1.0 * kreqs) / duration.count(), (duration.count()*1.0*1000)/(kreqs*1.0));
   }
   else
   {
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
     sleep(1);
     auto now = std::chrono::high_resolution_clock::now();
 
-    for (auto i = 0ULL; i < 200000; i++)
+    for (auto i = 0ULL; i < kreqs; i++)
     {
       auto [data, data_sz] = socket_layer::read_from_socket(
         net->node_connections_map[ccf::NodeId("1")]->listening_handle, 16);
