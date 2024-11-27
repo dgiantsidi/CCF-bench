@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
     ccf::NodeId("2"), network_stack::connectivity_description()));
 
   my_connections[ccf::NodeId("0")].nid = ccf::NodeId("0");
-  my_connections[ccf::NodeId("0")].ip = "10.1.0.7;
+  my_connections[ccf::NodeId("0")].ip = "10.1.0.7";
   // my_connections[ccf::NodeId("0")].ip = "10.5.0.6"; // regural VM IP
   my_connections[ccf::NodeId("0")].base_listening_port = 1800;
   my_connections[ccf::NodeId("0")].base_sending_port = 1900;
