@@ -310,6 +310,7 @@ public:
       start_node_id);
   }
 
+#if 0
   void cleanup_nodes(
     const std::string& term,
     const std::vector<std::string>& node_ids,
@@ -327,6 +328,7 @@ public:
     }
     _replicate(term, {}, lineno, false, std::nullopt, retired_committed);
   }
+
 
   void trust_nodes(
     const std::string& term,
@@ -358,6 +360,7 @@ public:
     sleep(1);
     _replicate(term, {}, lineno, false, configuration);
   }
+
 
   void swap_nodes(
     const std::string& term,
@@ -398,7 +401,7 @@ public:
     }
     _replicate(term, {}, lineno, false, configuration);
   }
-
+#endif
   // Note: deprecated, to be removed when the last scenario using it is removed
   void replicate_new_configuration(
     const std::string& term_s,
