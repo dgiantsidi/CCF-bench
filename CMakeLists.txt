@@ -985,6 +985,14 @@ if(BUILD_TESTS)
     target_link_libraries(raft_driver PRIVATE ccfcrypto.host)
     target_include_directories(raft_driver PRIVATE src/aft)
 
+    # Latency bench
+    add_executable(
+      latency_bench ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/latency_bench.cpp
+    )
+
+#    target_link_libraries(raft_driver PRIVATE ccfcrypto.host)
+    target_include_directories(raft_driver PRIVATE src/aft)
+
     add_test(
       NAME raft_scenario_test
       COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/tests/raft_scenarios_runner.py

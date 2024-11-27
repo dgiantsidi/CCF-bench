@@ -113,13 +113,13 @@ int main(int argc, char* argv[])
 
   fmt::print(
     "{}: time elapsed={}s, tput={} op/s, avg latency={} ms, nb_sends={}, "
-    "nb_recvs={}\n",
+    "nb_recvs={}, raft_committed_seqno={}\n",
     __func__,
     duration.count(),
     (1.0 * k_num_requests) / (1.0 * duration.count()),
     ((1000.0 * duration.count()) / (1.0 * k_num_requests)),
     socket_layer::nb_sends,
-    socket_layer::nb_recvs);
+    socket_layer::nb_recvs, driver->get_committed_seqno());
 
   return 0;
 }
