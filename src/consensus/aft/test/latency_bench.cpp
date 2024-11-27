@@ -51,17 +51,19 @@ int main(int argc, char* argv[])
 
     net->accept_connection(ccf::NodeId("0"));
 
+    sleep(1);
     auto now = std::chrono::high_resolution_clock::now();
     fmt::print("{} ---> Starting ...\n", __func__);
-    sleep(1);
     auto ptr = std::make_unique<uint8_t[]>(16);
-    socket_layer::send_to_socket(
-      net->node_connections_map[ccf::NodeId("1")]->sending_handle,
-      std::move(ptr),
-      16);
-    auto [data, data_sz] = socket_layer::read_from_socket(
-      net->node_connections_map[ccf::NodeId("0")]->listening_handle, 16);
-
+    for (auto i = 0ULL; i < 4e6; i++)
+    {
+      socket_layer::send_to_socket(
+        net->node_connections_map[ccf::NodeId("1")]->sending_handle,
+        std::move(ptr),
+        16);
+      auto [data, data_sz] = socket_layer::read_from_socket(
+        net->node_connections_map[ccf::NodeId("0")]->listening_handle, 16);
+    }
     net->close_channel(ccf::NodeId("0"));
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - now;
@@ -75,7 +77,6 @@ int main(int argc, char* argv[])
       my_connections[ccf::NodeId("1")].ip,
       std::to_string(my_connections[ccf::NodeId("1")].base_listening_port));
     net->accept_connection(ccf::NodeId("1"));
-    auto now = std::chrono::high_resolution_clock::now();
 
     net->connect_to_peer(
       my_connections[ccf::NodeId("1")].ip,
@@ -85,13 +86,17 @@ int main(int argc, char* argv[])
       my_connections[ccf::NodeId("0")].base_listening_port);
     fmt::print("{} ---> Starting time=1\n", __func__);
     sleep(1);
-    auto [data, data_sz] = socket_layer::read_from_socket(
-      net->node_connections_map[ccf::NodeId("1")]->listening_handle, 16);
-    auto ptr = std::make_unique<uint8_t[]>(16);
-    socket_layer::send_to_socket(
-      net->node_connections_map[ccf::NodeId("0")]->sending_handle,
-      std::move(ptr),
-      16);
+    auto now = std::chrono::high_resolution_clock::now();
+    for (auto i = 0ULL; i < 4e6; i++)
+    {
+      auto [data, data_sz] = socket_layer::read_from_socket(
+        net->node_connections_map[ccf::NodeId("1")]->listening_handle, 16);
+      auto ptr = std::make_unique<uint8_t[]>(16);
+      socket_layer::send_to_socket(
+        net->node_connections_map[ccf::NodeId("0")]->sending_handle,
+        std::move(ptr),
+        16);
+    }
     net->close_channel(ccf::NodeId("1"));
     auto end = std::chrono::high_resolution_clock::now();
 
