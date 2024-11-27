@@ -19,6 +19,8 @@
 
 namespace socket_layer
 {
+  uint64_t nb_sends = 0;
+  uint64_t nb_recvs = 0;
   static void print_data(const uint8_t* ptr, size_t msg_size)
   {
 #if 0
@@ -39,6 +41,7 @@ namespace socket_layer
   void send_to_socket(
     const int& socket, std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
   {
+    nb_sends++;
 #if 0
 fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
     fmt::print(
@@ -86,6 +89,7 @@ fmt::print("{}: --> msg_size={} @ socket={}\n", __func__, msg_sz, socket);
   std::tuple<std::unique_ptr<uint8_t[]>, size_t> get_from_socket(
     const int& socket, size_t sz)
   {
+    nb_recvs++;
     auto [header_buf, header_sz] = read_from_socket(socket, sz);
     if (header_sz != sz)
     {
@@ -634,6 +638,7 @@ public:
 private:
   void send_msg(node_id to, std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
   {
+
     auto& socket = node_connections_map[to]->sending_handle;
 
     if (authentication::is_enabled())

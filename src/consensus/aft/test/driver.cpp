@@ -144,11 +144,11 @@ int main(int argc, char* argv[])
   std::chrono::duration<double> duration = end - start;
 
   fmt::print(
-    "{}: time elapsed={}s, tput={} op/s, avg latency={} ms\n",
+    "{}: time elapsed={}s, tput={} op/s, avg latency={} ms, nb_sends={}, nb_recvs={}\n",
     __func__,
     duration.count(),
     (1.0 * k_num_requests) / (1.0 * duration.count()),
-    ((1000.0 * duration.count()) / (1.0 * k_num_requests)));
+    ((1000.0 * duration.count()) / (1.0 * k_num_requests)), socket_layer::nb_sends, socket_layer::nb_recvs);
 
 #if 0
   threading::ThreadMessaging::init(1);
