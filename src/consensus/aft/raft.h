@@ -2580,19 +2580,18 @@ namespace aft
           if (state->leadership_state == ccf::kv::LeadershipState::Leader)
           {
             fmt::print(
-              "{} ---> node_info.first={}, node_info.second={}, index={}\n",
+              "{} ---> node_info.first={}, index={}\n",
               __func__,
               node_info.first,
-              node_info.second,
               index);
               send_append_entries(node_info.first, index);
           }
-#if 0
+
           fmt::print("{} ---> Added raft node {}({}:{})\n", __func__,
             node_info.first,
             node_info.second.hostname,
             node_info.second.port);
-#endif
+
         }
       }
     }
