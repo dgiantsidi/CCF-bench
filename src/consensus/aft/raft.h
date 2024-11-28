@@ -799,6 +799,7 @@ namespace aft
 
           default:
           {
+            fmt::print("Unhandled AFT message type: {}", type);
             RAFT_FAIL_FMT("Unhandled AFT message type: {}", type);
           }
         }
@@ -815,6 +816,7 @@ namespace aft
       }
       catch (const std::exception& e)
       {
+        fmt::print("const std::exception& e={}", e.what());
         LOG_FAIL_EXC(e.what());
         return;
       }
@@ -1491,7 +1493,7 @@ namespace aft
     void send_append_entries_response_nack(
       ccf::NodeId to, const ccf::TxID& rejected)
     {
-      // fmt::print("{} ---> to node={}\n", __func__, to);
+      fmt::print("{} ---> to node={} for txid={}\n", __func__, to, rejected);
       const auto response_idx = find_highest_possible_match(rejected);
       const auto response_term = get_term_internal(response_idx);
 

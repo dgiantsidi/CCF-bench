@@ -398,14 +398,6 @@ public:
     return (node_connections_map.find(nid) != node_connections_map.end());
   }
 
-  size_t get_ledger_size()
-  {
-    if (auto s_ptr = raft_copy.lock())
-    {
-      return s_ptr->ledger->ledger_size();
-    }
-  }
-
   template <class T>
   T read(const uint8_t* data, size_t size)
   {
