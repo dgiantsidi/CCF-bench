@@ -169,7 +169,7 @@ private:
 
 public:
   RaftDriver(std::string node_id) : my_nid(ccf::NodeId(node_id)){};
-
+  std::map<ccf::NodeId, network_stack::connectivity_description> my_connections;
   int get_committed_seqno()
   {
     return (_nodes[ccf::NodeId("0")].raft)->get_committed_seqno();

@@ -37,11 +37,49 @@ static void print_data(uint8_t* ptr, size_t msg_size)
 std::unique_ptr<threading::ThreadMessaging>
   threading::ThreadMessaging::singleton = nullptr;
 
+namespace config_parser
+{
+  void initialize_with_data(
+    std::map<ccf::NodeId, network_stack::connectivity_description>&
+      my_connections)
+  {
+    my_connections.insert(std::make_pair(
+      ccf::NodeId("0"), network_stack::connectivity_description()));
+    my_connections.insert(std::make_pair(
+      ccf::NodeId("1"), network_stack::connectivity_description()));
+
+    my_connections[ccf::NodeId(std::to_string(primary_node))].nid =
+      ccf::NodeId(std::to_string(primary_node));
+    my_connections[ccf::NodeId(std::to_string(primary_node))].ip =
+      primary_ip; // CVM
+    // my_connections[ccf::NodeId(std::to_string(primary_node))].ip =
+    // "10.5.0.6"; // regural VM IP
+    my_connections[ccf::NodeId(std::to_string(primary_node))]
+      .base_listening_port = primary_listening_port;
+    my_connections[ccf::NodeId(std::to_string(primary_node))]
+      .base_sending_port = primary_sending_port;
+
+    my_connections[ccf::NodeId(std::to_string(follower_1))].nid =
+      ccf::NodeId(std::to_string(follower_1));
+    my_connections[ccf::NodeId(std::to_string(follower_1))].ip =
+      follower_1_ip; // CVM
+    // my_connections[ccf::NodeId(std::to_string(follower_1))].ip = "10.5.0.7";
+    // // regural VM IP
+    my_connections[ccf::NodeId(std::to_string(follower_1))]
+      .base_listening_port = follower_1_listening_port;
+    my_connections[ccf::NodeId(std::to_string(follower_1))].base_sending_port =
+      follower_1_sending_port;
+  }
+}
+
+
 int main(int argc, char* argv[])
 {
   threading::ThreadMessaging::init(1);
   authentication::init();
-  std::map<ccf::NodeId, network_stack::connectivity_description> my_connections;
+  // std::map<ccf::NodeId, network_stack::connectivity_description> my_connections;
+  
+  #if 0
   my_connections.insert(std::make_pair(
     ccf::NodeId("0"), network_stack::connectivity_description()));
   my_connections.insert(std::make_pair(
@@ -65,20 +103,21 @@ int main(int argc, char* argv[])
   my_connections[ccf::NodeId("2")].ip = "10.5.0.6";
   my_connections[ccf::NodeId("2")].base_listening_port = 3800;
   my_connections[ccf::NodeId("2")].base_sending_port = 3900;
-
+#endif
   std::string node_id;
   std::cin >> node_id;
 
   auto driver = make_shared<RaftDriver>(node_id);
+  config_parser::initialize_with_data(driver->my_connections);
   auto start = std::chrono::high_resolution_clock::now();
-  if (ccf::NodeId(node_id) == ccf::NodeId("0"))
+  if (ccf::NodeId(node_id) == ccf::NodeId(std::to_string(primary_node)))
   {
     driver->make_primary(
       ccf::NodeId(node_id),
-      my_connections[ccf::NodeId("0")].ip,
-      my_connections[ccf::NodeId("0")].base_listening_port);
+      driver->my_connections[std::to_string(primary_node)].ip,
+      driver->my_connections[std::to_string(primary_node)].base_listening_port);
     driver->become_primary();
-    driver->create_new_nodes(std::vector<std::string>{"1"});
+    driver->create_new_nodes(std::vector<std::string>{std::to_string(follower_1)});
     auto data = std::make_shared<std::vector<uint8_t>>();
     auto& vec = *(data.get());
 
@@ -86,7 +125,7 @@ int main(int argc, char* argv[])
     for (auto i = 0ULL; i < k_num_requests; i++)
     {
       driver->replicate_commitable("2", data, 0);
-      acks += driver->periodic_listening_acks(ccf::NodeId("1"));
+      acks += driver->periodic_listening_acks(std::to_string(follower_1));
       if (acks % 50000 == 0)
         fmt::print("{} acks={}\n", __func__, acks);
     }
@@ -97,16 +136,16 @@ int main(int argc, char* argv[])
   {
     driver->make_follower(
       ccf::NodeId(node_id),
-      my_connections[ccf::NodeId("1")].ip,
-      my_connections[ccf::NodeId("1")].base_listening_port);
+      driver->my_connections[std::to_string(follower_1)].ip,
+      driver->my_connections[std::to_string(follower_1)].base_listening_port);
     int count = 0;
     for (auto i = 0ULL; i < k_num_requests; i++)
     {
-      count += driver->periodic_listening(ccf::NodeId("0"));
+      count += driver->periodic_listening(std::to_string(primary_node));
     }
-    count += driver->periodic_listening(ccf::NodeId("0"));
+    count += driver->periodic_listening(std::to_string(primary_node));
     fmt::print("{} count={}\n", __func__, count);
-    driver->close_connections(ccf::NodeId("1"));
+    driver->close_connections(std::to_string(follower_1));
   }
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration = end - start;
