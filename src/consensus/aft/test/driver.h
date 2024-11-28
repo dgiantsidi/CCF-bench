@@ -172,7 +172,7 @@ public:
   std::map<ccf::NodeId, network_stack::connectivity_description> my_connections;
   int get_committed_seqno()
   {
-    return (_nodes[ccf::NodeId("0")].raft)->get_committed_seqno();
+    return (_nodes[std::to_string(primary_node)].raft)->get_committed_seqno();
   }
   void become_primary()
   {
@@ -182,7 +182,7 @@ public:
       "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
       __func__);
 #endif
-    _nodes[ccf::NodeId("0")].raft->force_become_primary();
+    _nodes[std::to_string(primary_node)].raft->force_become_primary();
 #if 0
     fmt::print(
       "\n=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
@@ -214,9 +214,9 @@ public:
     network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
     net->associate_node_address(my_nid, peer_hostname, std::to_string(port));
     net->connect_to_peer(
-      peer_hostname, std::to_string(port), ccf::NodeId("1"), "10.1.0.4", 2800);
+      peer_hostname, std::to_string(port), std::to_string(follower_1), follower_1_ip, 2800);
 
-    net->accept_connection(ccf::NodeId("0"));
+    net->accept_connection(std::to_string(primary_node));
 
 #if 0
     fmt::print(
@@ -244,10 +244,10 @@ public:
 
     network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
     net->associate_node_address(my_nid, peer_hostname, std::to_string(port));
-    net->accept_connection(ccf::NodeId("1"));
+    net->accept_connection(std::to_string(follower_1));
 
     net->connect_to_peer(
-      peer_hostname, std::to_string(port), ccf::NodeId("0"), "10.1.0.7", 1800);
+      peer_hostname, std::to_string(port), std::to_string(primary_node), primary_ip, primary_listening_port);
 #if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
