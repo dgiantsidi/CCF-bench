@@ -172,7 +172,7 @@ public:
   std::map<ccf::NodeId, network_stack::connectivity_description> my_connections;
   int get_committed_seqno()
   {
-    return (_nodes[std::to_string(primary_node)].raft)->get_committed_seqno();
+    return (_nodes[my_nid].raft)->get_committed_seqno();
   }
   void become_primary()
   {
