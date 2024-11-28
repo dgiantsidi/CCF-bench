@@ -97,6 +97,8 @@ int main(int argc, char* argv[])
     auto& vec = *(data.get());
 
     int acks = 0;
+    acks += driver->periodic_listening_acks(std::to_string(follower_1));
+
     for (auto i = 0ULL; i < k_num_requests; i++)
     {
       driver->replicate_commitable("2", data, 0);
