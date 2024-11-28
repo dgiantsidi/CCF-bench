@@ -25,6 +25,7 @@ inline static std::tuple<std::unique_ptr<uint8_t[]>, size_t> authenticate_msg(
       std::make_unique<uint8_t[]>(msg_sz + authentication::get_hash_len());
     ::memcpy(authenticated_msg.get(), msg.get(), msg_sz);
     ::memcpy(authenticated_msg.get() + msg_sz, hash.get(), hash_sz);
+    return {std::move(authenticated_msg), (hash_sz+msg_sz)};
   }
   return {std::move(msg), msg_sz};
 }
