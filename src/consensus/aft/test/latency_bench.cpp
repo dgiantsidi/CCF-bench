@@ -40,26 +40,46 @@ inline static bool verify_authentication(uint8_t* msg, size_t msg_sz)
   return true;
 }
 
+namespace config_parser
+{
+  void initialize_with_data(
+    std::map<ccf::NodeId, network_stack::connectivity_description>&
+      my_connections)
+  {
+    my_connections.insert(std::make_pair(
+      ccf::NodeId("0"), network_stack::connectivity_description()));
+    my_connections.insert(std::make_pair(
+      ccf::NodeId("1"), network_stack::connectivity_description()));
+
+    my_connections[ccf::NodeId(std::to_string(primary_node))].nid =
+      ccf::NodeId(std::to_string(primary_node));
+    my_connections[ccf::NodeId(std::to_string(primary_node))].ip =
+      primary_ip; // CVM
+    // my_connections[ccf::NodeId(std::to_string(primary_node))].ip =
+    // "10.5.0.6"; // regural VM IP
+    my_connections[ccf::NodeId(std::to_string(primary_node))]
+      .base_listening_port = primary_listening_port;
+    my_connections[ccf::NodeId(std::to_string(primary_node))]
+      .base_sending_port = primary_sending_port;
+
+    my_connections[ccf::NodeId(std::to_string(follower_1))].nid =
+      ccf::NodeId(std::to_string(follower_1));
+    my_connections[ccf::NodeId(std::to_string(follower_1))].ip =
+      follower_1_ip; // CVM
+    // my_connections[ccf::NodeId(std::to_string(follower_1))].ip = "10.5.0.7";
+    // // regural VM IP
+    my_connections[ccf::NodeId(std::to_string(follower_1))]
+      .base_listening_port = follower_1_listening_port;
+    my_connections[ccf::NodeId(std::to_string(follower_1))].base_sending_port =
+      follower_1_sending_port;
+  }
+}
+
 int main(int argc, char* argv[])
 {
   authentication::init();
   std::map<ccf::NodeId, network_stack::connectivity_description> my_connections;
-  my_connections.insert(std::make_pair(
-    ccf::NodeId("0"), network_stack::connectivity_description()));
-  my_connections.insert(std::make_pair(
-    ccf::NodeId("1"), network_stack::connectivity_description()));
-
-  my_connections[ccf::NodeId("0")].nid = ccf::NodeId("0");
-  my_connections[ccf::NodeId("0")].ip = "10.1.0.7"; // CVM
-  // my_connections[ccf::NodeId("0")].ip = "10.5.0.6"; // regural VM IP
-  my_connections[ccf::NodeId("0")].base_listening_port = 1800;
-  my_connections[ccf::NodeId("0")].base_sending_port = 1900;
-
-  my_connections[ccf::NodeId("1")].nid = ccf::NodeId("1");
-  my_connections[ccf::NodeId("1")].ip = "10.1.0.4"; // CVM
-  // my_connections[ccf::NodeId("1")].ip = "10.5.0.7"; // regural VM IP
-  my_connections[ccf::NodeId("1")].base_listening_port = 2800;
-  my_connections[ccf::NodeId("1")].base_sending_port = 2900;
+  config_parser::initialize_with_data(my_connections);
 
   std::string node_id;
   std::cin >> node_id;
