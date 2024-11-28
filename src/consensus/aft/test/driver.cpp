@@ -72,14 +72,14 @@ namespace config_parser
   }
 }
 
-
 int main(int argc, char* argv[])
 {
   threading::ThreadMessaging::init(1);
   authentication::init();
-  // std::map<ccf::NodeId, network_stack::connectivity_description> my_connections;
-  
-  #if 0
+  // std::map<ccf::NodeId, network_stack::connectivity_description>
+  // my_connections;
+
+#if 0
   my_connections.insert(std::make_pair(
     ccf::NodeId("0"), network_stack::connectivity_description()));
   my_connections.insert(std::make_pair(
@@ -117,7 +117,8 @@ int main(int argc, char* argv[])
       driver->my_connections[std::to_string(primary_node)].ip,
       driver->my_connections[std::to_string(primary_node)].base_listening_port);
     driver->become_primary();
-    driver->create_new_nodes(std::vector<std::string>{std::to_string(follower_1)});
+    driver->create_new_nodes(
+      std::vector<std::string>{std::to_string(follower_1)});
     auto data = std::make_shared<std::vector<uint8_t>>();
     auto& vec = *(data.get());
 
@@ -155,7 +156,7 @@ int main(int argc, char* argv[])
     "nb_recvs={}, raft_committed_seqno={}\n",
     __func__,
     duration.count(),
-    (1.0 * k_num_requests) / (1.0 * duration.count()),
+    ((1.0 * k_num_requests) / (1.0 * duration.count())),
     ((1000.0 * duration.count()) / (1.0 * k_num_requests)),
     socket_layer::nb_sends,
     socket_layer::nb_recvs,

@@ -214,7 +214,11 @@ public:
     network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
     net->associate_node_address(my_nid, peer_hostname, std::to_string(port));
     net->connect_to_peer(
-      peer_hostname, std::to_string(port), std::to_string(follower_1), follower_1_ip, 2800);
+      peer_hostname,
+      std::to_string(port),
+      std::to_string(follower_1),
+      follower_1_ip,
+      follower_1_listening_port);
 
     net->accept_connection(std::to_string(primary_node));
 
@@ -247,7 +251,11 @@ public:
     net->accept_connection(std::to_string(follower_1));
 
     net->connect_to_peer(
-      peer_hostname, std::to_string(port), std::to_string(primary_node), primary_ip, primary_listening_port);
+      peer_hostname,
+      std::to_string(port),
+      std::to_string(primary_node),
+      primary_ip,
+      primary_listening_port);
 #if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
