@@ -1493,7 +1493,8 @@ namespace aft
     void send_append_entries_response_nack(
       ccf::NodeId to, const ccf::TxID& rejected)
     {
-      fmt::print("{} ---> to node={} for txid={}\n", __func__, to, rejected.to_str());
+      fmt::print(
+        "{} ---> to node={} for txid={}\n", __func__, to, rejected.to_str());
       const auto response_idx = find_highest_possible_match(rejected);
       const auto response_term = get_term_internal(response_idx);
 
@@ -2562,8 +2563,8 @@ namespace aft
         {
           if (!channels->have_channel(node_info.first))
           {
-            RAFT_DEBUG_FMT(
-              "Configurations: create node channel with {}", node_info.first);
+            fmt::print("{} ---> 
+              Configurations: create node channel with {}", __func__, node_info.first);
 
             channels->associate_node_address(
               node_info.first,
@@ -2579,11 +2580,18 @@ namespace aft
 
           if (state->leadership_state == ccf::kv::LeadershipState::Leader)
           {
-            send_append_entries(node_info.first, index);
+            fmt::print(
+              "{} ---> node_info.first={}, node_info.second={}, index={}\n",
+              __func__,
+              node_info.first,
+              node_info.second,
+              index) send_append_entries(node_info.first, index);
           }
 
-          RAFT_INFO_FMT(
-            "Added raft node {} ({}:{})",
+          fmt::print(
+            "{} --->
+            Added raft node{}({}
+                              : {})\n ", __func__,
             node_info.first,
             node_info.second.hostname,
             node_info.second.port);
