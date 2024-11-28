@@ -11,8 +11,8 @@
 #include <regex>
 #include <string>
 
-constexpr int kreqs = 200000;
-constexpr int k_print = 2000;
+constexpr int kreqs = 1e6;
+constexpr int k_print = 10000;
 constexpr int k_msg_sz = 64;
 
 inline static std::tuple<std::unique_ptr<uint8_t[]>, size_t> authenticate_msg(
@@ -25,7 +25,7 @@ inline static std::tuple<std::unique_ptr<uint8_t[]>, size_t> authenticate_msg(
       std::make_unique<uint8_t[]>(msg_sz + authentication::get_hash_len());
     ::memcpy(authenticated_msg.get(), msg.get(), msg_sz);
     ::memcpy(authenticated_msg.get() + msg_sz, hash.get(), hash_sz);
-    return {std::move(authenticated_msg), (hash_sz+msg_sz)};
+    return {std::move(authenticated_msg), (hash_sz + msg_sz)};
   }
   return {std::move(msg), msg_sz};
 }
@@ -35,7 +35,7 @@ inline static bool verify_authentication(uint8_t* msg, size_t msg_sz)
   if (authentication::is_enabled())
   {
     auto [hash, hash_sz] = authentication::get_hash(msg, msg_sz);
-    return (::memcmp(hash.get(), msg+msg_sz, hash_sz) == 0);
+    return (::memcmp(hash.get(), msg + msg_sz, hash_sz) == 0);
   }
   return true;
 }
@@ -94,7 +94,8 @@ int main(int argc, char* argv[])
         msg_to_send_sz);
 
       auto [data, data_sz] = socket_layer::read_from_socket(
-        net->node_connections_map[ccf::NodeId("0")]->listening_handle, k_msg_sz+authentication::get_hash_len());
+        net->node_connections_map[ccf::NodeId("0")]->listening_handle,
+        k_msg_sz + authentication::get_hash_len());
       if (!verify_authentication(
             data.get(), data_sz - authentication::get_hash_len()))
       {
@@ -135,7 +136,8 @@ int main(int argc, char* argv[])
     for (auto i = 0ULL; i < kreqs; i++)
     {
       auto [data, data_sz] = socket_layer::read_from_socket(
-        net->node_connections_map[ccf::NodeId("1")]->listening_handle, k_msg_sz+authentication::get_hash_len());
+        net->node_connections_map[ccf::NodeId("1")]->listening_handle,
+        k_msg_sz + authentication::get_hash_len());
       if (!verify_authentication(
             data.get(), data_sz - authentication::get_hash_len()))
       {
