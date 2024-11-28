@@ -197,10 +197,13 @@ int main(int argc, char* argv[])
 
     std::chrono::duration<double> duration = end - now;
     fmt::print(
-      "{} ---> experiment took = {} s, tput={} op/s, avg_latency={} ms\n",
+      "{} ---> experiment took = {} s, tput={} op/s, avg_latency={} ms, "
+      "nb_sends={}, nb_recvs={}\n",
       __func__,
       duration.count(),
       (1.0 * kreqs) / duration.count(),
-      (duration.count() * 1.0 * 1000) / (kreqs * 1.0));
+      (duration.count() * 1.0 * 1000) / (kreqs * 1.0),
+      socket_layer::nb_sends,
+      socket_layer::nb_recvs);
   }
 }
