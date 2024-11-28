@@ -97,7 +97,9 @@ int main(int argc, char* argv[])
     auto& vec = *(data.get());
 
     int acks = 0;
-    acks += driver->periodic_listening_acks(std::to_string(follower_1));
+    acks += driver->periodic_listening_acks(std::to_string(follower_1)); 
+    // this is because we send an AppendEntries message every time we 
+    // send a new_configuration
 
     for (auto i = 0ULL; i < k_num_requests; i++)
     {
