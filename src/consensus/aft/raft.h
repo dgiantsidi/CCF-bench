@@ -2587,11 +2587,12 @@ namespace aft
               index);
               send_append_entries(node_info.first, index);
           }
-
+#if 0
           fmt::print("{} ---> Added raft node {}({}:{})\n", __func__,
             node_info.first,
             node_info.second.hostname,
             node_info.second.port);
+#endif
         }
       }
     }
