@@ -51,7 +51,7 @@ namespace socket_layer
     {
       len = write(socket, msg.get() + offset, remaining);
       offset += len;
-      remaining -= offset;
+      remaining -= len;
       if (remaining == 0)
         break;
     }
