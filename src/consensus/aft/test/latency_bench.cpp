@@ -147,8 +147,8 @@ int main(int argc, char* argv[])
 
       socket_layer::send_to_socket(
         net->node_connections_map[ccf::NodeId("0")]->sending_handle,
-        std::move(ptr),
-        k_msg_sz);
+        std::move(msg_to_send),
+        msg_to_send_sz);
     }
     net->close_channel(ccf::NodeId("1"));
     auto end = std::chrono::high_resolution_clock::now();
