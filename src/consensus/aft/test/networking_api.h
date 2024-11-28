@@ -272,7 +272,8 @@ public:
         peer_id);
       exit(-1);
     }
-    auto& listening_handle = node_connections_map[peer_id]->listening_handle;
+    fmt::print("{} ---> with peer={} and we will update the listening_handle\n", __func__, peer_id);
+    auto& listening_handle = node_connections_map[peer_id]->listening_handle; // TODO: the peer_id is my_id -> should be the other's node id
 
     if (listen(listening_handle, 5) == -1)
     {

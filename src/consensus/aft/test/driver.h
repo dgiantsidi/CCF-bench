@@ -227,9 +227,9 @@ public:
   }
 
   void make_follower(
-    const ccf::NodeId& peer_id,
-    const std::string& peer_hostname,
-    const int& port)
+    const ccf::NodeId& peer_id, /* my id */
+    const std::string& peer_hostname, /* my ip*/
+    const int& port /* listening port */)
   {
 #if 0
     fmt::print(
