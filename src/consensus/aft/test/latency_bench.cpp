@@ -10,7 +10,35 @@
 #include <map>
 #include <regex>
 #include <string>
+
 constexpr int kreqs = 200000;
+constexpr int k_print = 10000;
+constexpr int k_msg_sz = 64;
+
+inline static std::tuple<std::unique_ptr<uint8_t[]>, size_t> authenticate_msg(
+  std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
+{
+  if (authentication::is_enabled())
+  {
+    auto [hash, hash_sz] = authentication::get_hash(msg.get(), msg_sz);
+    auto authenticated_msg =
+      std::make_unique<uint8_t[]>(msg_sz + authentication::get_hash_len());
+    ::memcpy(authenticated_msg.get(), msg.get(), msg_sz);
+    ::memcpy(authenticated_msg.get() + msg_sz, hash.get(), hash_sz);
+  }
+  return {std::move(msg), msg_sz};
+}
+
+inline static bool verify_authentication(uint8_t* msg, size_t msg_sz)
+{
+  if (authentication::is_enabled())
+  {
+    auto [hash, hash_sz] = authentication::get_hash(msg, msg_sz);
+    return (::memcmp(hash.get(), msg, hash_sz) == 0);
+  }
+  return true;
+}
+
 int main(int argc, char* argv[])
 {
   authentication::init();
@@ -56,17 +84,23 @@ int main(int argc, char* argv[])
     fmt::print("{} ---> Starting ...\n", __func__);
     for (auto i = 0ULL; i < kreqs; i++)
     {
-      auto ptr = std::make_unique<uint8_t[]>(16);
-
+      auto ptr = std::make_unique<uint8_t[]>(k_msg_sz);
+      auto [msg_to_send, msg_to_send_sz] =
+        authenticate_msg(std::move(ptr), k_msg_sz);
       socket_layer::send_to_socket(
         net->node_connections_map[ccf::NodeId("1")]->sending_handle,
-        std::move(ptr),
-        16);
-      //   fmt::print("{} --> send, i={}\n", __func__, i);
+        std::move(msg_to_send),
+        msg_to_send_sz);
+
       auto [data, data_sz] = socket_layer::read_from_socket(
         net->node_connections_map[ccf::NodeId("0")]->listening_handle, 16);
-      if (i % 10000 == 0)
-        fmt::print("{} --> tx_id={}\n", __func__, i);
+      if (!verify_authentication(
+            data.get(), data_sz - authentication::get_hash_len()))
+      {
+        fmt::print("{} ---> tx_id={} failed in authentication\n", __func__, i);
+      }
+      if (i % k_print == 0)
+        fmt::print("{} ---> tx_id={}\n", __func__, i);
     }
     net->close_channel(ccf::NodeId("0"));
     auto end = std::chrono::high_resolution_clock::now();
@@ -75,7 +109,8 @@ int main(int argc, char* argv[])
       "{} ---> experiment took = {} s, tput={} op/s, avg_latency={} ms\n",
       __func__,
       duration.count(),
-      (1.0 * kreqs) / duration.count(), (duration.count()*1.0*1000)/(kreqs*1.0));
+      (1.0 * kreqs) / duration.count(),
+      (duration.count() * 1.0 * 1000) / (kreqs * 1.0));
   }
   else
   {
@@ -92,7 +127,7 @@ int main(int argc, char* argv[])
       ccf::NodeId("0"),
       my_connections[ccf::NodeId("0")].ip,
       my_connections[ccf::NodeId("0")].base_listening_port);
-    fmt::print("{} ---> Starting time=1\n", __func__);
+
     sleep(1);
     auto now = std::chrono::high_resolution_clock::now();
 
@@ -100,19 +135,29 @@ int main(int argc, char* argv[])
     {
       auto [data, data_sz] = socket_layer::read_from_socket(
         net->node_connections_map[ccf::NodeId("1")]->listening_handle, 16);
-      //  fmt::print("{} --> read, i={}\n", __func__, i);
-      auto ptr = std::make_unique<uint8_t[]>(16);
+      if (!verify_authentication(
+            data.get(), data_sz - authentication::get_hash_len()))
+      {
+        fmt::print("{} ---> tx_id={} failed in authentication\n", __func__, i);
+      }
+      auto ptr = std::make_unique<uint8_t[]>(k_msg_sz);
+      auto [msg_to_send, msg_to_send_sz] =
+        authenticate_msg(std::move(ptr), k_msg_sz);
 
       socket_layer::send_to_socket(
         net->node_connections_map[ccf::NodeId("0")]->sending_handle,
         std::move(ptr),
         16);
-      //    fmt::print("{} --> send, i={}\n", __func__, i);
     }
     net->close_channel(ccf::NodeId("1"));
     auto end = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> duration = end - now;
-    fmt::print("{} ---> experiment took = {} s\n", __func__, duration.count());
+    fmt::print(
+      "{} ---> experiment took = {} s, tput={} op/s, avg_latency={} ms\n",
+      __func__,
+      duration.count(),
+      (1.0 * kreqs) / duration.count(),
+      (duration.count() * 1.0 * 1000) / (kreqs * 1.0));
   }
 }
