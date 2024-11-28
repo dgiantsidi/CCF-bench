@@ -86,12 +86,22 @@ int main(int argc, char* argv[])
     for (auto i = 0ULL; i < kreqs; i++)
     {
       auto ptr = std::make_unique<uint8_t[]>(k_msg_sz);
-      auto [msg_to_send, msg_to_send_sz] =
-        authenticate_msg(std::move(ptr), k_msg_sz);
-      socket_layer::send_to_socket(
-        net->node_connections_map[ccf::NodeId("1")]->sending_handle,
-        std::move(msg_to_send),
-        msg_to_send_sz);
+      if (authentication::is_enabled())
+      {
+        auto [msg_to_send, msg_to_send_sz] =
+          authenticate_msg(std::move(ptr), k_msg_sz);
+        socket_layer::send_to_socket(
+          net->node_connections_map[ccf::NodeId("1")]->sending_handle,
+          std::move(msg_to_send),
+          msg_to_send_sz);
+      }
+      else
+      {
+        socket_layer::send_to_socket(
+          net->node_connections_map[ccf::NodeId("1")]->sending_handle,
+          std::move(ptr),
+          k_msg_sz);
+      }
 
       auto [data, data_sz] = socket_layer::read_from_socket(
         net->node_connections_map[ccf::NodeId("0")]->listening_handle,
@@ -144,13 +154,23 @@ int main(int argc, char* argv[])
         fmt::print("{} ---> tx_id={} failed in authentication\n", __func__, i);
       }
       auto ptr = std::make_unique<uint8_t[]>(k_msg_sz);
-      auto [msg_to_send, msg_to_send_sz] =
-        authenticate_msg(std::move(ptr), k_msg_sz);
+      if (authentication::is_enabled())
+      {
+        auto [msg_to_send, msg_to_send_sz] =
+          authenticate_msg(std::move(ptr), k_msg_sz);
 
-      socket_layer::send_to_socket(
-        net->node_connections_map[ccf::NodeId("0")]->sending_handle,
-        std::move(msg_to_send),
-        msg_to_send_sz);
+        socket_layer::send_to_socket(
+          net->node_connections_map[ccf::NodeId("0")]->sending_handle,
+          std::move(msg_to_send),
+          msg_to_send_sz);
+      }
+      else
+      {
+        socket_layer::send_to_socket(
+          net->node_connections_map[ccf::NodeId("0")]->sending_handle,
+          std::move(ptr),
+          k_msg_sz);
+      }
     }
     net->close_channel(ccf::NodeId("1"));
     auto end = std::chrono::high_resolution_clock::now();
