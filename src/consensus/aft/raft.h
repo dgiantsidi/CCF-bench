@@ -2563,8 +2563,7 @@ namespace aft
         {
           if (!channels->have_channel(node_info.first))
           {
-            fmt::print("{} ---> 
-              Configurations: create node channel with {}", __func__, node_info.first);
+            fmt::print("{} ---> Configurations: create node channel with {}\n", __func__, node_info.first);
 
             channels->associate_node_address(
               node_info.first,
@@ -2585,13 +2584,13 @@ namespace aft
               __func__,
               node_info.first,
               node_info.second,
-              index) send_append_entries(node_info.first, index);
+              index);
+              send_append_entries(node_info.first, index);
           }
 
           fmt::print(
             "{} --->
-            Added raft node{}({}
-                              : {})\n ", __func__,
+            Added raft node {}({}:{})\n", __func__,
             node_info.first,
             node_info.second.hostname,
             node_info.second.port);
