@@ -12,7 +12,7 @@
 #include <string>
 
 constexpr int kreqs = 200000;
-constexpr int k_print = 10000;
+constexpr int k_print = 2000;
 constexpr int k_msg_sz = 64;
 
 inline static std::tuple<std::unique_ptr<uint8_t[]>, size_t> authenticate_msg(
@@ -34,7 +34,7 @@ inline static bool verify_authentication(uint8_t* msg, size_t msg_sz)
   if (authentication::is_enabled())
   {
     auto [hash, hash_sz] = authentication::get_hash(msg, msg_sz);
-    return (::memcmp(hash.get(), msg, hash_sz) == 0);
+    return (::memcmp(hash.get(), msg+msg_sz, hash_sz) == 0);
   }
   return true;
 }
