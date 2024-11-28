@@ -2588,9 +2588,7 @@ namespace aft
               send_append_entries(node_info.first, index);
           }
 
-          fmt::print(
-            "{} --->
-            Added raft node {}({}:{})\n", __func__,
+          fmt::print("{} ---> Added raft node {}({}:{})\n", __func__,
             node_info.first,
             node_info.second.hostname,
             node_info.second.port);
