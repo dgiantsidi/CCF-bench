@@ -52,7 +52,7 @@ private:
   };
 
   std::map<ccf::NodeId, NodeDriver> _nodes;
-  std::set<std::pair<ccf::NodeId, ccf::NodeId>> _connections;
+  // std::set<std::pair<ccf::NodeId, ccf::NodeId>> _connections;
 
   void _replicate(
     const std::string& term_s,
@@ -174,6 +174,12 @@ public:
   {
     return (_nodes[my_nid].raft)->get_committed_seqno();
   }
+
+  size_t get_ledger_size()
+  {
+    return (_nodes[my_nid].raft)->ledger->ledger_size();
+  }
+
   void become_primary()
   {
 #if 0

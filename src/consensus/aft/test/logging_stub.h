@@ -27,6 +27,10 @@ namespace aft
 
     virtual void init(Index, Index) {}
 
+    size_t ledger_size()
+    {
+      return ledger.size();
+    }
     virtual void put_entry(
       const std::vector<uint8_t>& original,
       bool globally_committable,

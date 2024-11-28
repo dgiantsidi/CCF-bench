@@ -381,9 +381,29 @@ public:
 
   bool have_channel(const ccf::NodeId& nid) override
   {
-    fmt::print("{} with node {} \n", __func__, nid);
+    if (auto s_ptr = raft_copy.lock())
+    {
+      fmt::print(
+        "{} --> current node {} with node {} \n", __func__, s_ptr->id(), nid);
+    }
+    else
+    {
+      fmt::print(
+        "{} --> with node {} (raft_copy not initialized ...)\n",
+        __func__,
+        s_ptr->id(),
+        nid);
+    }
 
     return (node_connections_map.find(nid) != node_connections_map.end());
+  }
+
+  size_t get_ledger_size()
+  {
+    if (auto s_ptr = raft_copy.lock())
+    {
+      return s_ptr->ledger->ledger_size();
+    }
   }
 
   template <class T>

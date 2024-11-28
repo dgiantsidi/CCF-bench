@@ -74,9 +74,10 @@ namespace config_parser
 
 int main(int argc, char* argv[])
 {
-  threading::ThreadMessaging::init(1); // @dimitra:TODO -> this is not used actually 
+  threading::ThreadMessaging::init(
+    1); // @dimitra:TODO -> this is not used actually
   authentication::init();
- 
+
   std::string node_id;
   std::cin >> node_id;
 
@@ -125,16 +126,22 @@ int main(int argc, char* argv[])
   std::chrono::duration<double> duration = end - start;
 
   fmt::print(
-    "{}: time elapsed={}s, tput={} op/s, avg latency={} ms, nb_sends={}, nb_syscalls_writes={} "
-    "nb_recvs={}, nb_syscalls_reads={}, bytes_sent={}, bytes_received={}, raft_committed_seqno={}\n",
+    "{}: time elapsed={}s, tput={} op/s, avg latency={} ms, nb_sends={}, "
+    "nb_syscalls_writes={} "
+    "nb_recvs={}, nb_syscalls_reads={}, bytes_sent={}, bytes_received={}, "
+    "raft_committed_seqno={}, ledger_size={}\n",
     __func__,
     duration.count(),
     ((1.0 * k_num_requests) / (1.0 * duration.count())),
     ((1000.0 * duration.count()) / (1.0 * k_num_requests)),
-    socket_layer::nb_sends, socket_layer::nb_syscalls_writes, 
-    socket_layer::nb_recvs, socket_layer::nb_syscalls_reads,
-    socket_layer::bytes_sent, socket_layer::bytes_received,
-    driver->get_committed_seqno());
+    socket_layer::nb_sends,
+    socket_layer::nb_syscalls_writes,
+    socket_layer::nb_recvs,
+    socket_layer::nb_syscalls_reads,
+    socket_layer::bytes_sent,
+    socket_layer::bytes_received,
+    driver->get_committed_seqno(),
+    driver->get_ledger_size());
 
   return 0;
 }
