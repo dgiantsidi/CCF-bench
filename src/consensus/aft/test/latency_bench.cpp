@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
         msg_to_send_sz);
 
       auto [data, data_sz] = socket_layer::read_from_socket(
-        net->node_connections_map[ccf::NodeId("0")]->listening_handle, 16);
+        net->node_connections_map[ccf::NodeId("0")]->listening_handle, k_msg_sz);
       if (!verify_authentication(
             data.get(), data_sz - authentication::get_hash_len()))
       {
@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
     for (auto i = 0ULL; i < kreqs; i++)
     {
       auto [data, data_sz] = socket_layer::read_from_socket(
-        net->node_connections_map[ccf::NodeId("1")]->listening_handle, 16);
+        net->node_connections_map[ccf::NodeId("1")]->listening_handle, k_msg_sz);
       if (!verify_authentication(
             data.get(), data_sz - authentication::get_hash_len()))
       {
@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
       socket_layer::send_to_socket(
         net->node_connections_map[ccf::NodeId("0")]->sending_handle,
         std::move(ptr),
-        16);
+        k_msg_sz);
     }
     net->close_channel(ccf::NodeId("1"));
     auto end = std::chrono::high_resolution_clock::now();
