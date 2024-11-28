@@ -22,6 +22,10 @@ namespace socket_layer
   // these are stats we keep track of
   uint64_t nb_sends = 0;
   uint64_t nb_recvs = 0;
+  uint64_t bytes_sent = 0;
+  uint64_t bytes_received = 0;
+  uint64_t nb_syscalls_writes = 0;
+  uint64_t nb_syscalls_reads = 0;
 
   static void print_data(const uint8_t* ptr, size_t msg_size)
   {
@@ -44,12 +48,13 @@ namespace socket_layer
     const int& socket, std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
   {
     nb_sends++;
-
+    bytes_sent += msg_sz;
     int len = 0, offset = 0;
     int remaining = msg_sz;
     for (;;)
     {
       len = write(socket, msg.get() + offset, remaining);
+      nb_syscalls_writes++;
       offset += len;
       remaining -= len;
       if (remaining == 0)
@@ -62,11 +67,14 @@ namespace socket_layer
   {
     int len = 0, offset = 0;
     int remaining = sz;
+    bytes_received += sz;
+
     std::unique_ptr<uint8_t[]> data_buf =
       std::make_unique<uint8_t[]>(remaining);
     for (;;)
     {
       len = read(socket, data_buf.get() + offset, remaining);
+      nb_syscalls_reads++;
       offset += len;
       remaining -= len;
       if (remaining == 0)

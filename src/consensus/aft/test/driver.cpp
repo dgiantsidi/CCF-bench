@@ -74,36 +74,9 @@ namespace config_parser
 
 int main(int argc, char* argv[])
 {
-  threading::ThreadMessaging::init(1);
+  threading::ThreadMessaging::init(1); // @dimitra:TODO -> this is not used actually 
   authentication::init();
-  // std::map<ccf::NodeId, network_stack::connectivity_description>
-  // my_connections;
-
-#if 0
-  my_connections.insert(std::make_pair(
-    ccf::NodeId("0"), network_stack::connectivity_description()));
-  my_connections.insert(std::make_pair(
-    ccf::NodeId("1"), network_stack::connectivity_description()));
-  my_connections.insert(std::make_pair(
-    ccf::NodeId("2"), network_stack::connectivity_description()));
-
-  my_connections[ccf::NodeId("0")].nid = ccf::NodeId("0");
-  my_connections[ccf::NodeId("0")].ip = "10.1.0.7";
-  // my_connections[ccf::NodeId("0")].ip = "10.5.0.6"; // regural VM IP
-  my_connections[ccf::NodeId("0")].base_listening_port = 1800;
-  my_connections[ccf::NodeId("0")].base_sending_port = 1900;
-
-  my_connections[ccf::NodeId("1")].nid = ccf::NodeId("1");
-  my_connections[ccf::NodeId("1")].ip = "10.1.0.4";
-  // my_connections[ccf::NodeId("1")].ip = "10.5.0.7"; // regural VM IP
-  my_connections[ccf::NodeId("1")].base_listening_port = 2800;
-  my_connections[ccf::NodeId("1")].base_sending_port = 2900;
-
-  my_connections[ccf::NodeId("2")].nid = ccf::NodeId("2");
-  my_connections[ccf::NodeId("2")].ip = "10.5.0.6";
-  my_connections[ccf::NodeId("2")].base_listening_port = 3800;
-  my_connections[ccf::NodeId("2")].base_sending_port = 3900;
-#endif
+ 
   std::string node_id;
   std::cin >> node_id;
 
@@ -152,14 +125,15 @@ int main(int argc, char* argv[])
   std::chrono::duration<double> duration = end - start;
 
   fmt::print(
-    "{}: time elapsed={}s, tput={} op/s, avg latency={} ms, nb_sends={}, "
-    "nb_recvs={}, raft_committed_seqno={}\n",
+    "{}: time elapsed={}s, tput={} op/s, avg latency={} ms, nb_sends={}, nb_syscalls_writes={} "
+    "nb_recvs={}, nb_syscalls_reads={}, bytes_sent={}, bytes_received={}, raft_committed_seqno={}\n",
     __func__,
     duration.count(),
     ((1.0 * k_num_requests) / (1.0 * duration.count())),
     ((1000.0 * duration.count()) / (1.0 * k_num_requests)),
-    socket_layer::nb_sends,
-    socket_layer::nb_recvs,
+    socket_layer::nb_sends, socket_layer::nb_syscalls_writes, 
+    socket_layer::nb_recvs, socket_layer::nb_syscalls_reads,
+    socket_layer::bytes_sent, socket_layer::bytes_received,
     driver->get_committed_seqno());
 
   return 0;
