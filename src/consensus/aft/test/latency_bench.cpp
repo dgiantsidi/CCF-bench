@@ -11,9 +11,9 @@
 #include <regex>
 #include <string>
 
-constexpr int kreqs = 1e6;
+constexpr int kreqs = k_num_requests;
 constexpr int k_print = 10000;
-constexpr int k_msg_sz = 64;
+constexpr int k_msg_sz = 16;
 
 inline static std::tuple<std::unique_ptr<uint8_t[]>, size_t> authenticate_msg(
   std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
