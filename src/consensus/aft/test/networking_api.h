@@ -372,9 +372,10 @@ public:
 
   void close_channel(const ccf::NodeId& peer_id) override
   {
-    if (node_connections_map.find(peer_id) == node_connections_map.end())
+    if (node_connections_map.find(peer_id) == node_connections_map.end()) {
       fmt::print("{} not connections found with peer {}\n", __func__, peer_id);
-    return;
+      return;
+    }
 
     if (node_connections_map[peer_id]->listening_handle > 0)
       close(node_connections_map[peer_id]->listening_handle);
