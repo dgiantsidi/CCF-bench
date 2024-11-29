@@ -235,7 +235,7 @@ public:
       count++;
       sleep(1);
       fmt::print(
-        "{} ---> trying to connect to {}:{}\n", __func__, peer_ip, peer_port);
+        "{} ---> trying to connect to {}:{} ---> {}\n", __func__, peer_ip, peer_port, std::strerror(errno));
       if (count == 10000)
       {
         fmt::print(
