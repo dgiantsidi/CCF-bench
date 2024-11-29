@@ -97,8 +97,8 @@ int main(int argc, char* argv[])
     auto& vec = *(data.get());
 
     int acks = 0;
-    acks += driver->periodic_listening_acks(std::to_string(follower_1)); 
-    // this is because we send an AppendEntries message every time we 
+    acks += driver->periodic_listening_acks(std::to_string(follower_1));
+    // this is because we send an AppendEntries message every time we
     // send a new_configuration
 
     for (auto i = 0ULL; i < k_num_requests; i++)
@@ -109,7 +109,8 @@ int main(int argc, char* argv[])
         fmt::print("{} acks={}\n", __func__, acks);
     }
 
-    driver->close_connections(ccf::NodeId("0"));
+    driver->close_connections(std::to_string(primary_node));
+    driver->close_connections(std::to_string(follower_1));
   }
   else
   {
@@ -125,6 +126,7 @@ int main(int argc, char* argv[])
     count += driver->periodic_listening(std::to_string(primary_node));
     fmt::print("{} count={}\n", __func__, count);
     driver->close_connections(std::to_string(follower_1));
+    driver->close_connections(std::to_string(primary_node));
   }
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration = end - start;
