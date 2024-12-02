@@ -47,6 +47,7 @@ namespace socket_layer
   void send_to_socket(
     const int& socket, std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
   {
+    
     nb_sends++;
     bytes_sent += msg_sz;
     int len = 0, offset = 0;
@@ -57,6 +58,7 @@ namespace socket_layer
       nb_syscalls_writes++;
       offset += len;
       remaining -= len;
+      
       if (remaining == 0)
         break;
     }

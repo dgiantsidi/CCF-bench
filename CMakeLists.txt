@@ -983,7 +983,10 @@ if(BUILD_TESTS)
                   src/enclave/thread_local.cpp
     )
     target_link_libraries(raft_driver PRIVATE ccfcrypto.host)
+    target_link_libraries(raft_driver PRIVATE ${CMAKE_THREAD_LIBS_INIT})
     target_include_directories(raft_driver PRIVATE src/aft)
+    
+
 
     # Latency bench
     add_executable(
