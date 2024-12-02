@@ -747,13 +747,8 @@ namespace aft
     void recv_message(
       const ccf::NodeId& from, const uint8_t* data, size_t size) override
     {
-       RaftMsgType type;
-      {
-      std::unique_lock<ccf::pal::Mutex> guard(state->lock);
-
-      type = serialized::peek<RaftMsgType>(data, size);
-      }
-
+       RaftMsgType type = serialized::peek<RaftMsgType>(data, size);
+      
       try
       {
         switch (type)
@@ -986,6 +981,8 @@ namespace aft
 
     void send_append_entries(const ccf::NodeId& to, Index start_idx)
     {
+            std::unique_lock<ccf::pal::Mutex> guard(state->lock);
+
 #if 0
       fmt::print(
         "Sending append entries to node {} in batches of {}, covering the "
