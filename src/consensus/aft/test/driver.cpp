@@ -76,8 +76,10 @@ static void listen_for_acks(std::shared_ptr<RaftDriver> driver) {
   int acks = 0;
   for (;;) {
     acks += driver->periodic_listening_acks(std::to_string(follower_1));
-    if (acks % 1000 == 0)
+    if (acks % 50000 == 0)
       fmt::print("{} acks={}\n", __func__, acks);
+    if (driver->get_committed_seqno() == k_num_requests)
+      return ;
   }
 }
 
@@ -127,6 +129,7 @@ int main(int argc, char* argv[])
         break;
     }
     fmt::print("{} --> finished, {}\n", __func__, driver->get_committed_seqno());
+    
     threads_leader[0].join();
     driver->close_connections(std::to_string(primary_node));
     driver->close_connections(std::to_string(follower_1));
