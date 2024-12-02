@@ -747,7 +747,12 @@ namespace aft
     void recv_message(
       const ccf::NodeId& from, const uint8_t* data, size_t size) override
     {
-      RaftMsgType type = serialized::peek<RaftMsgType>(data, size);
+       RaftMsgType type;
+      {
+      std::unique_lock<ccf::pal::Mutex> guard(state->lock);
+
+      type = serialized::peek<RaftMsgType>(data, size);
+      }
 
       try
       {
