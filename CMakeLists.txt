@@ -109,6 +109,8 @@ if(USE_AUTHENTICATOR)
 endif()
 
 if(SAN)
+ message( STATUS
+      "Building with address sanitizer")
   # Set the compiler flags for AddressSanitizer
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g -O1 -fno-omit-frame-pointer")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -g -O1 -fno-omit-frame-pointer")
