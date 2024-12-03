@@ -19,8 +19,9 @@ public:
   std::tuple<ccf::NodeId, std::unique_ptr<uint8_t[]>, size_t> pop()
   {
     std::unique_lock<std::mutex> tmp_lock(dq_mtx);
-    if (dq.empty()) {
-        fmt::print("{} --> no elem\n", __func__);
+    if (dq.empty())
+    {
+      fmt::print("{} --> no elem\n", __func__);
       return {ccf::NodeId("0"), std::make_unique<uint8_t[]>(1), 0};
     }
     std::unique_ptr<message>& front = dq.front();
