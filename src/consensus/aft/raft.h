@@ -671,7 +671,7 @@ namespace aft
 
         if (index != state->last_idx + 1)
           return false;
-#if 1
+#if 0
         fmt::print(
           "Replicated on leader {}: {}{} ({} hooks)\n",
           state->node_id,
@@ -729,7 +729,7 @@ namespace aft
           entry_size_not_limited = 0;
           for (const auto& it : all_other_nodes)
           {
-            fmt::print("Sending updates to follower {}\n", it.first);
+            //fmt::print("Sending updates to follower {}\n", it.first);
             send_append_entries(it.first, it.second.sent_idx + 1);
           }
         }

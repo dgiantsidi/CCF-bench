@@ -90,11 +90,12 @@ namespace socket_layer
     for (;;)
     {
       count++;
-      fmt::print("{}:{}@{} count={} ** START **\n", socket_layer::get_thread_id(), __func__, socket, count);
+      // fmt::print("{}:{}@{} count={} ** START **\n", socket_layer::get_thread_id(), __func__, socket, count);
       len = read(socket, data_buf.get() + offset, remaining);
       nb_syscalls_reads++;
       offset += len;
       remaining -= len;
+      #if 0
       fmt::print(
         "{}:{}@{} count={} len={} remaining={} ** START **\n", socket_layer::get_thread_id(),
         __func__,
@@ -102,10 +103,10 @@ namespace socket_layer
         count,
         len,
         remaining);
-
+      #endif
       if (remaining == 0)
       {
-        fmt::print("{}:{}@{} count={} ** END **\n",socket_layer::get_thread_id(), __func__, socket, count);
+        //fmt::print("{}:{}@{} count={} ** END **\n",socket_layer::get_thread_id(), __func__, socket, count);
         return {std::move(data_buf), sz};
       }
     }
