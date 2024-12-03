@@ -48,6 +48,7 @@ private:
       msg = std::move(_msg);
       msg_sz = _msg_sz;
     }
+    message() = delete;
   };
   std::deque<std::unique_ptr<message>> dq;
   std::mutex dq_mtx;
