@@ -55,14 +55,16 @@ namespace socket_layer
     int remaining = msg_sz;
     for (;;)
     {
-      fmt::print("{} nb_sents={}\n", __func__, nb_sends);
+      fmt::print("{} nb_sents={} ** START **\n", __func__, nb_sends);
       len = write(socket, msg.get() + offset, remaining);
       nb_syscalls_writes++;
       offset += len;
       remaining -= len;
       
-      if (remaining == 0)
+      if (remaining == 0) {
+        fmt::print("{} nb_sents={} ** END **\n", __func__, nb_sends);
         break;
+      }
     }
   }
 
@@ -77,12 +79,17 @@ namespace socket_layer
       std::make_unique<uint8_t[]>(remaining);
     for (;;)
     {
+      fmt::print("{} bytes_received={} ** START **\n", __func__, bytes_received);
       len = read(socket, data_buf.get() + offset, remaining);
       nb_syscalls_reads++;
       offset += len;
       remaining -= len;
-      if (remaining == 0)
+      if (remaining == 0) {
+        fmt::print("{} bytes_received={} ** END **\n", __func__, bytes_received);
+
         return {std::move(data_buf), sz};
+
+      }
     }
     return {std::move(std::make_unique<uint8_t[]>(0)), 0};
   }
