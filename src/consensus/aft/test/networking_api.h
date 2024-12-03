@@ -64,7 +64,7 @@ namespace socket_layer
     int remaining = msg_sz;
     for (;;)
     {
-      fmt::print("{}:{}@{} nb_sents={} ** START **\n", socket_layer::get_thread_id(), __func__, socket, nb_sends);
+      // fmt::print("{}:{}@{} nb_sents={} ** START **\n", socket_layer::get_thread_id(), __func__, socket, nb_sends);
       len = write(socket, msg.get() + offset, remaining);
       nb_syscalls_writes++;
       offset += len;
@@ -72,7 +72,7 @@ namespace socket_layer
 
       if (remaining == 0)
       {
-        fmt::print("{}:{}@{} nb_sents={} ** END **\n", socket_layer::get_thread_id(), __func__, socket, nb_sends);
+        //fmt::print("{}:{}@{} nb_sents={} ** END **\n", socket_layer::get_thread_id(), __func__, socket, nb_sends);
         break;
       }
     }
