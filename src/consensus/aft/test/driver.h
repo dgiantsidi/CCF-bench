@@ -82,7 +82,7 @@ private:
 
     auto& raft = _nodes.at(node_id).raft;
     const auto idx = raft->get_last_idx() + 1;
-#if 1
+#if 0
     fmt::print(
       "{}->>{}: replicate {}.{} = {} [{}]\n",
       node_id,
