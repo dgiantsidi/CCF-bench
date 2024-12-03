@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <unordered_map>
 
@@ -54,6 +55,7 @@ namespace socket_layer
     int remaining = msg_sz;
     for (;;)
     {
+      fmt::print("{} nb_sents={}\n", __func__, nb_sends);
       len = write(socket, msg.get() + offset, remaining);
       nb_syscalls_writes++;
       offset += len;
@@ -221,6 +223,18 @@ public:
       fmt::print("{} error setting up the socket\n", __func__);
       return -1;
     }
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    if (flags < 0) {
+        perror("fcntl(F_GETFL)");
+        exit(EXIT_FAILURE);
+    }
+
+    flags |= O_NONBLOCK;
+    if (fcntl(sockfd, F_SETFL, flags) < 0) {
+        perror("fcntl(F_SETFL)");
+        exit(EXIT_FAILURE);
+    }
+
 
     // Define the server address
     struct sockaddr_in server_addr;
