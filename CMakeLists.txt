@@ -121,6 +121,20 @@ if(SAN)
   set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fsanitize=address")
 endif()
 
+
+if(TSAN)
+ message( STATUS
+      "Building with thread sanitizer")
+  # Set the compiler flags for AddressSanitizer
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread -g -O1 -fno-omit-frame-pointer")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=thread -g -O1 -fno-omit-frame-pointer")
+
+  # Set the linker flags for AddressSanitizer
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=thread")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=thread")
+  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fsanitize=thread")
+endif()
+
 # This option controls whether to link virtual builds against snmalloc rather
 # than use the system allocator. In builds using Open Enclave, enclave
 # allocation is managed separately and enabling snmalloc is done by linking
