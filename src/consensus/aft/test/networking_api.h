@@ -74,19 +74,21 @@ namespace socket_layer
     int len = 0, offset = 0;
     int remaining = sz;
     bytes_received += sz;
-
+    static int count = 0;
     std::unique_ptr<uint8_t[]> data_buf =
       std::make_unique<uint8_t[]>(remaining);
     for (;;)
     {
-      fmt::print("{} bytes_received={} ** START **\n", __func__, bytes_received);
+      count++;
+      fmt::print("{} count={} ** START **\n", __func__, count);
       len = read(socket, data_buf.get() + offset, remaining);
       nb_syscalls_reads++;
       offset += len;
       remaining -= len;
-      if (remaining == 0) {
-        fmt::print("{} bytes_received={} ** END **\n", __func__, bytes_received);
+      fmt::print("{} count={} len={} remaining={} ** START **\n", __func__, count, len, remaining);
 
+      if (remaining == 0) {
+        fmt::print("{} count={} ** END **\n", __func__, count);
         return {std::move(data_buf), sz};
 
       }
