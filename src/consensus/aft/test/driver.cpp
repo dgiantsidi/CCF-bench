@@ -162,6 +162,7 @@ int main(int argc, char* argv[])
   }
   else
   {
+    std::vector<std::thread> threads_follower;
     driver->make_follower(
       ccf::NodeId(node_id),
       driver->my_connections[std::to_string(follower_1)].ip,
@@ -170,6 +171,10 @@ int main(int argc, char* argv[])
     for (auto i = 0ULL; i < k_num_requests; i++)
     {
       count += driver->periodic_listening(std::to_string(primary_node));
+      if (i == 0)
+      {
+        threads_follower.emplace_back(std::thread(apply_cmds, driver));
+      }
     }
     count += driver->periodic_listening(std::to_string(primary_node));
     driver->close_connections(std::to_string(follower_1));
