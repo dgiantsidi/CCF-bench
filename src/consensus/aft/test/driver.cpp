@@ -74,6 +74,7 @@ namespace config_parser
 
 static void listen_for_acks(std::shared_ptr<RaftDriver> driver)
 {
+  fmt::print("{}:{}\n", __func__, socket_layer::get_thread_id());
   int acks = 0;
   for (;;)
   {
@@ -118,6 +119,7 @@ int main(int argc, char* argv[])
     threads_leader.emplace_back(std::thread(listen_for_acks, driver));
     for (auto i = 0ULL; i < k_num_requests; i++)
     {
+      fmt::print("{}:{} ---> replicate_commitable()\n", __func__, socket_layer::get_thread_id());
       driver->replicate_commitable("2", data, 0);
 #if 0
       acks += driver->periodic_listening_acks(std::to_string(follower_1));
