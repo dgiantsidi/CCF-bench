@@ -24,7 +24,7 @@ public:
     std::unique_ptr<message>& front = dq.front();
     std::unique_ptr<uint8_t[]> ret_msg = std::move(front->msg);
     size_t ret_sz = front->msg_sz;
-    ccf::NodeId node_id = front->node_id.value();
+    ccf::NodeId node_id = front->node_id;
     dq.pop_front();
     return {node_id, std::move(ret_msg), ret_sz};
   }
