@@ -671,7 +671,7 @@ namespace aft
 
         if (index != state->last_idx + 1)
           return false;
-#if 0
+#if 1
         fmt::print(
           "Replicated on leader {}: {}{} ({} hooks)\n",
           state->node_id,
@@ -729,7 +729,7 @@ namespace aft
           entry_size_not_limited = 0;
           for (const auto& it : all_other_nodes)
           {
-            // fmt::print("Sending updates to follower {}\n", it.first);
+            fmt::print("Sending updates to follower {}\n", it.first);
             send_append_entries(it.first, it.second.sent_idx + 1);
           }
         }
@@ -981,7 +981,6 @@ namespace aft
 
     void send_append_entries(const ccf::NodeId& to, Index start_idx)
     {
-            std::unique_lock<ccf::pal::Mutex> guard(state->lock);
 
 #if 0
       fmt::print(
