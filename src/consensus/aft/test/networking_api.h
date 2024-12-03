@@ -229,11 +229,13 @@ public:
         exit(EXIT_FAILURE);
     }
 
+  #if 0
     flags |= O_NONBLOCK;
     if (fcntl(sockfd, F_SETFL, flags) < 0) {
         perror("fcntl(F_SETFL)");
         exit(EXIT_FAILURE);
     }
+  #endif
 
 
     // Define the server address
@@ -361,12 +363,13 @@ public:
         perror("fcntl(F_GETFL)");
         exit(EXIT_FAILURE);
     }
-
+#if 0
     flags |= O_NONBLOCK;
     if (fcntl(sockfd, F_SETFL, flags) < 0) {
         perror("fcntl(F_SETFL)");
         exit(EXIT_FAILURE);
     }
+  #endif
 
 
     const int port = std::stoi(peer_service);
