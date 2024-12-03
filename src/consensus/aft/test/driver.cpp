@@ -72,14 +72,16 @@ namespace config_parser
   }
 }
 
-static void listen_for_acks(std::shared_ptr<RaftDriver> driver) {
+static void listen_for_acks(std::shared_ptr<RaftDriver> driver)
+{
   int acks = 0;
-  for (;;) {
+  for (;;)
+  {
     acks += driver->periodic_listening_acks(std::to_string(follower_1));
     if (acks % 5000 == 0)
       fmt::print("{} acks={}\n", __func__, acks);
     if (driver->get_committed_seqno() == k_num_requests)
-      return ;
+      return;
   }
 }
 
@@ -117,19 +119,24 @@ int main(int argc, char* argv[])
     for (auto i = 0ULL; i < k_num_requests; i++)
     {
       driver->replicate_commitable("2", data, 0);
-      #if 0
+#if 0
       acks += driver->periodic_listening_acks(std::to_string(follower_1));
       if (acks % 50000 == 0)
         fmt::print("{} acks={}\n", __func__, acks);
-      #endif
+#endif
     }
-    for(;; ) {
-      fmt::print("{} --> get_committed_seqno()={}\n", __func__, driver->get_committed_seqno());
+    for (;;)
+    {
+      fmt::print(
+        "{} --> get_committed_seqno()={}\n",
+        __func__,
+        driver->get_committed_seqno());
       if (driver->get_committed_seqno() == k_num_requests)
         break;
     }
-    fmt::print("{} --> finished, {}\n", __func__, driver->get_committed_seqno());
-    
+    fmt::print(
+      "{} --> finished, {}\n", __func__, driver->get_committed_seqno());
+
     threads_leader[0].join();
     driver->close_connections(std::to_string(primary_node));
     driver->close_connections(std::to_string(follower_1));
@@ -144,12 +151,10 @@ int main(int argc, char* argv[])
     for (auto i = 0ULL; i < k_num_requests; i++)
     {
       count += driver->periodic_listening(std::to_string(primary_node));
-      
-
     }
     count += driver->periodic_listening(std::to_string(primary_node));
     driver->close_connections(std::to_string(follower_1));
-   // driver->close_connections(std::to_string(primary_node));
+    // driver->close_connections(std::to_string(primary_node));
   }
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration = end - start;

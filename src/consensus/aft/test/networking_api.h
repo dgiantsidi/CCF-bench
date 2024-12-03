@@ -7,6 +7,7 @@
 
 #include <arpa/inet.h>
 #include <cstring>
+#include <fcntl.h>
 #include <fmt/printf.h>
 #include <iostream>
 #include <netinet/in.h>
@@ -14,7 +15,7 @@
 #include <stdint.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <fcntl.h>
+#include <thread>
 #include <unistd.h>
 #include <unordered_map>
 
@@ -45,10 +46,18 @@ namespace socket_layer
 #endif
   }
 
+  static std::string get_thread_id()
+  {
+    std::thread::id this_id = std::this_thread::get_id();
+    std::stringstream ss;
+    ss << this_id;
+    std::string id_str = ss.str();
+    return id_str;
+  }
+
   void send_to_socket(
     const int& socket, std::unique_ptr<uint8_t[]> msg, size_t msg_sz)
   {
-    
     nb_sends++;
     bytes_sent += msg_sz;
     int len = 0, offset = 0;
@@ -60,8 +69,9 @@ namespace socket_layer
       nb_syscalls_writes++;
       offset += len;
       remaining -= len;
-      
-      if (remaining == 0) {
+
+      if (remaining == 0)
+      {
         fmt::print("{} nb_sents={} ** END **\n", __func__, nb_sends);
         break;
       }
@@ -85,12 +95,17 @@ namespace socket_layer
       nb_syscalls_reads++;
       offset += len;
       remaining -= len;
-      fmt::print("{} count={} len={} remaining={} ** START **\n", __func__, count, len, remaining);
+      fmt::print(
+        "{} count={} len={} remaining={} ** START **\n",
+        __func__,
+        count,
+        len,
+        remaining);
 
-      if (remaining == 0) {
+      if (remaining == 0)
+      {
         fmt::print("{} count={} ** END **\n", __func__, count);
         return {std::move(data_buf), sz};
-
       }
     }
     return {std::move(std::make_unique<uint8_t[]>(0)), 0};
@@ -233,19 +248,19 @@ public:
       return -1;
     }
     int flags = fcntl(sockfd, F_GETFL, 0);
-    if (flags < 0) {
-        perror("fcntl(F_GETFL)");
-        exit(EXIT_FAILURE);
+    if (flags < 0)
+    {
+      perror("fcntl(F_GETFL)");
+      exit(EXIT_FAILURE);
     }
 
-  #if 0
+#if 0
     flags |= O_NONBLOCK;
     if (fcntl(sockfd, F_SETFL, flags) < 0) {
         perror("fcntl(F_SETFL)");
         exit(EXIT_FAILURE);
     }
-  #endif
-
+#endif
 
     // Define the server address
     struct sockaddr_in server_addr;
@@ -367,10 +382,11 @@ public:
       return;
     }
 
-     int flags = fcntl(sockfd, F_GETFL, 0);
-    if (flags < 0) {
-        perror("fcntl(F_GETFL)");
-        exit(EXIT_FAILURE);
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    if (flags < 0)
+    {
+      perror("fcntl(F_GETFL)");
+      exit(EXIT_FAILURE);
     }
 #if 0
     flags |= O_NONBLOCK;
@@ -378,8 +394,7 @@ public:
         perror("fcntl(F_SETFL)");
         exit(EXIT_FAILURE);
     }
-  #endif
-
+#endif
 
     const int port = std::stoi(peer_service);
     // define the server address
@@ -413,7 +428,8 @@ public:
 
   void close_channel(const ccf::NodeId& peer_id) override
   {
-    if (node_connections_map.find(peer_id) == node_connections_map.end()) {
+    if (node_connections_map.find(peer_id) == node_connections_map.end())
+    {
       fmt::print("{} not connections found with peer {}\n", __func__, peer_id);
       return;
     }

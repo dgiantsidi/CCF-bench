@@ -54,9 +54,6 @@ private:
   std::map<ccf::NodeId, NodeDriver> _nodes;
   // std::set<std::pair<ccf::NodeId, ccf::NodeId>> _connections;
 
-
- 
-
   void _replicate(
     const std::string& term_s,
     std::vector<uint8_t> data,
@@ -199,9 +196,10 @@ public:
       __func__);
 #endif
   }
-   std::shared_ptr<TRaft> get_raft_copy() {
-    return  _nodes.at(my_nid).raft;
-  } 
+  std::shared_ptr<TRaft> get_raft_copy()
+  {
+    return _nodes.at(my_nid).raft;
+  }
 
   void close_connections(ccf::NodeId peer_id)
   {
