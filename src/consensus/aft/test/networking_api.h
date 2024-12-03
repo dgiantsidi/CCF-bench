@@ -64,7 +64,8 @@ namespace socket_layer
     int remaining = msg_sz;
     for (;;)
     {
-      // fmt::print("{}:{}@{} nb_sents={} ** START **\n", socket_layer::get_thread_id(), __func__, socket, nb_sends);
+      // fmt::print("{}:{}@{} nb_sents={} ** START **\n",
+      // socket_layer::get_thread_id(), __func__, socket, nb_sends);
       len = write(socket, msg.get() + offset, remaining);
       nb_syscalls_writes++;
       offset += len;
@@ -72,7 +73,8 @@ namespace socket_layer
 
       if (remaining == 0)
       {
-        //fmt::print("{}:{}@{} nb_sents={} ** END **\n", socket_layer::get_thread_id(), __func__, socket, nb_sends);
+        // fmt::print("{}:{}@{} nb_sents={} ** END **\n",
+        // socket_layer::get_thread_id(), __func__, socket, nb_sends);
         break;
       }
     }
@@ -90,12 +92,13 @@ namespace socket_layer
     for (;;)
     {
       count++;
-      // fmt::print("{}:{}@{} count={} ** START **\n", socket_layer::get_thread_id(), __func__, socket, count);
+      // fmt::print("{}:{}@{} count={} ** START **\n",
+      // socket_layer::get_thread_id(), __func__, socket, count);
       len = read(socket, data_buf.get() + offset, remaining);
       nb_syscalls_reads++;
       offset += len;
       remaining -= len;
-      #if 0
+#if 0
       fmt::print(
         "{}:{}@{} count={} len={} remaining={} ** START **\n", socket_layer::get_thread_id(),
         __func__,
@@ -103,10 +106,11 @@ namespace socket_layer
         count,
         len,
         remaining);
-      #endif
+#endif
       if (remaining == 0)
       {
-        //fmt::print("{}:{}@{} count={} ** END **\n",socket_layer::get_thread_id(), __func__, socket, count);
+        // fmt::print("{}:{}@{} count={} ** END
+        // **\n",socket_layer::get_thread_id(), __func__, socket, count);
         return {std::move(data_buf), sz};
       }
     }
@@ -340,7 +344,7 @@ public:
     if (listen(listening_handle, 5) == -1)
     {
       fmt::print(
-        "{} error in listening on socket {}\n", __func__, listening_handle);
+        "{} error in listening on socket {} \n", __func__, listening_handle);
       close(listening_handle);
     }
 
@@ -350,8 +354,12 @@ public:
       accept(listening_handle, (struct sockaddr*)&client_addr, &client_len);
     if (client_sock == -1)
     {
-      fmt::print("{} error in accepting a connection\n", __func__);
+      fmt::print(
+        "{} error in accepting a connection: {}\n",
+        __func__,
+        std::strerror(errno));
       close(listening_handle);
+      exit(-1);
     }
 
     fmt::print(

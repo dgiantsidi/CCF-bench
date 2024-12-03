@@ -6,6 +6,7 @@
 #include "consensus/aft/raft.h"
 #include "loggin_stub_mermaid.h"
 #include "logging_stub.h"
+#include "message_queue.h"
 #include "networking_api.h"
 
 #include <chrono>
@@ -170,6 +171,7 @@ private:
 public:
   RaftDriver(std::string node_id) : my_nid(ccf::NodeId(node_id)){};
   std::map<ccf::NodeId, network_stack::connectivity_description> my_connections;
+  class m_queue message_queue;
   int get_committed_seqno()
   {
     return (_nodes[my_nid].raft)->get_committed_seqno();
@@ -1230,6 +1232,13 @@ public:
     }
   }
 #endif
+
+  int periodic_applying(ccf::NodeId src_node, uint8_t* data, size_t data_sz)
+  {
+    auto& my_raft = _nodes.at(my_nid).raft;
+    _nodes.at(my_nid).raft->recv_message(src_node, data, data_sz);
+  }
+
   int periodic_listening(ccf::NodeId src_node)
   {
     auto& my_raft = _nodes.at(my_nid).raft;
@@ -1240,7 +1249,10 @@ public:
     auto [data, data_sz] = socket_layer::get_from_socket(
       incomming_socket, sizeof(aft::AppendEntries));
 
-    _nodes.at(my_nid).raft->recv_message(src_node, data.get(), data_sz);
+    message_queue.append(src_node, std::move(data), data_sz);
+
+    // todo: enqueue
+    // _nodes.at(my_nid).raft->recv_message(src_node, data.get(), data_sz);
 
     return 1;
   }

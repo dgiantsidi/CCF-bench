@@ -17,7 +17,7 @@
 #include <string>
 
 using namespace std;
-
+std::mutex leader_mtx;
 static void print_data(uint8_t* ptr, size_t msg_size)
 {
   fmt::print(
@@ -71,6 +71,15 @@ namespace config_parser
       follower_1_sending_port;
   }
 }
+static void apply_cmds(std::shared_ptr<RaftDriver> driver)
+{
+  for (;;)
+  {
+    auto [src_node, data, data_sz] = driver->message_queue.pop();
+    if (data_sz > 0)
+      driver->periodic_applying(src_node, data.get(), data_sz);
+  }
+}
 
 static void listen_for_acks(std::shared_ptr<RaftDriver> driver)
 {
@@ -78,10 +87,13 @@ static void listen_for_acks(std::shared_ptr<RaftDriver> driver)
   int acks = 0;
   for (;;)
   {
-    acks += driver->periodic_listening_acks(std::to_string(follower_1));
-    if (acks % 5000 == 0)
+    {
+      // std::unique_lock<std::mutex> tmp_l(leader_mtx);
+      acks += driver->periodic_listening_acks(std::to_string(follower_1));
+    }
+    if (acks % 1 == 0)
       fmt::print("{} acks={}\n", __func__, acks);
-    if (driver->get_committed_seqno() == k_num_requests)
+    if (acks == k_num_requests)
       return;
   }
 }
@@ -116,17 +128,24 @@ int main(int argc, char* argv[])
     acks += driver->periodic_listening_acks(std::to_string(follower_1));
     // this is because we send an AppendEntries message every time we
     // send a new_configuration
-    threads_leader.emplace_back(std::thread(listen_for_acks, driver));
     for (auto i = 0ULL; i < k_num_requests; i++)
     {
-      //fmt::print("{}:{} ---> replicate_commitable()\n", __func__, socket_layer::get_thread_id());
+      // std::unique_lock<std::mutex> tmp_l(leader_mtx);
+
+      // fmt::print("{}:{} ---> replicate_commitable()\n", __func__,
+      // socket_layer::get_thread_id());
       driver->replicate_commitable("2", data, 0);
+      if (i == 0)
+      {
+        threads_leader.emplace_back(std::thread(listen_for_acks, driver));
+      }
 #if 0
       acks += driver->periodic_listening_acks(std::to_string(follower_1));
       if (acks % 50000 == 0)
         fmt::print("{} acks={}\n", __func__, acks);
 #endif
     }
+    fmt::print("{} --> finished, 1\n", __func__);
     for (;;)
     {
       fmt::print(
@@ -136,8 +155,6 @@ int main(int argc, char* argv[])
       if (driver->get_committed_seqno() == k_num_requests)
         break;
     }
-    fmt::print(
-      "{} --> finished, {}\n", __func__, driver->get_committed_seqno());
 
     threads_leader[0].join();
     driver->close_connections(std::to_string(primary_node));
