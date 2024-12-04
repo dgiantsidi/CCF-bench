@@ -72,6 +72,8 @@ namespace config_parser
   }
 }
 
+std::atomic<bool> stop;
+
 static void apply_cmds(std::shared_ptr<RaftDriver> driver)
 {
   for (;;)
@@ -84,6 +86,8 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
       fmt::print("{} --> data_sz={}\n", __func__, data_sz);
       auto src_node_str = ccf::NodeId(std::to_string(src_node));
       driver->periodic_applying(src_node_str, data.get(), data_sz);
+      if (stop.load())
+        return;
     }
   }
 }
@@ -110,7 +114,7 @@ int main(int argc, char* argv[])
   threading::ThreadMessaging::init(
     1); // @dimitra:TODO -> this is not used actually
   authentication::init();
-
+  stop.store(false);
   std::string node_id;
   std::cin >> node_id;
   std::vector<std::thread> threads_leader;
@@ -161,7 +165,7 @@ int main(int argc, char* argv[])
         driver->get_committed_seqno());
       if (driver->get_committed_seqno() == k_num_requests)
         break;
-      std::this_thread::sleep_for(std::chrono::seconds(2));
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     threads_leader[0].join();
@@ -185,6 +189,17 @@ int main(int argc, char* argv[])
         threads_follower.emplace_back(std::thread(apply_cmds, driver));
       }
     }
+     for (;;)
+    {
+      fmt::print(
+        "{} --> get_committed_seqno()={}\n",
+        __func__,
+        driver->get_committed_seqno());
+      if (driver->get_committed_seqno() == k_num_requests)
+        break;
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    stop.store(true);
     //count += driver->periodic_listening(std::to_string(primary_node));
     driver->close_connections(std::to_string(follower_1));
     // driver->close_connections(std::to_string(primary_node));
