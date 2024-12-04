@@ -253,20 +253,7 @@ public:
       fmt::print("{} error setting up the socket\n", __func__);
       return -1;
     }
-    int flags = fcntl(sockfd, F_GETFL, 0);
-    if (flags < 0)
-    {
-      perror("fcntl(F_GETFL)");
-      exit(EXIT_FAILURE);
-    }
-
-#if 0
-    flags |= O_NONBLOCK;
-    if (fcntl(sockfd, F_SETFL, flags) < 0) {
-        perror("fcntl(F_SETFL)");
-        exit(EXIT_FAILURE);
-    }
-#endif
+  
 
     // Define the server address
     struct sockaddr_in server_addr;
@@ -392,20 +379,7 @@ public:
       return;
     }
 
-    int flags = fcntl(sockfd, F_GETFL, 0);
-    if (flags < 0)
-    {
-      perror("fcntl(F_GETFL)");
-      exit(EXIT_FAILURE);
-    }
-#if 0
-    flags |= O_NONBLOCK;
-    if (fcntl(sockfd, F_SETFL, flags) < 0) {
-        perror("fcntl(F_SETFL)");
-        exit(EXIT_FAILURE);
-    }
-#endif
-
+ 
     const int port = std::stoi(peer_service);
     // define the server address
     struct sockaddr_in server_addr;

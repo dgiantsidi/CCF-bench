@@ -982,7 +982,7 @@ namespace aft
     void send_append_entries(const ccf::NodeId& to, Index start_idx)
     {
 
-#if 0
+#if 1
       fmt::print(
         "Sending append entries to node {} in batches of {}, covering the "
         "range {} -> {}\n",
