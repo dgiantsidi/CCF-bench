@@ -179,6 +179,7 @@ int main(int argc, char* argv[])
     count += driver->periodic_listening(std::to_string(primary_node));
     driver->close_connections(std::to_string(follower_1));
     // driver->close_connections(std::to_string(primary_node));
+    threads_follower[0].join();
   }
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration = end - start;

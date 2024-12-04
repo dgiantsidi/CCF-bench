@@ -38,12 +38,12 @@ public:
     size_t ret_sz = front->msg_sz;
     fmt::print("{}4\n", __func__);
 
-    ccf::NodeId node_id = ccf::NodeId(0); // front->node_id;
+    //ccf::NodeId node_id = ccf::NodeId(0); // front->node_id;
     fmt::print("{}5\n", __func__);
 
     dq.pop_front();
     fmt::print("{} ---\n", __func__);
-    return {node_id, std::move(ret_msg), ret_sz};
+    return {ccf::NodeId(0), std::move(ret_msg), ret_sz};
   }
 
 private:
