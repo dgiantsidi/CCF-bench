@@ -19,6 +19,8 @@ public:
 
   std::tuple<ccf::NodeId, std::unique_ptr<uint8_t[]>, size_t> pop()
   {
+    fmt::print("{} \n", __PRETTY_FUNCTION__);
+
     std::unique_lock<std::mutex> tmp_lock(dq_mtx);
     if (dq.empty())
     {
@@ -61,6 +63,7 @@ private:
 
     message(const message& other)
     {
+      fmt::print("{} \n", __PRETTY_FUNCTION__);
       node_id = other.node_id;
       msg_sz = other.msg_sz;
       msg = std::make_unique<uint8_t[]>(other.msg_sz);
@@ -69,6 +72,7 @@ private:
 
     message(message&& other)
     {
+      fmt::print("{} \n", __PRETTY_FUNCTION__);
       node_id = other.node_id;
       msg_sz = other.msg_sz;
       msg = std::make_unique<uint8_t[]>(other.msg_sz);
@@ -77,6 +81,7 @@ private:
 
     message& operator=(const message& other)
     {
+      fmt::print("{} \n", __PRETTY_FUNCTION__);
       node_id = other.node_id;
       msg_sz = other.msg_sz;
       msg = std::make_unique<uint8_t[]>(other.msg_sz);
@@ -86,6 +91,7 @@ private:
 
     message& operator=(message&& other)
     {
+      fmt::print("{} \n", __PRETTY_FUNCTION__);
       node_id = other.node_id;
       msg_sz = other.msg_sz;
       msg = std::make_unique<uint8_t[]>(other.msg_sz);
