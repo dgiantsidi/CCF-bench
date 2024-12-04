@@ -76,8 +76,10 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
   for (;;)
   {
     auto [src_node, data, data_sz] = driver->message_queue.pop();
+    // auto [data, data_sz] = driver->message_queue.pop();
+    auto src_node_str = ccf::NodeId(std::to_string(src_node));
     if (data_sz > 0)
-      driver->periodic_applying(src_node, data.get(), data_sz);
+      driver->periodic_applying(src_node_str, data.get(), data_sz);
   }
 }
 

@@ -1019,9 +1019,13 @@ if(BUILD_TESTS)
       test_message_queue ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/test_message_queue.cpp
     )
 
+    #find_package(fmt REQUIRED)
+
+    
+    
     target_link_libraries(test_message_queue PRIVATE ccfcrypto.host)
     target_link_libraries(test_message_queue PRIVATE ${CMAKE_THREAD_LIBS_INIT})
-
+    #target_link_libraries(test_message_queue PRIVATE fmt::fmt)
     target_include_directories(test_message_queue PRIVATE src/aft)
 
     add_test(

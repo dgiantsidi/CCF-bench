@@ -1251,7 +1251,8 @@ public:
     auto [data, data_sz] = socket_layer::get_from_socket(
       incomming_socket, sizeof(aft::AppendEntries));
 
-    message_queue.append(src_node, std::move(data), data_sz);
+    int id_node = std::stoi(src_node.value());
+    message_queue.append(id_node, std::move(data), data_sz);
 
     // todo: enqueue
     // _nodes.at(my_nid).raft->recv_message(src_node, data.get(), data_sz);
