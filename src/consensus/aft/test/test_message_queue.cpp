@@ -18,6 +18,7 @@ static void run_func_append()
     Q->append(std::move(ptr), msg_sz);
   }
   fmt::print("{}\n", __func__);
+  return;
 }
 
 // static void run_func_pop(std::shared_ptr<m_queue> q) {
@@ -41,12 +42,12 @@ int main()
   std::vector<std::thread> vec_threads;
   Q = std::shared_ptr<m_queue>();
   // std::shared_ptr<m_queue> q = std::make_shared<m_queue>();
-  run_func_append();
-#if 0
-    for (auto i = 0ULL; i < 1; i++) {
-        vec_threads.emplace_back(std::thread(run_func_append));
-        
-    }
+  // run_func_append();
+#if 1
+  for (auto i = 0ULL; i < 1; i++)
+  {
+    vec_threads.emplace_back(std::thread(run_func_append));
+  }
 #endif
   vec_threads[0].join();
   // vec_threads.emplace_back(std::thread(run_func_pop, q));
