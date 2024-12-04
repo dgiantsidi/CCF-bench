@@ -1012,6 +1012,18 @@ if(BUILD_TESTS)
     target_link_libraries(latency_bench PRIVATE ccfcrypto.host)
     target_include_directories(latency_bench PRIVATE src/aft)
 
+
+    
+    # mqueue bench
+    add_executable(
+      test_message_queue ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/test_message_queue.cpp
+    )
+
+    target_link_libraries(test_message_queue PRIVATE ccfcrypto.host)
+    target_link_libraries(test_message_queue PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+
+    target_include_directories(test_message_queue PRIVATE src/aft)
+
     add_test(
       NAME raft_scenario_test
       COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/tests/raft_scenarios_runner.py
