@@ -32,7 +32,7 @@ public:
     std::unique_ptr<message>& front = dq.front();
     fmt::print("{}2\n", __func__);
 
-    std::unique_ptr<uint8_t[]> ret_msg = std::move(front->msg);
+    std::unique_ptr<uint8_t[]> ret_msg = std::make_unique<uint8_t[]>(front->msg_sz);// std::move(front->msg);
     fmt::print("{}3\n", __func__);
 
     size_t ret_sz = front->msg_sz;
