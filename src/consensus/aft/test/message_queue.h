@@ -14,7 +14,7 @@ public:
   {
     std::unique_lock<std::mutex> tmp_lock(dq_mtx);
     fmt::print("{}\n", __func__);
-    dq.push_back(std::make_unique<message>(node_id, std::move(msg), size));
+    dq.emplace_back(std::make_unique<message>(node_id, std::move(msg), size));
   }
 
   std::tuple<ccf::NodeId, std::unique_ptr<uint8_t[]>, size_t> pop()
@@ -25,6 +25,7 @@ public:
       fmt::print("{} --> no elem\n", __func__);
       return {ccf::NodeId(0), std::make_unique<uint8_t[]>(1), 0};
     }
+
     fmt::print("{}1\n", __func__);
     std::unique_ptr<message>& front = dq.front();
     fmt::print("{}2\n", __func__);
@@ -57,6 +58,40 @@ private:
       msg_sz = _msg_sz;
     }
     message() = delete;
+
+    message(const message& other)
+    {
+      node_id = other.node_id;
+      msg_sz = other.msg_sz;
+      msg = std::make_unique<uint8_t[]>(other.msg_sz);
+      ::memcpy(msg.get(), other.msg.get(), msg_sz);
+    }
+
+    message(message&& other)
+    {
+      node_id = other.node_id;
+      msg_sz = other.msg_sz;
+      msg = std::make_unique<uint8_t[]>(other.msg_sz);
+      ::memcpy(msg.get(), other.msg.get(), msg_sz);
+    }
+
+    message& operator=(const message& other)
+    {
+      node_id = other.node_id;
+      msg_sz = other.msg_sz;
+      msg = std::make_unique<uint8_t[]>(other.msg_sz);
+      ::memcpy(msg.get(), other.msg.get(), msg_sz);
+      return *this;
+    }
+
+    message& operator=(message&& other)
+    {
+      node_id = other.node_id;
+      msg_sz = other.msg_sz;
+      msg = std::make_unique<uint8_t[]>(other.msg_sz);
+      ::memcpy(msg.get(), other.msg.get(), msg_sz);
+      return *this;
+    }
   };
   std::deque<std::unique_ptr<message>> dq;
   std::mutex dq_mtx;
