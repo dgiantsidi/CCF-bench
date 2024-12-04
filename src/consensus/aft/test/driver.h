@@ -1238,6 +1238,7 @@ public:
   {
     auto& my_raft = _nodes.at(my_nid).raft;
     _nodes.at(my_nid).raft->recv_message(src_node, data, data_sz);
+    return 1;
   }
 
   int periodic_listening(ccf::NodeId src_node)
