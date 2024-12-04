@@ -83,7 +83,7 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
     // auto [data, data_sz] = driver->message_queue.pop();
     
     if (data_sz > 0) {
-      fmt::print("{} --> data_sz={}\n", __func__, data_sz);
+      //fmt::print("{} --> data_sz={}\n", __func__, data_sz);
       auto src_node_str = ccf::NodeId(std::to_string(src_node));
       driver->periodic_applying(src_node_str, data.get(), data_sz);
       if (stop.load())
@@ -102,7 +102,7 @@ static void listen_for_acks(std::shared_ptr<RaftDriver> driver)
       // std::unique_lock<std::mutex> tmp_l(leader_mtx);
       acks += driver->periodic_listening_acks(std::to_string(follower_1));
     }
-    if (acks % 1 == 0)
+    if (acks % 10000 == 0)
       fmt::print("{} acks={}\n", __func__, acks);
     if (acks == k_num_requests)
       return;

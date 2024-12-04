@@ -508,7 +508,7 @@ public:
     {
       auto ae = *(aft::AppendEntries*)data;
 
-#if 1
+#if 0
       fmt::print(
         "{}:aft::AppendEntries --> .idx={}, .prev_idx={}, .term={}, "
         ".leader_commit_idx={}, .term_of_idx={}\n",
@@ -582,7 +582,7 @@ public:
     const uint8_t*& data,
     size_t& size) override
   {
-#if 1
+#if 0
     auto [msg_type, specific_msg_type_sz] =
       get_msg_type_from_header_sz(header.data(), header.size());
     if (msg_type == aft::RaftMsgType::raft_append_entries)
