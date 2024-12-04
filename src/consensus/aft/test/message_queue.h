@@ -42,7 +42,7 @@ public:
     fmt::print("{} --- 1\n", __func__);
     auto ptr = std::make_unique<message>(std::move(msg), size);
     fmt::print("{} --- 2\n", __func__);
-    dq.push_back(std::move(ptr));
+    //dq.push_back(std::move(ptr));
   }
 
   std::tuple<ccf::NodeId, std::unique_ptr<uint8_t[]>, size_t> pop()
