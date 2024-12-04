@@ -15,7 +15,7 @@ static void run_func_append()
     auto ptr = std::make_unique<uint8_t[]>(msg_sz);
     fmt::print("{} i = {}\n", __func__, i);
 
-    Q->append(ccf::NodeId(0), std::move(ptr), msg_sz);
+    Q->append(std::move(ptr), msg_sz);
   }
   fmt::print("{}\n", __func__);
 }

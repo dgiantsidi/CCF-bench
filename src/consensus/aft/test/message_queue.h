@@ -25,12 +25,12 @@ public:
 
   void append(ccf::NodeId node_id, std::unique_ptr<uint8_t[]> msg, size_t size)
   {
-    fmt::print("{} --- 0\n", __func__);
+    //fmt::print("{} --- 0\n", __func__);
 
     //std::lock_guard<std::mutex> tmp_lock(dq_mtx);
-    fmt::print("{} --- 1\n", __func__);
+    // fmt::print("{} --- 1\n", __func__);
     auto ptr = std::make_unique<message>(node_id, std::move(msg), size);
-    fmt::print("{} --- 2\n", __func__);
+    //fmt::print("{} --- 2\n", __func__);
     //dq.push_back(std::move(ptr));
   }
 
