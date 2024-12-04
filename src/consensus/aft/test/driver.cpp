@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
         driver->get_committed_seqno());
       if (driver->get_committed_seqno() == k_num_requests)
         break;
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
     stop.store(true);
     //count += driver->periodic_listening(std::to_string(primary_node));
