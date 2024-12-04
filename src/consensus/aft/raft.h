@@ -1092,7 +1092,7 @@ namespace aft
       size_t size)
     {
       std::unique_lock<ccf::pal::Mutex> guard(state->lock);
-#if 0
+#if 1
       fmt::print(
         "Received append entries: {}.{} to {}.{} (from {} in term {}) data_sz={}\n",
         r.prev_term,
@@ -1518,6 +1518,12 @@ namespace aft
       aft::Term response_term,
       aft::Index response_idx)
     {
+      fmt::print(
+          "> Send append entries response from {} to {} for index {}: {}\n",
+          state->node_id,
+          to,
+          response_idx,
+          (answer == AppendEntriesResponseType::OK ? "ACK" : "NACK"));
       if (answer != AppendEntriesResponseType::OK)
       {
         fmt::print(
