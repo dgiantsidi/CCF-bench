@@ -71,15 +71,18 @@ namespace config_parser
       follower_1_sending_port;
   }
 }
+
 static void apply_cmds(std::shared_ptr<RaftDriver> driver)
 {
   for (;;)
   {
     auto [src_node, data, data_sz] = driver->message_queue.pop();
+    fmt::print("{} --> data_sz={}\n", __func__, data_sz);
     // auto [data, data_sz] = driver->message_queue.pop();
     auto src_node_str = ccf::NodeId(std::to_string(src_node));
-    if (data_sz > 0)
+    if (data_sz > 0) {
       driver->periodic_applying(src_node_str, data.get(), data_sz);
+    }
   }
 }
 
@@ -156,6 +159,7 @@ int main(int argc, char* argv[])
         driver->get_committed_seqno());
       if (driver->get_committed_seqno() == k_num_requests)
         break;
+      std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 
     threads_leader[0].join();

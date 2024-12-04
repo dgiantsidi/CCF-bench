@@ -128,6 +128,7 @@ namespace socket_layer
         "{} ---> error header_sz={} and sz={}\n", __func__, header_sz, sz);
       exit(-1);
     }
+    fmt::print("{} ---> header_sz={}\n", __func__, header_sz);
 
     int total_bytes = header_sz;
     auto [payload_sz_buf, pload_sz] = read_from_socket(socket, payload_sz);
@@ -142,7 +143,7 @@ namespace socket_layer
     }
     size_t sz_val;
     ::memcpy(&sz_val, payload_sz_buf.get(), payload_sz);
-
+    fmt::print("{} ---> sz_val={}\n", __func__, sz_val);
     auto [entry_buf, entry_sz] = read_from_socket(socket, sz_val);
     if (entry_sz != sz_val)
     {
@@ -178,6 +179,7 @@ namespace socket_layer
             original_msg.get(), (total_bytes + payload_sz), hash.get()))
         fmt::print("{} ---> error in verifying the hash\n", __func__);
     }
+    fmt::print("{} ---> total_bytes={}\n", __func__, total_bytes);
     print_data(serialized_msg.get(), total_bytes);
     return {std::move(serialized_msg), total_bytes};
   }
