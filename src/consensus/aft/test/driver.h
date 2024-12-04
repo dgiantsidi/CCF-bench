@@ -1268,7 +1268,7 @@ public:
     auto [data, data_sz] = socket_layer::get_from_socket(
       incomming_socket, sizeof(aft::AppendEntries));
 
-    fmt::print("{} --> data_sz={}\n", __func__, data_sz);
+    //fmt::print("{} --> data_sz={}\n", __func__, data_sz);
     int id_node = std::stoi(src_node.value());
     message_queue.append(id_node, std::move(data), data_sz);
 
