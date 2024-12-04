@@ -58,11 +58,11 @@ public:
     dq.pop_front();
 
     std::unique_ptr<uint8_t[]> ret_msg =
-      std::make_unique<uint8_t[]>(front->msg_sz); // std::move(front->msg);
+       std::move(front->msg);
 
     size_t ret_sz = front->msg_sz;
     int node_id = front->node_id;
-
+    
     return {node_id, std::move(ret_msg), ret_sz};
   }
 
