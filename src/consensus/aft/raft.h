@@ -982,7 +982,7 @@ namespace aft
     void send_append_entries(const ccf::NodeId& to, Index start_idx)
     {
 
-#if 1
+#if 0
       fmt::print(
         "Sending append entries to node {} in batches of {}, covering the "
         "range {} -> {}\n",
@@ -1092,7 +1092,7 @@ namespace aft
       size_t size)
     {
       std::unique_lock<ccf::pal::Mutex> guard(state->lock);
-#if 1
+#if 0
       fmt::print(
         "Received append entries: {}.{} to {}.{} (from {} in term {}) data_sz={}\n",
         r.prev_term,
@@ -1518,12 +1518,7 @@ namespace aft
       aft::Term response_term,
       aft::Index response_idx)
     {
-      fmt::print(
-          "> Send append entries response from {} to {} for index {}: {}\n",
-          state->node_id,
-          to,
-          response_idx,
-          (answer == AppendEntriesResponseType::OK ? "ACK" : "NACK"));
+     
       if (answer != AppendEntriesResponseType::OK)
       {
         fmt::print(
