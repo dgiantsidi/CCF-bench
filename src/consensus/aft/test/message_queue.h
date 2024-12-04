@@ -41,7 +41,7 @@ public:
     //ccf::NodeId node_id = ccf::NodeId(0); // front->node_id;
     fmt::print("{}5\n", __func__);
 
-    dq.pop_front();
+    //dq.pop_front();
     fmt::print("{} ---\n", __func__);
     return {ccf::NodeId(0), std::move(ret_msg), ret_sz};
   }
