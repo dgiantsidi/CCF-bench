@@ -170,6 +170,7 @@ int main(int argc, char* argv[])
       driver->my_connections[std::to_string(follower_1)].ip,
       driver->my_connections[std::to_string(follower_1)].base_listening_port);
     int count = 0;
+    count += driver->establish_state(std::to_string(primary_node));
     for (auto i = 0ULL; i < k_num_requests; i++)
     {
       count += driver->periodic_listening(std::to_string(primary_node));
@@ -178,7 +179,7 @@ int main(int argc, char* argv[])
         threads_follower.emplace_back(std::thread(apply_cmds, driver));
       }
     }
-    count += driver->periodic_listening(std::to_string(primary_node));
+    //count += driver->periodic_listening(std::to_string(primary_node));
     driver->close_connections(std::to_string(follower_1));
     // driver->close_connections(std::to_string(primary_node));
     threads_follower[0].join();

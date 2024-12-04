@@ -1241,6 +1241,23 @@ public:
     return 1;
   }
 
+  int establish_state(ccf::NodeId src_node)
+  {
+    auto& my_raft = _nodes.at(my_nid).raft;
+    network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
+
+    auto& incomming_socket =
+      net->node_connections_map[my_nid]->listening_handle;
+    auto [data, data_sz] = socket_layer::get_from_socket(
+      incomming_socket, sizeof(aft::AppendEntries));
+
+    
+    
+    _nodes.at(my_nid).raft->recv_message(src_node, data.get(), data_sz);
+
+    return 1;
+  }
+
   int periodic_listening(ccf::NodeId src_node)
   {
     auto& my_raft = _nodes.at(my_nid).raft;
