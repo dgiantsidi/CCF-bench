@@ -104,7 +104,7 @@ static void listen_for_acks(std::shared_ptr<RaftDriver> driver)
       // std::unique_lock<std::mutex> tmp_l(leader_mtx);
       acks += driver->periodic_listening_acks(std::to_string(follower_1));
     }
-    if (acks % 10000 == 0)
+    if (acks % 50000 == 0)
       fmt::print("{} acks={}\n", __func__, acks);
     if (acks == k_num_requests)
       return;
