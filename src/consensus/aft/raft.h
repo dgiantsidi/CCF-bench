@@ -1131,12 +1131,14 @@ namespace aft
       else if (state->current_view > r.term)
       {
         // Reply false, since our term is later than the received term.
+        
         fmt::print(
           "Recv append entries to {} from {} but our term is later ({} > {})\n",
           state->node_id,
           from,
           state->current_view,
           r.term);
+        
         send_append_entries_response_nack(from);
         return;
       }
@@ -1213,7 +1215,7 @@ namespace aft
           state->last_idx);
         return;
       }
-#if 1
+#if 0
       fmt::print(
         "Recv append entries to {} from {} for index {} and previous index {}\n",
         state->node_id,
@@ -1377,7 +1379,7 @@ namespace aft
 
         const auto& entry = ds->get_entry();
 
-        fmt::print("Replicating on follower {}: {} ---> term={}, index={}\n", state->node_id, i, ds->get_term(), ds->get_index());
+        // fmt::print("Replicating on follower {}: {} ---> term={}, index={}\n", state->node_id, i, ds->get_term(), ds->get_index());
 
         ledger->put_entry(
           entry, globally_committable, ds->get_term(), ds->get_index());
@@ -1386,7 +1388,7 @@ namespace aft
         {
           case ccf::kv::ApplyResult::FAIL:
           {
-            fmt::print("Follower failed to apply log entry: {}\n", i);
+            // fmt::print("Follower failed to apply log entry: {}\n", i);
             state->last_idx--;
             ledger->truncate(state->last_idx);
             send_append_entries_response_nack(from);
@@ -1395,7 +1397,7 @@ namespace aft
 
           case ccf::kv::ApplyResult::PASS_SIGNATURE:
           {
-            fmt::print("Deserialising signature at {}", i);
+            // fmt::print("Deserialising signature at {}", i);
             if (
               state->membership_state == ccf::kv::MembershipState::Retired &&
               state->retirement_phase == ccf::kv::RetirementPhase::Ordered)
@@ -2327,11 +2329,13 @@ namespace aft
     // given idx.
     void commit_if_possible(Index idx)
     {
+      #if 0
       fmt::print(
         "Commit if possible {} (ci: {}) (ti {})",
         idx,
         state->commit_idx,
         get_term_internal(idx));
+      #endif
       if (
         (idx > state->commit_idx) &&
         (get_term_internal(idx) <= state->current_view))
@@ -2392,7 +2396,7 @@ namespace aft
       store->compact(idx);
       ledger->commit(idx);
 
-      fmt::print("Commit on {}: {}", state->node_id, idx);
+      //fmt::print("Commit on {}: {}", state->node_id, idx);
 
       // Examine each configuration that is followed by a globally committed
       // configuration.
