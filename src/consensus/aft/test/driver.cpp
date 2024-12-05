@@ -86,6 +86,8 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
       //fmt::print("{} --> data_sz={}\n", __func__, data_sz);
       auto src_node_str = ccf::NodeId(std::to_string(src_node));
       driver->periodic_applying(src_node_str, data.get(), data_sz);
+    }
+    else if (data_sz == 0) {
       if (stop.load())
         return;
     }
@@ -167,6 +169,9 @@ int main(int argc, char* argv[])
         break;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+    driver->replicate_commitable("2", data, 0);
+    acks += driver->periodic_listening_acks(std::to_string(follower_1));
+
 
     threads_leader[0].join();
     driver->close_connections(std::to_string(primary_node));
@@ -191,6 +196,7 @@ int main(int argc, char* argv[])
     }
      for (;;)
     {
+      stop.store(true);
       fmt::print(
         "{} --> get_committed_seqno()={}\n",
         __func__,
@@ -198,8 +204,10 @@ int main(int argc, char* argv[])
       if (driver->get_committed_seqno() == k_num_requests)
         break;
       std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+      count += driver->establish_state(std::to_string(primary_node));
+
     }
-    stop.store(true);
     //count += driver->periodic_listening(std::to_string(primary_node));
     driver->close_connections(std::to_string(follower_1));
     // driver->close_connections(std::to_string(primary_node));
