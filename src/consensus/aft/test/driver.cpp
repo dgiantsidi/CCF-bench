@@ -174,6 +174,7 @@ int main(int argc, char* argv[])
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     leader_end = std::chrono::high_resolution_clock::now();
+    fmt::print("{} ---> taken timestamp={}s\n", __func__, driver->get_committed_seqno());
     driver->replicate_commitable("2", data, 0);
     acks += driver->periodic_listening_acks(std::to_string(follower_1));
 
