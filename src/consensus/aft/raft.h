@@ -729,7 +729,7 @@ namespace aft
           entry_size_not_limited = 0;
           for (const auto& it : all_other_nodes)
           {
-            //fmt::print("Sending updates to follower {}\n", it.first);
+            // fmt::print("Sending updates to follower {}\n", it.first);
             send_append_entries(it.first, it.second.sent_idx + 1);
           }
         }
@@ -747,8 +747,8 @@ namespace aft
     void recv_message(
       const ccf::NodeId& from, const uint8_t* data, size_t size) override
     {
-       RaftMsgType type = serialized::peek<RaftMsgType>(data, size);
-      
+      RaftMsgType type = serialized::peek<RaftMsgType>(data, size);
+
       try
       {
         switch (type)
@@ -981,7 +981,6 @@ namespace aft
 
     void send_append_entries(const ccf::NodeId& to, Index start_idx)
     {
-
 #if 0
       fmt::print(
         "Sending append entries to node {} in batches of {}, covering the "
@@ -1131,14 +1130,14 @@ namespace aft
       else if (state->current_view > r.term)
       {
         // Reply false, since our term is later than the received term.
-        
+
         fmt::print(
           "Recv append entries to {} from {} but our term is later ({} > {})\n",
           state->node_id,
           from,
           state->current_view,
           r.term);
-        
+
         send_append_entries_response_nack(from);
         return;
       }
@@ -1343,7 +1342,7 @@ namespace aft
       for (auto& ae : append_entries)
       {
         auto& [ds, i] = ae;
-        //fmt::print("Replicating on follower {}: {}\n", state->node_id, i);
+        // fmt::print("Replicating on follower {}: {}\n", state->node_id, i);
 
 #ifdef CCF_RAFT_TRACING
         nlohmann::json j = {};
@@ -1379,7 +1378,8 @@ namespace aft
 
         const auto& entry = ds->get_entry();
 
-        // fmt::print("Replicating on follower {}: {} ---> term={}, index={}\n", state->node_id, i, ds->get_term(), ds->get_index());
+        // fmt::print("Replicating on follower {}: {} ---> term={}, index={}\n",
+        // state->node_id, i, ds->get_term(), ds->get_index());
 
         ledger->put_entry(
           entry, globally_committable, ds->get_term(), ds->get_index());
@@ -1522,7 +1522,6 @@ namespace aft
       aft::Term response_term,
       aft::Index response_idx)
     {
-     
       if (answer != AppendEntriesResponseType::OK)
       {
         fmt::print(
@@ -2329,13 +2328,13 @@ namespace aft
     // given idx.
     void commit_if_possible(Index idx)
     {
-      #if 0
+#if 0
       fmt::print(
         "Commit if possible {} (ci: {}) (ti {})",
         idx,
         state->commit_idx,
         get_term_internal(idx));
-      #endif
+#endif
       if (
         (idx > state->commit_idx) &&
         (get_term_internal(idx) <= state->current_view))
@@ -2396,7 +2395,7 @@ namespace aft
       store->compact(idx);
       ledger->commit(idx);
 
-      //fmt::print("Commit on {}: {}", state->node_id, idx);
+      // fmt::print("Commit on {}: {}", state->node_id, idx);
 
       // Examine each configuration that is followed by a globally committed
       // configuration.
@@ -2571,7 +2570,10 @@ namespace aft
         {
           if (!channels->have_channel(node_info.first))
           {
-            fmt::print("{} ---> Configurations: create node channel with {}\n", __func__, node_info.first);
+            fmt::print(
+              "{} ---> Configurations: create node channel with {}\n",
+              __func__,
+              node_info.first);
 
             channels->associate_node_address(
               node_info.first,
@@ -2592,14 +2594,15 @@ namespace aft
               __func__,
               node_info.first,
               index);
-              send_append_entries(node_info.first, index);
+            send_append_entries(node_info.first, index);
           }
 
-          fmt::print("{} ---> Added raft node {}({}:{})\n", __func__,
+          fmt::print(
+            "{} ---> Added raft node {}({}:{})\n",
+            __func__,
             node_info.first,
             node_info.second.hostname,
             node_info.second.port);
-
         }
       }
     }

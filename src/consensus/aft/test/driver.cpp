@@ -47,6 +47,8 @@ namespace config_parser
       ccf::NodeId("0"), network_stack::connectivity_description()));
     my_connections.insert(std::make_pair(
       ccf::NodeId("1"), network_stack::connectivity_description()));
+       my_connections.insert(std::make_pair(
+      ccf::NodeId("2"), network_stack::connectivity_description()));
 
     my_connections[ccf::NodeId(std::to_string(primary_node))].nid =
       ccf::NodeId(std::to_string(primary_node));
@@ -69,6 +71,19 @@ namespace config_parser
       .base_listening_port = follower_1_listening_port;
     my_connections[ccf::NodeId(std::to_string(follower_1))].base_sending_port =
       follower_1_sending_port;
+
+
+    
+    my_connections[ccf::NodeId(std::to_string(follower_2))].nid =
+      ccf::NodeId(std::to_string(follower_2));
+    my_connections[ccf::NodeId(std::to_string(follower_2))].ip =
+      follower_2_ip; // CVM
+    // my_connections[ccf::NodeId(std::to_string(follower_1))].ip = "10.5.0.7";
+    // // regural VM IP
+    my_connections[ccf::NodeId(std::to_string(follower_2))]
+      .base_listening_port = follower_2_listening_port;
+    my_connections[ccf::NodeId(std::to_string(follower_2))].base_sending_port =
+      follower_2_sending_port;
   }
 }
 
@@ -137,7 +152,7 @@ int main(int argc, char* argv[])
       driver->my_connections[std::to_string(primary_node)].base_listening_port);
     driver->become_primary();
     driver->create_new_nodes(
-      std::vector<std::string>{std::to_string(follower_1), std::to_string(follower_2)});
+      std::vector<std::string>{std::to_string(follower_1), std::to_string(follower_2)}); //
     auto data = std::make_shared<std::vector<uint8_t>>();
     auto& vec = *(data.get());
 
@@ -157,8 +172,10 @@ int main(int argc, char* argv[])
       {
         threads_leader.emplace_back(
           std::thread(listen_for_acks, driver, follower_1));
-          threads_leader.emplace_back(
+        #if 0
+        threads_leader.emplace_back(
           std::thread(listen_for_acks, driver, follower_2));
+        #endif
       }
 #if 0
       acks += driver->periodic_listening_acks(std::to_string(follower_1));
