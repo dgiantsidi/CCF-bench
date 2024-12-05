@@ -123,6 +123,8 @@ int main(int argc, char* argv[])
   auto driver = make_shared<RaftDriver>(node_id);
   config_parser::initialize_with_data(driver->my_connections);
   auto start = std::chrono::high_resolution_clock::now();
+  auto leader_end = std::chrono::high_resolution_clock::now();
+
   if (ccf::NodeId(node_id) == ccf::NodeId(std::to_string(primary_node)))
   {
     std::vector<std::thread> threads_leader;
@@ -161,14 +163,17 @@ int main(int argc, char* argv[])
     fmt::print("{} --> finished, 1\n", __func__);
     for (;;)
     {
+      #if 0
       fmt::print(
         "{} --> get_committed_seqno()={}\n",
         __func__,
         driver->get_committed_seqno());
+      #endif
       if (driver->get_committed_seqno() == k_num_requests)
         break;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+    leader_end = std::chrono::high_resolution_clock::now();
     driver->replicate_commitable("2", data, 0);
     acks += driver->periodic_listening_acks(std::to_string(follower_1));
 
@@ -215,14 +220,15 @@ int main(int argc, char* argv[])
   }
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> duration = end - start;
+  std::chrono::duration<double> leader_duration = leader_end - start;
 
   fmt::print(
-    "{}: time elapsed={}s, tput={} op/s, avg latency={} ms, nb_sends={}, "
+    "{}: total time elapsed={}s, time elapsed in leader={}s, tput={} op/s, avg latency={} ms, nb_sends={}, "
     "nb_syscalls_writes={} "
     "nb_recvs={}, nb_syscalls_reads={}, bytes_sent={}, bytes_received={}, "
     "raft_committed_seqno={}, ledger_size={}\n",
     __func__,
-    duration.count(),
+    duration.count(), leader_duration.count(),
     ((1.0 * k_num_requests) / (1.0 * duration.count())),
     ((1000.0 * duration.count()) / (1.0 * k_num_requests)),
     socket_layer::nb_sends,
@@ -233,6 +239,7 @@ int main(int argc, char* argv[])
     socket_layer::bytes_received,
     driver->get_committed_seqno(),
     driver->get_ledger_size());
+
 
   return 0;
 }
