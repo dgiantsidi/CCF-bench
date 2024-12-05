@@ -1213,7 +1213,7 @@ namespace aft
           state->last_idx);
         return;
       }
-#if 0
+#if 1
       fmt::print(
         "Recv append entries to {} from {} for index {} and previous index {}\n",
         state->node_id,
@@ -1341,7 +1341,7 @@ namespace aft
       for (auto& ae : append_entries)
       {
         auto& [ds, i] = ae;
-        // fmt::print("Replicating on follower {}: {}\n", state->node_id, i);
+        //fmt::print("Replicating on follower {}: {}\n", state->node_id, i);
 
 #ifdef CCF_RAFT_TRACING
         nlohmann::json j = {};
@@ -1377,6 +1377,8 @@ namespace aft
 
         const auto& entry = ds->get_entry();
 
+        fmt::print("Replicating on follower {}: {} ---> term={}, index={}\n", state->node_id, i, ds->get_term(), ds->get_index());
+
         ledger->put_entry(
           entry, globally_committable, ds->get_term(), ds->get_index());
 
@@ -1393,7 +1395,7 @@ namespace aft
 
           case ccf::kv::ApplyResult::PASS_SIGNATURE:
           {
-            RAFT_DEBUG_FMT("Deserialising signature at {}", i);
+            fmt::print("Deserialising signature at {}", i);
             if (
               state->membership_state == ccf::kv::MembershipState::Retired &&
               state->retirement_phase == ccf::kv::RetirementPhase::Ordered)
@@ -2325,7 +2327,7 @@ namespace aft
     // given idx.
     void commit_if_possible(Index idx)
     {
-      RAFT_DEBUG_FMT(
+      fmt::print(
         "Commit if possible {} (ci: {}) (ti {})",
         idx,
         state->commit_idx,
@@ -2390,7 +2392,7 @@ namespace aft
       store->compact(idx);
       ledger->commit(idx);
 
-      RAFT_DEBUG_FMT("Commit on {}: {}", state->node_id, idx);
+      fmt::print("Commit on {}: {}", state->node_id, idx);
 
       // Examine each configuration that is followed by a globally committed
       // configuration.
