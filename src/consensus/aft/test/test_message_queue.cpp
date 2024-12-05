@@ -15,7 +15,7 @@ static void run_func_append(std::shared_ptr<m_queue> Q)
   {
     size_t msg_sz = 10;
     auto ptr = std::make_unique<uint8_t[]>(msg_sz);
-    //fmt::print("{} i = {}\n", __func__, i);
+    // fmt::print("{} i = {}\n", __func__, i);
 
     Q->append(0, std::move(ptr), msg_sz);
   }
@@ -35,9 +35,9 @@ static void run_func_pop(std::shared_ptr<m_queue> Q)
     if (data_sz > 0)
     {
       count++;
-      //fmt::print("{} ----> count={}\n", __func__, count);
+      // fmt::print("{} ----> count={}\n", __func__, count);
     }
-    
+
     if (count == total_reqs)
       return;
   }

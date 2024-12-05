@@ -42,30 +42,27 @@ public:
     exit(-1);
   }
 
-
   std::tuple<int, std::unique_ptr<uint8_t[]>, size_t> pop()
   {
-    //fmt::print("{} \n", __PRETTY_FUNCTION__);
+    // fmt::print("{} \n", __PRETTY_FUNCTION__);
 
     std::lock_guard<std::mutex> tmp_lock(dq_mtx);
     if (dq.empty())
     {
-      //fmt::print("{} --> no elem\n", __func__);
+      // fmt::print("{} --> no elem\n", __func__);
       return {-1, std::make_unique<uint8_t[]>(1), 0};
     }
 
     std::unique_ptr<message> front = std::move(dq.front());
     dq.pop_front();
 
-    std::unique_ptr<uint8_t[]> ret_msg =
-       std::move(front->msg);
+    std::unique_ptr<uint8_t[]> ret_msg = std::move(front->msg);
 
     size_t ret_sz = front->msg_sz;
     int node_id = front->node_id;
-    
+
     return {node_id, std::move(ret_msg), ret_sz};
   }
-
 
 private:
   struct message
@@ -77,14 +74,12 @@ private:
     explicit message(
       int _node_id, std::unique_ptr<uint8_t[]> _msg, size_t _msg_sz)
     {
-      //fmt::print("{}\n", __PRETTY_FUNCTION__);
+      // fmt::print("{}\n", __PRETTY_FUNCTION__);
 
       node_id = _node_id;
       msg = std::move(_msg);
       msg_sz = _msg_sz;
     }
-
-
 
     message() = delete;
 

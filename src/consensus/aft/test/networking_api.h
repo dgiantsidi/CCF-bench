@@ -255,7 +255,6 @@ public:
       fmt::print("{} error setting up the socket\n", __func__);
       return -1;
     }
-  
 
     // Define the server address
     struct sockaddr_in server_addr;
@@ -381,7 +380,6 @@ public:
       return;
     }
 
- 
     const int port = std::stoi(peer_service);
     // define the server address
     struct sockaddr_in server_addr;

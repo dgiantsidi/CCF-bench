@@ -81,20 +81,22 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
     auto [src_node, data, data_sz] = driver->message_queue.pop();
     //
     // auto [data, data_sz] = driver->message_queue.pop();
-    
-    if (data_sz > 0) {
-      //fmt::print("{} --> data_sz={}\n", __func__, data_sz);
+
+    if (data_sz > 0)
+    {
+      // fmt::print("{} --> data_sz={}\n", __func__, data_sz);
       auto src_node_str = ccf::NodeId(std::to_string(src_node));
       driver->periodic_applying(src_node_str, data.get(), data_sz);
     }
-    else if (data_sz == 0) {
+    else if (data_sz == 0)
+    {
       if (stop.load())
         return;
     }
   }
 }
 
-static void listen_for_acks(std::shared_ptr<RaftDriver> driver)
+static void listen_for_acks(std::shared_ptr<RaftDriver> driver, int node_id)
 {
   fmt::print("{}:{}\n", __func__, socket_layer::get_thread_id());
   int acks = 0;
@@ -102,7 +104,7 @@ static void listen_for_acks(std::shared_ptr<RaftDriver> driver)
   {
     {
       // std::unique_lock<std::mutex> tmp_l(leader_mtx);
-      acks += driver->periodic_listening_acks(std::to_string(follower_1));
+      acks += driver->periodic_listening_acks(std::to_string(node_id));
     }
     if (acks % 50000 == 0)
       fmt::print("{} acks={}\n", __func__, acks);
@@ -135,12 +137,13 @@ int main(int argc, char* argv[])
       driver->my_connections[std::to_string(primary_node)].base_listening_port);
     driver->become_primary();
     driver->create_new_nodes(
-      std::vector<std::string>{std::to_string(follower_1)});
+      std::vector<std::string>{std::to_string(follower_1), std::to_string(follower_2)});
     auto data = std::make_shared<std::vector<uint8_t>>();
     auto& vec = *(data.get());
 
     int acks = 0;
     acks += driver->periodic_listening_acks(std::to_string(follower_1));
+    acks += driver->periodic_listening_acks(std::to_string(follower_2));
     // this is because we send an AppendEntries message every time we
     // send a new_configuration
     for (auto i = 0ULL; i < k_num_requests; i++)
@@ -152,7 +155,10 @@ int main(int argc, char* argv[])
       driver->replicate_commitable("2", data, 0);
       if (i == 0)
       {
-        threads_leader.emplace_back(std::thread(listen_for_acks, driver));
+        threads_leader.emplace_back(
+          std::thread(listen_for_acks, driver, follower_1));
+          threads_leader.emplace_back(
+          std::thread(listen_for_acks, driver, follower_2));
       }
 #if 0
       acks += driver->periodic_listening_acks(std::to_string(follower_1));
@@ -163,21 +169,21 @@ int main(int argc, char* argv[])
     fmt::print("{} --> finished, 1\n", __func__);
     for (;;)
     {
-      #if 0
+#if 0
       fmt::print(
         "{} --> get_committed_seqno()={}\n",
         __func__,
         driver->get_committed_seqno());
-      #endif
+#endif
       if (driver->get_committed_seqno() == k_num_requests)
         break;
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     leader_end = std::chrono::high_resolution_clock::now();
-    fmt::print("{} ---> taken timestamp={}s\n", __func__, driver->get_committed_seqno());
+    fmt::print(
+      "{} ---> taken timestamp={}s\n", __func__, driver->get_committed_seqno());
     driver->replicate_commitable("2", data, 0);
     acks += driver->periodic_listening_acks(std::to_string(follower_1));
-
 
     threads_leader[0].join();
     driver->close_connections(std::to_string(primary_node));
@@ -185,11 +191,12 @@ int main(int argc, char* argv[])
   }
   else
   {
+    
     std::vector<std::thread> threads_follower;
     driver->make_follower(
       ccf::NodeId(node_id),
-      driver->my_connections[std::to_string(follower_1)].ip,
-      driver->my_connections[std::to_string(follower_1)].base_listening_port);
+      driver->my_connections[ccf::NodeId(node_id)].ip,
+      driver->my_connections[ccf::NodeId(node_id)].base_listening_port);
     int count = 0;
     count += driver->establish_state(std::to_string(primary_node));
     for (auto i = 0ULL; i < k_num_requests; i++)
@@ -200,7 +207,7 @@ int main(int argc, char* argv[])
         threads_follower.emplace_back(std::thread(apply_cmds, driver));
       }
     }
-     for (;;)
+    for (;;)
     {
       stop.store(true);
       fmt::print(
@@ -212,9 +219,8 @@ int main(int argc, char* argv[])
       std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
       count += driver->establish_state(std::to_string(primary_node));
-
     }
-    //count += driver->periodic_listening(std::to_string(primary_node));
+    // count += driver->periodic_listening(std::to_string(primary_node));
     driver->close_connections(std::to_string(follower_1));
     // driver->close_connections(std::to_string(primary_node));
     threads_follower[0].join();
@@ -224,12 +230,14 @@ int main(int argc, char* argv[])
   std::chrono::duration<double> leader_duration = leader_end - start;
 
   fmt::print(
-    "{}: total time elapsed={}s, time elapsed in leader={}s, tput={} op/s, avg latency={} ms, nb_sends={}, "
+    "{}: total time elapsed={}s, time elapsed in leader={}s, tput={} op/s, avg "
+    "latency={} ms, nb_sends={}, "
     "nb_syscalls_writes={} "
     "nb_recvs={}, nb_syscalls_reads={}, bytes_sent={}, bytes_received={}, "
     "raft_committed_seqno={}, ledger_size={}\n",
     __func__,
-    duration.count(), leader_duration.count(),
+    duration.count(),
+    leader_duration.count(),
     ((1.0 * k_num_requests) / (1.0 * duration.count())),
     ((1000.0 * duration.count()) / (1.0 * k_num_requests)),
     socket_layer::nb_sends,
@@ -240,7 +248,6 @@ int main(int argc, char* argv[])
     socket_layer::bytes_received,
     driver->get_committed_seqno(),
     driver->get_ledger_size());
-
 
   return 0;
 }
