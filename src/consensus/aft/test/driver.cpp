@@ -214,9 +214,12 @@ int main(int argc, char* argv[])
     acks += driver->periodic_listening_acks(std::to_string(follower_2));
 
     threads_leader[0].join();
+    threads_leader[1].join();
     // threads_leader[0].join();
     driver->close_connections(std::to_string(primary_node));
     driver->close_connections(std::to_string(follower_1));
+    driver->close_connections(std::to_string(follower_2));
+
   }
   else
   {
@@ -249,7 +252,8 @@ int main(int argc, char* argv[])
       count += driver->establish_state(std::to_string(primary_node));
     }
     // count += driver->periodic_listening(std::to_string(primary_node));
-    driver->close_connections(std::to_string(follower_1));
+    driver->close_connections(node_id);
+    
     // driver->close_connections(std::to_string(primary_node));
     threads_follower[0].join();
   }
