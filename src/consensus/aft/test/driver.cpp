@@ -156,8 +156,7 @@ int main(int argc, char* argv[])
       std::map<std::string, ccf::kv::Configuration::NodeInfo>{
         std::make_pair(
           std::to_string(primary_node),
-          ccf::kv::Configuration::NodeInfo(
-            primary_ip, primary_listening_port)),
+          ccf::kv::Configuration::NodeInfo(primary_ip, primary_listening_port)),
         std::make_pair(
           std::to_string(follower_1),
           ccf::kv::Configuration::NodeInfo(
@@ -216,8 +215,7 @@ int main(int argc, char* argv[])
     leader_end = std::chrono::high_resolution_clock::now();
     fmt::print(
       "{} ---> taken timestamp={}s\n", __func__, driver->get_committed_seqno());
-    
-    
+
     threads_leader[0].join();
     threads_leader[1].join();
 
@@ -226,12 +224,10 @@ int main(int argc, char* argv[])
     acks += driver->periodic_listening_acks(std::to_string(follower_1));
     acks += driver->periodic_listening_acks(std::to_string(follower_2));
 
-
     // threads_leader[0].join();
     driver->close_connections(std::to_string(primary_node));
     driver->close_connections(std::to_string(follower_1));
     driver->close_connections(std::to_string(follower_2));
-
   }
   else
   {
@@ -265,7 +261,7 @@ int main(int argc, char* argv[])
     }
     // count += driver->periodic_listening(std::to_string(primary_node));
     driver->close_connections(node_id);
-    
+
     // driver->close_connections(std::to_string(primary_node));
     threads_follower[0].join();
   }

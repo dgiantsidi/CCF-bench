@@ -161,11 +161,10 @@ private:
     static_cast<network_stack*>(net_stack.get())->register_ledger_getter(raft);
     if (_nodes.find(node_id) != _nodes.end())
     {
-     // throw std::logic_error(fmt::format("Node {} already exists", node_id));
-
+      // throw std::logic_error(fmt::format("Node {} already exists", node_id));
     }
-    else {
-
+    else
+    {
       _nodes.emplace(node_id, NodeDriver{kv, raft});
       fmt::print("{}: {} added\n", __func__, node_id);
     }
@@ -312,7 +311,7 @@ public:
 
     for (auto const& [n, info] : node_ids)
     {
-      //add_node(n);
+      // add_node(n);
       configuration.try_emplace(n, info);
       fmt::print("{} -> n={}\n", __func__, n);
       configuration[n].print();

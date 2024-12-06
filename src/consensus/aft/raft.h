@@ -2276,7 +2276,8 @@ namespace aft
 
         sort(match.begin(), match.end());
         auto confirmed = match.at((match.size() - 1) / 2);
-        // fmt::print("{} ---> confirmed={} match.size()={})\n", __func__, confirmed, match.size());
+        // fmt::print("{} ---> confirmed={} match.size()={})\n", __func__,
+        // confirmed, match.size());
 
         if (
           !new_agreement_index.has_value() ||
