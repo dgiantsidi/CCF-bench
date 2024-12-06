@@ -307,7 +307,7 @@ public:
     for (auto const& [n, info] : node_ids)
     {
       add_node(n);
-      configuration.try_emplace(n);
+      configuration.try_emplace(n, info);
       fmt::print("{} -> n={}\n", __func__, n);
       configuration[n].print();
     }
@@ -1306,9 +1306,10 @@ public:
   {
     auto& my_raft = _nodes.at(my_nid).raft;
     network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
-
+    
     auto& incomming_socket =
-      net->node_connections_map[my_nid]->listening_handle;
+      net->node_connections_map[src_node]->listening_handle;
+    //fmt::print("{} ---> src_node={} from socket={}\n", __func__, src_node, incomming_socket);
     auto [data, data_sz] = socket_layer::get_from_socket(
       incomming_socket, sizeof(aft::AppendEntriesResponse));
 

@@ -453,7 +453,13 @@ public:
         nid);
     }
 
-    return (node_connections_map.find(nid) != node_connections_map.end());
+    bool ret_val = (node_connections_map.find(nid) != node_connections_map.end());
+    
+    fmt::print("{} ---> ret_val={} w/ node_connections_map[nid={}]\n", __func__, ret_val, nid);
+    
+    
+    return true; //dimitra
+    return ret_val;
   }
 
   template <class T>

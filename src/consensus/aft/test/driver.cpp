@@ -156,10 +156,12 @@ int main(int argc, char* argv[])
         }); //
     auto data = std::make_shared<std::vector<uint8_t>>();
     auto& vec = *(data.get());
-
+    fmt::print("{} #1\n", __func__);
     int acks = 0;
     acks += driver->periodic_listening_acks(std::to_string(follower_1));
+    fmt::print("{} #2\n", __func__);
     acks += driver->periodic_listening_acks(std::to_string(follower_2));
+    fmt::print("{} #3\n", __func__);
     // this is because we send an AppendEntries message every time we
     // send a new_configuration
     for (auto i = 0ULL; i < k_num_requests; i++)
@@ -169,6 +171,7 @@ int main(int argc, char* argv[])
       // fmt::print("{}:{} ---> replicate_commitable()\n", __func__,
       // socket_layer::get_thread_id());
       driver->replicate_commitable("2", data, 0);
+      //fmt::print("{} #4\n", __func__);
       if (i == 0)
       {
         threads_leader.emplace_back(
@@ -187,7 +190,7 @@ int main(int argc, char* argv[])
     fmt::print("{} --> finished, 1\n", __func__);
     for (;;)
     {
-#if 0
+#if 1
       fmt::print(
         "{} --> get_committed_seqno()={}\n",
         __func__,
@@ -195,15 +198,17 @@ int main(int argc, char* argv[])
 #endif
       if (driver->get_committed_seqno() == k_num_requests)
         break;
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
     leader_end = std::chrono::high_resolution_clock::now();
     fmt::print(
       "{} ---> taken timestamp={}s\n", __func__, driver->get_committed_seqno());
     driver->replicate_commitable("2", data, 0);
     acks += driver->periodic_listening_acks(std::to_string(follower_1));
+    acks += driver->periodic_listening_acks(std::to_string(follower_2));
 
     threads_leader[0].join();
+    //threads_leader[0].join();
     driver->close_connections(std::to_string(primary_node));
     driver->close_connections(std::to_string(follower_1));
   }
