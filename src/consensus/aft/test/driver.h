@@ -233,7 +233,16 @@ public:
       follower_1_ip,
       follower_1_listening_port);
 
-    net->accept_connection(std::to_string(primary_node));
+    net->accept_connection(std::to_string(primary_node), std::to_string(follower_1));
+
+    net->associate_node_address(my_nid, peer_hostname, std::to_string(port+1));
+    net->connect_to_peer(
+      peer_hostname,
+      std::to_string(port+1),
+      std::to_string(follower_2),
+      follower_2_ip,
+      follower_2_listening_port);
+    net->accept_connection(std::to_string(primary_node), std::to_string(follower_2));
 
 #if 0
     fmt::print(
@@ -261,14 +270,24 @@ public:
 
     network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
     net->associate_node_address(my_nid, peer_hostname, std::to_string(port));
-    net->accept_connection(std::to_string(follower_1));
+    // net->accept_connection(std::to_string(follower_1));
+    net->accept_connection(peer_id, peer_id);
 
+    if (peer_id == ccf::NodeId("2"))
     net->connect_to_peer(
       peer_hostname,
       std::to_string(port),
       std::to_string(primary_node),
       primary_ip,
+      primary_listening_port+1);
+    else
+      net->connect_to_peer(
+      peer_hostname,
+      std::to_string(port),
+      std::to_string(primary_node),
+      primary_ip,
       primary_listening_port);
+
 #if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
@@ -278,16 +297,23 @@ public:
   }
   ccf::NodeId my_nid;
   // Note: deprecated, to be removed when the last scenario using it is removed
-  void create_new_nodes(std::vector<std::string> node_ids)
+  void create_new_nodes(
+    std::map<std::string, ccf::kv::Configuration::NodeInfo> node_ids)
   {
     // Unrealistic way to create network. Initial configuration is automatically
     // added to all nodes.
     ccf::kv::Configuration::Nodes configuration;
-    for (auto const& n : node_ids)
+
+    for (auto const& [n, info] : node_ids)
     {
       add_node(n);
       configuration.try_emplace(n);
+      fmt::print("{} -> n={}\n", __func__, n);
+      configuration[n].print();
     }
+
+    fmt::print(
+      "{} ---> configuration.size()={}\n", __func__, configuration.size());
 
     for (auto& node : _nodes)
     {

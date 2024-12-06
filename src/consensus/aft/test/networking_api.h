@@ -18,6 +18,7 @@
 #include <thread>
 #include <unistd.h>
 #include <unordered_map>
+#include <map>
 
 namespace socket_layer
 {
@@ -192,7 +193,9 @@ class network_stack : public ccf::NodeToNode
 
   struct connections
   {
-    connections() : listening_handle(0), sending_handle(0){};
+    connections() : listening_handle(0), sending_handle(0){
+      
+    };
 
     connections(const connections& other)
     {
@@ -206,7 +209,7 @@ class network_stack : public ccf::NodeToNode
       sending_handle = other.sending_handle;
     }
 
-    conn_handle listening_handle;
+    conn_handle listening_handle; // this is for the leader to hear from many followers //@dimitra:re-factor me
     conn_handle sending_handle;
   };
 
@@ -300,18 +303,19 @@ public:
     auto& sending_handle = node_connections_map[peer_id]->sending_handle;
     sending_handle = sockfd;
     fmt::print(
-      "{} ---> ({}) {}:{} at sending socket={}\n",
+      "{} ---> ({}) {}:{} at sending socket={} added on peer_id={}\n",
       __func__,
       peer_id,
       peer_ip,
       peer_port,
-      sending_handle);
+      sending_handle, peer_id);
 
     return 1;
   }
 
-  void accept_connection(const ccf::NodeId& peer_id)
+  void accept_connection(const ccf::NodeId& peer_id, const ccf::NodeId& remote_id)
   {
+    int node_id = std::stoi(peer_id.value());
     if (node_connections_map.find(peer_id) == node_connections_map.end())
     {
       fmt::print(
@@ -351,13 +355,14 @@ public:
     }
 
     fmt::print(
-      "{} ---> connection accepted on {} from {}:{} ({})\n",
+      "{} ---> connection accepted on {} from {}:{} (listening_handle added on map: {})\n",
       __func__,
       client_sock,
       inet_ntoa(client_addr.sin_addr),
       ntohs(client_addr.sin_port),
-      peer_id);
-    listening_handle = client_sock;
+      remote_id);
+    // listening_handle = client_sock;
+     node_connections_map[remote_id]->listening_handle = client_sock;
   }
 
   void associate_node_address(
@@ -379,6 +384,12 @@ public:
       fmt::print("{} ---> error setting up the socket\n", __func__);
       return;
     }
+    fmt::print(
+      "{} --> peer_id={}, peer_hostname={}, peer_service={}\n",
+      __func__,
+      peer_id,
+      peer_hostname,
+      peer_service);
 
     const int port = std::stoi(peer_service);
     // define the server address
@@ -399,6 +410,7 @@ public:
       close(sockfd);
       return;
     }
+    int node_id = std::stoi(peer_id.value());
     fmt::print(
       "{} listening socket={} (bound at {}:{})\n",
       __func__,

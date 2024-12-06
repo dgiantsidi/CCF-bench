@@ -84,6 +84,42 @@ namespace ccf::kv
     {
       std::string hostname;
       std::string port;
+      
+      NodeInfo(const std::string& _hostname, const int& _port) {
+        hostname = _hostname;
+        port = std::to_string(_port);
+      }
+
+      NodeInfo(const NodeInfo& other) {
+        hostname = other.hostname;
+        port = other.port;
+      }
+
+      NodeInfo(NodeInfo&& other) {
+        hostname = other.hostname;
+        port = other.port;
+      }
+
+      NodeInfo& operator=(const NodeInfo& other) {
+        hostname = other.hostname;
+        port = other.port;
+        return *this;
+      }
+
+      NodeInfo& operator=(NodeInfo&& other) {
+        hostname = other.hostname;
+        port = other.port;
+        return *this;
+      }
+
+      void print() {
+        fmt::print("{} ---> hostname={}, port={}\n", __func__, hostname, port);
+      }
+
+      friend std::ostream& operator<<(std::ostream& os, const NodeInfo& other) {
+        os << other.hostname << ":" << other.port <<"\n";
+        return os;
+      }
 
       NodeInfo() = default;
 
@@ -100,6 +136,11 @@ namespace ccf::kv
 
     using Nodes = std::map<NodeId, NodeInfo>;
 
+    void print() {
+      for (auto& elem : nodes) {
+        std::cout << __func__ << " " << elem.first << " " << elem.second << "\n";
+      }
+    }
     ccf::SeqNo idx;
     Nodes nodes;
     ReconfigurationId rid;

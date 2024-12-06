@@ -1005,12 +1005,12 @@ if(BUILD_TESTS)
 
 
     # Latency bench
-    add_executable(
-      latency_bench ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/latency_bench.cpp
-    )
+   # add_executable(
+   #   latency_bench ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/latency_bench.cpp
+   # )
 
-    target_link_libraries(latency_bench PRIVATE ccfcrypto.host)
-    target_include_directories(latency_bench PRIVATE src/aft)
+   # target_link_libraries(latency_bench PRIVATE ccfcrypto.host)
+   # target_include_directories(latency_bench PRIVATE src/aft)
 
 
     
