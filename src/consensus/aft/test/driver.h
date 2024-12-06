@@ -233,16 +233,19 @@ public:
       follower_1_ip,
       follower_1_listening_port);
 
-    net->accept_connection(std::to_string(primary_node), std::to_string(follower_1));
+    net->accept_connection(
+      std::to_string(primary_node), std::to_string(follower_1));
 
-    net->associate_node_address(my_nid, peer_hostname, std::to_string(port+1));
+    net->associate_node_address(
+      my_nid, peer_hostname, std::to_string(port + 1));
     net->connect_to_peer(
       peer_hostname,
-      std::to_string(port+1),
+      std::to_string(port + 1),
       std::to_string(follower_2),
       follower_2_ip,
       follower_2_listening_port);
-    net->accept_connection(std::to_string(primary_node), std::to_string(follower_2));
+    net->accept_connection(
+      std::to_string(primary_node), std::to_string(follower_2));
 
 #if 0
     fmt::print(
@@ -274,19 +277,19 @@ public:
     net->accept_connection(peer_id, peer_id);
 
     if (peer_id == ccf::NodeId("2"))
-    net->connect_to_peer(
-      peer_hostname,
-      std::to_string(port),
-      std::to_string(primary_node),
-      primary_ip,
-      primary_listening_port+1);
+      net->connect_to_peer(
+        peer_hostname,
+        std::to_string(port),
+        std::to_string(primary_node),
+        primary_ip,
+        primary_listening_port + 1);
     else
       net->connect_to_peer(
-      peer_hostname,
-      std::to_string(port),
-      std::to_string(primary_node),
-      primary_ip,
-      primary_listening_port);
+        peer_hostname,
+        std::to_string(port),
+        std::to_string(primary_node),
+        primary_ip,
+        primary_listening_port);
 
 #if 0
     fmt::print(
@@ -1306,10 +1309,11 @@ public:
   {
     auto& my_raft = _nodes.at(my_nid).raft;
     network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
-    
+
     auto& incomming_socket =
       net->node_connections_map[src_node]->listening_handle;
-    //fmt::print("{} ---> src_node={} from socket={}\n", __func__, src_node, incomming_socket);
+    // fmt::print("{} ---> src_node={} from socket={}\n", __func__, src_node,
+    // incomming_socket);
     auto [data, data_sz] = socket_layer::get_from_socket(
       incomming_socket, sizeof(aft::AppendEntriesResponse));
 

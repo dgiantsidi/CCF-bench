@@ -151,9 +151,14 @@ int main(int argc, char* argv[])
     driver->become_primary();
     driver->create_new_nodes(
       std::map<std::string, ccf::kv::Configuration::NodeInfo>{
-        std::make_pair(std::to_string(follower_1), ccf::kv::Configuration::NodeInfo(follower_1_ip, follower_1_listening_port)),
-        std::make_pair(std::to_string(follower_2), ccf::kv::Configuration::NodeInfo(follower_2_ip, follower_2_listening_port))
-        }); //
+        std::make_pair(
+          std::to_string(follower_1),
+          ccf::kv::Configuration::NodeInfo(
+            follower_1_ip, follower_1_listening_port)),
+        std::make_pair(
+          std::to_string(follower_2),
+          ccf::kv::Configuration::NodeInfo(
+            follower_2_ip, follower_2_listening_port))}); //
     auto data = std::make_shared<std::vector<uint8_t>>();
     auto& vec = *(data.get());
     fmt::print("{} #1\n", __func__);
@@ -171,11 +176,12 @@ int main(int argc, char* argv[])
       // fmt::print("{}:{} ---> replicate_commitable()\n", __func__,
       // socket_layer::get_thread_id());
       driver->replicate_commitable("2", data, 0);
-      //fmt::print("{} #4\n", __func__);
       if (i == 0)
       {
         threads_leader.emplace_back(
           std::thread(listen_for_acks, driver, follower_1));
+        threads_leader.emplace_back(
+          std::thread(listen_for_acks, driver, follower_2));
 #if 0
         threads_leader.emplace_back(
           std::thread(listen_for_acks, driver, follower_2));
@@ -208,7 +214,7 @@ int main(int argc, char* argv[])
     acks += driver->periodic_listening_acks(std::to_string(follower_2));
 
     threads_leader[0].join();
-    //threads_leader[0].join();
+    // threads_leader[0].join();
     driver->close_connections(std::to_string(primary_node));
     driver->close_connections(std::to_string(follower_1));
   }

@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <fmt/printf.h>
 #include <iostream>
+#include <map>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <stdint.h>
@@ -18,7 +19,6 @@
 #include <thread>
 #include <unistd.h>
 #include <unordered_map>
-#include <map>
 
 namespace socket_layer
 {
@@ -193,9 +193,11 @@ class network_stack : public ccf::NodeToNode
 
   struct connections
   {
-    connections() : listening_handle(0), sending_handle(0){
-      
-    };
+    connections() :
+      listening_handle(0),
+      sending_handle(0){
+
+      };
 
     connections(const connections& other)
     {
@@ -209,7 +211,8 @@ class network_stack : public ccf::NodeToNode
       sending_handle = other.sending_handle;
     }
 
-    conn_handle listening_handle; // this is for the leader to hear from many followers //@dimitra:re-factor me
+    conn_handle listening_handle; // this is for the leader to hear from many
+                                  // followers //@dimitra:re-factor me
     conn_handle sending_handle;
   };
 
@@ -308,12 +311,14 @@ public:
       peer_id,
       peer_ip,
       peer_port,
-      sending_handle, peer_id);
+      sending_handle,
+      peer_id);
 
     return 1;
   }
 
-  void accept_connection(const ccf::NodeId& peer_id, const ccf::NodeId& remote_id)
+  void accept_connection(
+    const ccf::NodeId& peer_id, const ccf::NodeId& remote_id)
   {
     int node_id = std::stoi(peer_id.value());
     if (node_connections_map.find(peer_id) == node_connections_map.end())
@@ -355,14 +360,15 @@ public:
     }
 
     fmt::print(
-      "{} ---> connection accepted on {} from {}:{} (listening_handle added on map: {})\n",
+      "{} ---> connection accepted on {} from {}:{} (listening_handle added on "
+      "map: {})\n",
       __func__,
       client_sock,
       inet_ntoa(client_addr.sin_addr),
       ntohs(client_addr.sin_port),
       remote_id);
     // listening_handle = client_sock;
-     node_connections_map[remote_id]->listening_handle = client_sock;
+    node_connections_map[remote_id]->listening_handle = client_sock;
   }
 
   void associate_node_address(
@@ -453,12 +459,16 @@ public:
         nid);
     }
 
-    bool ret_val = (node_connections_map.find(nid) != node_connections_map.end());
-    
-    fmt::print("{} ---> ret_val={} w/ node_connections_map[nid={}]\n", __func__, ret_val, nid);
-    
-    
-    return true; //dimitra
+    bool ret_val =
+      (node_connections_map.find(nid) != node_connections_map.end());
+
+    fmt::print(
+      "{} ---> ret_val={} w/ node_connections_map[nid={}]\n",
+      __func__,
+      ret_val,
+      nid);
+
+    return true; // dimitra
     return ret_val;
   }
 
