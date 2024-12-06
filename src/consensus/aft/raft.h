@@ -2260,9 +2260,10 @@ namespace aft
         // configuration.
         std::vector<Index> match;
         match.reserve(c.nodes.size());
-
+        // fmt::print("{} ---------------------------\n", __func__);
         for (auto node : c.nodes)
         {
+          // fmt::print("{} -->  node={}\n", __func__, node.first);
           if (node.first == state->node_id)
           {
             match.push_back(state->last_idx);
@@ -2275,6 +2276,7 @@ namespace aft
 
         sort(match.begin(), match.end());
         auto confirmed = match.at((match.size() - 1) / 2);
+        // fmt::print("{} ---> confirmed={} match.size()={})\n", __func__, confirmed, match.size());
 
         if (
           !new_agreement_index.has_value() ||
@@ -2350,6 +2352,7 @@ namespace aft
 
     size_t get_quorum(size_t n) const
     {
+      fmt::print("{} ---> quorum={} (total={})\n", __func__, ((n / 2) + 1), n);
       return (n / 2) + 1;
     }
 

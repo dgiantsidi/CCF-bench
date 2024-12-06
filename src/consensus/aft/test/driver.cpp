@@ -86,6 +86,7 @@ namespace config_parser
 }
 
 std::atomic<bool> stop;
+std::atomic<int> total_acks;
 
 static void apply_cmds(std::shared_ptr<RaftDriver> driver)
 {
@@ -119,8 +120,9 @@ static void listen_for_acks(std::shared_ptr<RaftDriver> driver, int node_id)
       // std::unique_lock<std::mutex> tmp_l(leader_mtx);
       acks += driver->periodic_listening_acks(std::to_string(node_id));
     }
+    total_acks.fetch_add(1);
     if (acks % 50000 == 0)
-      fmt::print("{} acks={}\n", __func__, acks);
+      fmt::print("{} acks={} from node_id={}\n", __func__, acks, node_id);
     if (acks == k_num_requests)
       return;
   }
@@ -132,6 +134,7 @@ int main(int argc, char* argv[])
     1); // @dimitra:TODO -> this is not used actually
   authentication::init();
   stop.store(false);
+  total_acks.store(0);
   std::string node_id;
   std::cin >> node_id;
   std::vector<std::thread> threads_leader;
@@ -151,6 +154,10 @@ int main(int argc, char* argv[])
     driver->become_primary();
     driver->create_new_nodes(
       std::map<std::string, ccf::kv::Configuration::NodeInfo>{
+        std::make_pair(
+          std::to_string(primary_node),
+          ccf::kv::Configuration::NodeInfo(
+            primary_ip, primary_listening_port)),
         std::make_pair(
           std::to_string(follower_1),
           ccf::kv::Configuration::NodeInfo(
@@ -209,12 +216,17 @@ int main(int argc, char* argv[])
     leader_end = std::chrono::high_resolution_clock::now();
     fmt::print(
       "{} ---> taken timestamp={}s\n", __func__, driver->get_committed_seqno());
+    
+    
+    threads_leader[0].join();
+    threads_leader[1].join();
+
     driver->replicate_commitable("2", data, 0);
+
     acks += driver->periodic_listening_acks(std::to_string(follower_1));
     acks += driver->periodic_listening_acks(std::to_string(follower_2));
 
-    threads_leader[0].join();
-    threads_leader[1].join();
+
     // threads_leader[0].join();
     driver->close_connections(std::to_string(primary_node));
     driver->close_connections(std::to_string(follower_1));
