@@ -258,9 +258,16 @@ public:
       setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
     if (result < 0)
     {
-      fmt::print("{} error setting up the socket\n", __func__);
+      fmt::print("{} error setting up the socket with TCP_NODELAY\n", __func__);
       return -1;
     }
+    flag = 1;
+    result = setsockopt(sockfd, SOL_SOCKET, SO_ZEROCOPY, &flag, sizeof(int));
+    if (result < 0) {
+      fmt::print("{} error setting up the socket with SO_ZEROCOPY\n", __func__);
+      return -1;
+    }
+
 
     // Define the server address
     struct sockaddr_in server_addr;
@@ -389,6 +396,12 @@ public:
     {
       fmt::print("{} ---> error setting up the socket\n", __func__);
       return;
+    }
+    flag = 1;
+    result = setsockopt(sockfd, SOL_SOCKET, SO_ZEROCOPY, &flag, sizeof(int));
+    if (result < 0) {
+      fmt::print("{} error setting up the socket with SO_ZEROCOPY\n", __func__);
+      return -1;
     }
     fmt::print(
       "{} --> peer_id={}, peer_hostname={}, peer_service={}\n",
