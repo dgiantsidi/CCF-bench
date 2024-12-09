@@ -160,6 +160,7 @@ private:
     static_cast<network_stack*>(net_stack.get())->register_ledger_getter(raft);
     if (_nodes.find(node_id) != _nodes.end())
     {
+      fmt::print("{} ---> node={} already exists\n", __func__, node_id);
       // throw std::logic_error(fmt::format("Node {} already exists", node_id));
     }
     else if (my_nid != node_id)
@@ -167,7 +168,8 @@ private:
       // _nodes.emplace(node_id, NodeDriver{kv, raft});
       fmt::print("{}: {} added w/o creating a raft obj\n", __func__, node_id);
     }
-    else {
+    else
+    {
       _nodes.emplace(node_id, NodeDriver{kv, raft});
       fmt::print("{}: {} added\n", __func__, node_id);
     }
