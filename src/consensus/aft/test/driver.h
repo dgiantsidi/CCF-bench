@@ -141,7 +141,6 @@ private:
     std::shared_ptr<ccf::NodeToNode> net_stack =
       std::make_shared<network_stack>();
     auto state = std::make_shared<aft::State>(node_id);
-    // state->current_view = (node_id == ccf::NodeId("0")) ? 0 : 2;
 
     auto raft = std::make_shared<TRaft>(
       settings,
@@ -163,8 +162,12 @@ private:
     {
       // throw std::logic_error(fmt::format("Node {} already exists", node_id));
     }
-    else
+    else if (my_nid != node_id)
     {
+      // _nodes.emplace(node_id, NodeDriver{kv, raft});
+      fmt::print("{}: {} added w/o creating a raft obj\n", __func__, node_id);
+    }
+    else {
       _nodes.emplace(node_id, NodeDriver{kv, raft});
       fmt::print("{}: {} added\n", __func__, node_id);
     }
