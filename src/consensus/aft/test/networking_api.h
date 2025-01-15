@@ -263,11 +263,11 @@ public:
     }
     flag = 1;
     result = setsockopt(sockfd, SOL_SOCKET, SO_ZEROCOPY, &flag, sizeof(int));
-    if (result < 0) {
+    if (result < 0)
+    {
       fmt::print("{} error setting up the socket with SO_ZEROCOPY\n", __func__);
       return -1;
     }
-
 
     // Define the server address
     struct sockaddr_in server_addr;
@@ -399,9 +399,10 @@ public:
     }
     flag = 1;
     result = setsockopt(sockfd, SOL_SOCKET, SO_ZEROCOPY, &flag, sizeof(int));
-    if (result < 0) {
+    if (result < 0)
+    {
       fmt::print("{} error setting up the socket with SO_ZEROCOPY\n", __func__);
-      return ;
+      return;
     }
     fmt::print(
       "{} --> peer_id={}, peer_hostname={}, peer_service={}\n",

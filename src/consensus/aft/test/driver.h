@@ -243,6 +243,8 @@ public:
     net->accept_connection(
       std::to_string(primary_node), std::to_string(follower_1));
 
+#ifdef SECOND_FOLLOWER
+#  warning "We run with 2 follower nodes"
     net->associate_node_address(
       my_nid, peer_hostname, std::to_string(port + 1));
     net->connect_to_peer(
@@ -253,7 +255,7 @@ public:
       follower_2_listening_port);
     net->accept_connection(
       std::to_string(primary_node), std::to_string(follower_2));
-
+#endif
 #if 0
     fmt::print(
       "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "

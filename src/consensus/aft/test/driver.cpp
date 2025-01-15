@@ -8,6 +8,10 @@
 #include "ccf/ds/hash.h"
 #include "config.hpp"
 #include "networking_api.h"
+#include "ngtcp2/examples/config.h"
+#include "ngtcp2/examples/server.h"
+#include "ngtcp2/examples/template.h"
+#include "ngtcp2/examples/util.h"
 
 #include <cassert>
 #include <chrono>
@@ -34,6 +38,39 @@ static void print_data(uint8_t* ptr, size_t msg_size)
     __func__);
 }
 
+void callable_obj_replication(
+  std::weak_ptr<void> driver, uint8_t* data = nullptr, size_t sz_data = 0)
+{
+  static int reqs_no = 0;
+  // fmt::print("{} here\n", __func__);
+  std::shared_ptr<void> drv_shared = driver.lock();
+  if (drv_shared)
+  {
+    auto data = std::make_shared<std::vector<uint8_t>>();
+    std::shared_ptr<RaftDriver> raft_drv =
+      std::static_pointer_cast<RaftDriver>(drv_shared);
+    // std::cout << __PRETTY_FUNCTION__ << " committed_seqno=" <<
+    // raft_drv->get_committed_seqno() << "\n";
+    reqs_no++;
+    if (reqs_no % 10000 == 0)
+    {
+      std::cout << __PRETTY_FUNCTION__
+                << " committed_seqno=" << raft_drv->get_committed_seqno()
+                << "\n";
+    }
+    raft_drv->replicate_commitable("2", data, 0);
+
+    while (raft_drv->get_committed_seqno() != reqs_no)
+    {
+    }
+  }
+  else
+  {
+    fmt::print("{} error\n", __PRETTY_FUNCTION__);
+    assert(false);
+  }
+}
+
 std::unique_ptr<threading::ThreadMessaging>
   threading::ThreadMessaging::singleton = nullptr;
 
@@ -47,15 +84,15 @@ namespace config_parser
       ccf::NodeId("0"), network_stack::connectivity_description()));
     my_connections.insert(std::make_pair(
       ccf::NodeId("1"), network_stack::connectivity_description()));
+#ifdef SECOND_FOLLOWER
     my_connections.insert(std::make_pair(
       ccf::NodeId("2"), network_stack::connectivity_description()));
-
+#endif
     my_connections[ccf::NodeId(std::to_string(primary_node))].nid =
       ccf::NodeId(std::to_string(primary_node));
     my_connections[ccf::NodeId(std::to_string(primary_node))].ip =
       primary_ip; // CVM
-    // my_connections[ccf::NodeId(std::to_string(primary_node))].ip =
-    // "10.5.0.6"; // regural VM IP
+
     my_connections[ccf::NodeId(std::to_string(primary_node))]
       .base_listening_port = primary_listening_port;
     my_connections[ccf::NodeId(std::to_string(primary_node))]
@@ -65,23 +102,22 @@ namespace config_parser
       ccf::NodeId(std::to_string(follower_1));
     my_connections[ccf::NodeId(std::to_string(follower_1))].ip =
       follower_1_ip; // CVM
-    // my_connections[ccf::NodeId(std::to_string(follower_1))].ip = "10.5.0.7";
-    // // regural VM IP
+
     my_connections[ccf::NodeId(std::to_string(follower_1))]
       .base_listening_port = follower_1_listening_port;
     my_connections[ccf::NodeId(std::to_string(follower_1))].base_sending_port =
       follower_1_sending_port;
-
+#ifdef SECOND_FOLLOWER
     my_connections[ccf::NodeId(std::to_string(follower_2))].nid =
       ccf::NodeId(std::to_string(follower_2));
     my_connections[ccf::NodeId(std::to_string(follower_2))].ip =
       follower_2_ip; // CVM
-    // my_connections[ccf::NodeId(std::to_string(follower_1))].ip = "10.5.0.7";
-    // // regural VM IP
+
     my_connections[ccf::NodeId(std::to_string(follower_2))]
       .base_listening_port = follower_2_listening_port;
     my_connections[ccf::NodeId(std::to_string(follower_2))].base_sending_port =
       follower_2_sending_port;
+#endif
   }
 }
 
@@ -93,8 +129,6 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
   for (;;)
   {
     auto [src_node, data, data_sz] = driver->message_queue.pop();
-    //
-    // auto [data, data_sz] = driver->message_queue.pop();
 
     if (data_sz > 0)
     {
@@ -123,13 +157,66 @@ static void listen_for_acks(std::shared_ptr<RaftDriver> driver, int node_id)
     total_acks.fetch_add(1);
     if (acks % 50000 == 0)
       fmt::print("{} acks={} from node_id={}\n", __func__, acks, node_id);
+    /*
     if (acks == k_num_requests)
       return;
+    */
   }
 }
 
 int main(int argc, char* argv[])
 {
+  config_set_default(config);
+  if (argc - optind < 4)
+  {
+    std::cerr << "Too few arguments" << std::endl;
+    print_usage();
+    exit(EXIT_FAILURE);
+  }
+
+  auto addr = argv[optind++];
+  auto port = argv[optind++];
+  auto private_key_file = argv[optind++];
+  auto cert_file = argv[optind++];
+
+  if (auto n = util::parse_uint(port); !n)
+  {
+    std::cerr << "port: invalid port number" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  else if (*n > 65535)
+  {
+    std::cerr << "port: must not exceed 65535" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  else
+  {
+    config.port = *n;
+  }
+
+  TLSServerContext tls_ctx;
+
+  if (tls_ctx.init(private_key_file, cert_file, AppProtocol::H3) != 0)
+  {
+    exit(EXIT_FAILURE);
+  }
+
+  if (config.htdocs.back() != '/')
+  {
+    config.htdocs += '/';
+  }
+
+  fmt::print("{} using document root:{}\n", __func__, config.htdocs);
+
+  auto ev_loop_d = defer(ev_loop_destroy, EV_DEFAULT);
+  if (util::generate_secret(config.static_secret) != 0)
+  {
+    fmt::print("{} unable to generate static secret\n", __func__);
+    exit(EXIT_FAILURE);
+  }
+
+  // here starts the original driver_raft logic
+
   threading::ThreadMessaging::init(
     1); // @dimitra:TODO -> this is not used actually
   authentication::init();
@@ -139,6 +226,7 @@ int main(int argc, char* argv[])
   std::cin >> node_id;
   std::vector<std::thread> threads_leader;
   auto driver = make_shared<RaftDriver>(node_id);
+
   config_parser::initialize_with_data(driver->my_connections);
   auto start = std::chrono::high_resolution_clock::now();
   auto leader_end = std::chrono::high_resolution_clock::now();
@@ -160,19 +248,46 @@ int main(int argc, char* argv[])
         std::make_pair(
           std::to_string(follower_1),
           ccf::kv::Configuration::NodeInfo(
-            follower_1_ip, follower_1_listening_port)),
+            follower_1_ip, follower_1_listening_port))
+#ifdef SECOND_FOLLOWER
+          ,
         std::make_pair(
           std::to_string(follower_2),
           ccf::kv::Configuration::NodeInfo(
-            follower_2_ip, follower_2_listening_port))}); //
+            follower_2_ip, follower_2_listening_port))
+#endif
+      }); //
     auto data = std::make_shared<std::vector<uint8_t>>();
     auto& vec = *(data.get());
     fmt::print("{} #1\n", __func__);
     int acks = 0;
     acks += driver->periodic_listening_acks(std::to_string(follower_1));
     fmt::print("{} #2\n", __func__);
+#ifdef SECOND_FOLLOWER
     acks += driver->periodic_listening_acks(std::to_string(follower_2));
     fmt::print("{} #3\n", __func__);
+#endif
+
+    threads_leader.emplace_back(
+      std::thread(listen_for_acks, driver, follower_1));
+#ifdef SECOND_FOLLOWER
+    threads_leader.emplace_back(
+      std::thread(listen_for_acks, driver, follower_2));
+#endif
+    fmt::print("{} QUIC server\n", __PRETTY_FUNCTION__);
+    // =============== QUIC
+    Server s(EV_DEFAULT, tls_ctx);
+    s.init(addr, port);
+    s.assign_server_id(5);
+    std::shared_ptr<callable_replication> ptr_callable =
+      std::make_shared<callable_replication>(driver, callable_obj_replication);
+    s.register_replication(ptr_callable);
+    ev_run(EV_DEFAULT, 0);
+
+    s.disconnect();
+    s.close();
+    // =============== QUIC end
+
     // this is because we send an AppendEntries message every time we
     // send a new_configuration
     for (auto i = 0ULL; i < k_num_requests; i++)
@@ -188,10 +303,6 @@ int main(int argc, char* argv[])
           std::thread(listen_for_acks, driver, follower_1));
         threads_leader.emplace_back(
           std::thread(listen_for_acks, driver, follower_2));
-#if 0
-        threads_leader.emplace_back(
-          std::thread(listen_for_acks, driver, follower_2));
-#endif
       }
 #if 0
       acks += driver->periodic_listening_acks(std::to_string(follower_1));
@@ -212,6 +323,7 @@ int main(int argc, char* argv[])
         break;
       std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
+
     leader_end = std::chrono::high_resolution_clock::now();
     fmt::print(
       "{} ---> taken timestamp={}s\n", __func__, driver->get_committed_seqno());

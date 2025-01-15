@@ -108,6 +108,13 @@ if(USE_AUTHENTICATOR)
   add_compile_definitions(AUTHENTICATOR)
 endif()
 
+if(USE_SECOND_FOLLOWER)
+  message( STATUS
+      "Building with SECOND_FOLLOWER"
+  )
+  add_compile_definitions(SECOND_FOLLOWER)
+endif()
+
 if(SAN)
  message( STATUS
       "Building with address sanitizer")
@@ -988,21 +995,50 @@ if(BUILD_TESTS)
     # Merkle Tree memory test
     add_executable(merkle_mem src/node/test/merkle_mem.cpp)
     target_compile_options(merkle_mem PRIVATE ${COMPILE_LIBCXX})
+    set(PICOTLS_LIBS "-L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/picotls -lpicotls-openssl -lpicotls-core -lev -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/lib/.libs -lngtcp2 -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/crypto/picotls -lngtcp2_crypto_picotls -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/nghttp3/build/lib -lnghttp3")
+    set(NGTCP2_THIRD_PARTY_LIBS "-L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/third-party/.libs -lurlparse")
     target_link_libraries(
       merkle_mem PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${LINK_LIBCXX}
                          ccfcrypto.host
     )
-
+    set (PICOTLS_CFLAGS "-I$PWD/picotls/include/")
+    
+    set(ptlsserver_SOURCES
+      ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/examples/server.cc
+      ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/examples/server_base.cc
+      ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/examples/debug.cc
+      ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/examples/util.cc
+      ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/examples/http.cc
+      ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/examples/shared.cc
+      ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/examples/tls_server_context_picotls.cc
+      ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/examples/tls_server_session_picotls.cc
+      ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/examples/tls_session_base_picotls.cc
+      ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/examples/tls_shared_picotls.cc
+      ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/examples/util_openssl.cc
+      ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/examples/config.cpp
+    )
     # Raft driver and scenario test
     add_executable(
       raft_driver ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/driver.cpp
                   src/enclave/thread_local.cpp
+                  ${ptlsserver_SOURCES}
+    )
+    set_target_properties(raft_driver PROPERTIES
+      COMPILE_FLAGS "${WARNCXXFLAGS} -DENABLE_EXAMPLE_PICOTLS -DWITH_EXAMPLE_PICOTLS -DHAVE_NETINET_IP_H"
     )
     target_link_libraries(raft_driver PRIVATE ccfcrypto.host)
-    target_link_libraries(raft_driver PRIVATE ${CMAKE_THREAD_LIBS_INIT})
-    target_include_directories(raft_driver PRIVATE src/aft)
-    
+    target_link_libraries(raft_driver PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PICOTLS_LIBS} ${NGTCP2_THIRD_PARTY_LIBS})
 
+    target_include_directories(raft_driver PRIVATE src/aft)
+    target_include_directories(raft_driver PRIVATE src/aft)
+    target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+    target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/lib/includes)
+    target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/nghttp3/lib/includes)
+    target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/crypto/includes)
+    target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/picotls/include)
+    target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/third-party/urlparse)
+    target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/third-party/http-parser)
+    
 
     # Latency bench
    # add_executable(
