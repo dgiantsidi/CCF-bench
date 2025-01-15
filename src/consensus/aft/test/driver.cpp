@@ -166,55 +166,8 @@ static void listen_for_acks(std::shared_ptr<RaftDriver> driver, int node_id)
 
 int main(int argc, char* argv[])
 {
-  config_set_default(config);
-  if (argc - optind < 4)
-  {
-    std::cerr << "Too few arguments" << std::endl;
-    print_usage();
-    exit(EXIT_FAILURE);
-  }
-
-  auto addr = argv[optind++];
-  auto port = argv[optind++];
-  auto private_key_file = argv[optind++];
-  auto cert_file = argv[optind++];
-
-  if (auto n = util::parse_uint(port); !n)
-  {
-    std::cerr << "port: invalid port number" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-  else if (*n > 65535)
-  {
-    std::cerr << "port: must not exceed 65535" << std::endl;
-    exit(EXIT_FAILURE);
-  }
-  else
-  {
-    config.port = *n;
-  }
-
-  TLSServerContext tls_ctx;
-
-  if (tls_ctx.init(private_key_file, cert_file, AppProtocol::H3) != 0)
-  {
-    exit(EXIT_FAILURE);
-  }
-
-  if (config.htdocs.back() != '/')
-  {
-    config.htdocs += '/';
-  }
-
-  fmt::print("{} using document root:{}\n", __func__, config.htdocs);
-
-  auto ev_loop_d = defer(ev_loop_destroy, EV_DEFAULT);
-  if (util::generate_secret(config.static_secret) != 0)
-  {
-    fmt::print("{} unable to generate static secret\n", __func__);
-    exit(EXIT_FAILURE);
-  }
-
+  std::string node_id;
+  std::cin >> node_id;
   // here starts the original driver_raft logic
 
   threading::ThreadMessaging::init(
@@ -222,8 +175,7 @@ int main(int argc, char* argv[])
   authentication::init();
   stop.store(false);
   total_acks.store(0);
-  std::string node_id;
-  std::cin >> node_id;
+
   std::vector<std::thread> threads_leader;
   auto driver = make_shared<RaftDriver>(node_id);
 
@@ -233,6 +185,55 @@ int main(int argc, char* argv[])
 
   if (ccf::NodeId(node_id) == ccf::NodeId(std::to_string(primary_node)))
   {
+    config_set_default(config);
+    if (argc - optind < 4)
+    {
+      std::cerr << "Too few arguments" << std::endl;
+      print_usage();
+      exit(EXIT_FAILURE);
+    }
+
+    auto addr = argv[optind++];
+    auto port = argv[optind++];
+    auto private_key_file = argv[optind++];
+    auto cert_file = argv[optind++];
+
+    if (auto n = util::parse_uint(port); !n)
+    {
+      std::cerr << "port: invalid port number" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    else if (*n > 65535)
+    {
+      std::cerr << "port: must not exceed 65535" << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    else
+    {
+      config.port = *n;
+    }
+
+    TLSServerContext tls_ctx;
+
+    if (tls_ctx.init(private_key_file, cert_file, AppProtocol::H3) != 0)
+    {
+      exit(EXIT_FAILURE);
+    }
+
+    if (config.htdocs.back() != '/')
+    {
+      config.htdocs += '/';
+    }
+
+    fmt::print("{} using document root:{}\n", __func__, config.htdocs);
+
+    auto ev_loop_d = defer(ev_loop_destroy, EV_DEFAULT);
+    if (util::generate_secret(config.static_secret) != 0)
+    {
+      fmt::print("{} unable to generate static secret\n", __func__);
+      exit(EXIT_FAILURE);
+    }
+
     std::vector<std::thread> threads_leader;
 
     driver->make_primary(
