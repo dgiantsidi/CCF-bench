@@ -38,6 +38,12 @@ static void print_data(uint8_t* ptr, size_t msg_size)
     __func__);
 }
 
+static uint64_t get_timestamp_ns() {
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(
+           std::chrono::steady_clock::now().time_since_epoch())
+    .count();
+}
+
 void callable_obj_replication(
   std::weak_ptr<void> driver, uint8_t* data = nullptr, size_t sz_data = 0)
 {
@@ -52,17 +58,31 @@ void callable_obj_replication(
     // std::cout << __PRETTY_FUNCTION__ << " committed_seqno=" <<
     // raft_drv->get_committed_seqno() << "\n";
     reqs_no++;
+    auto now_ts = get_timestamp_ns();
     if (reqs_no % 10000 == 0)
     {
       std::cout << __PRETTY_FUNCTION__
                 << " committed_seqno=" << raft_drv->get_committed_seqno()
                 << "\n";
     }
+    
     raft_drv->replicate_commitable("2", data, 0);
 
-    while (raft_drv->get_committed_seqno() != reqs_no)
+    while (raft_drv->get_committed_seqno() < reqs_no)
     {
+    #if 0
+      std::cout << __PRETTY_FUNCTION__
+                << " reqs_no=" << reqs_no
+                << " committed_seqno=" << raft_drv->get_committed_seqno()
+                << "\n";
+    #endif
     }
+    auto end_ts = get_timestamp_ns();
+    std::cout << __PRETTY_FUNCTION__
+                << " reqs_no=" << reqs_no
+                << " committed_seqno=" << raft_drv->get_committed_seqno()
+                << " latency (ns)=" << (end_ts-now_ts) << "\n";
+    
   }
   else
   {
@@ -146,7 +166,7 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
 
 static void listen_for_acks(std::shared_ptr<RaftDriver> driver, int node_id)
 {
-  fmt::print("{}:{}\n", __func__, socket_layer::get_thread_id());
+  fmt::print("{}: thread_id={}\n", __func__, socket_layer::get_thread_id());
   int acks = 0;
   for (;;)
   {
@@ -155,8 +175,9 @@ static void listen_for_acks(std::shared_ptr<RaftDriver> driver, int node_id)
       acks += driver->periodic_listening_acks(std::to_string(node_id));
     }
     total_acks.fetch_add(1);
-    if (acks % 50000 == 0)
-      fmt::print("{} acks={} from node_id={}\n", __func__, acks, node_id);
+    if (acks % 50000 == 0) {
+      fmt::print("{} acks={} from node_id={}, cmt_idx={} \n", __func__, acks, node_id, driver->get_committed_seqno());
+    }
     /*
     if (acks == k_num_requests)
       return;
