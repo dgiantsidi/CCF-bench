@@ -115,6 +115,13 @@ if(USE_SECOND_FOLLOWER)
   add_compile_definitions(SECOND_FOLLOWER)
 endif()
 
+if(STANDALONE)
+  message( STATUS
+      "Building with STANDALONE: that will benchmark QUIC only w/o replication"
+  )
+  add_compile_definitions(STANDALONE)
+endif()
+
 if(SAN)
  message( STATUS
       "Building with address sanitizer")

@@ -45,6 +45,10 @@ static uint64_t get_timestamp_ns()
     .count();
 }
 
+void callable_obj_replication_empty(
+  std::weak_ptr<void> driver, uint8_t* data = nullptr, size_t sz_data = 0)
+{}
+
 void callable_obj_replication(
   std::weak_ptr<void> driver, uint8_t* data = nullptr, size_t sz_data = 0)
 {
@@ -312,9 +316,18 @@ int main(int argc, char* argv[])
     Server s(EV_DEFAULT, tls_ctx);
     s.init(addr, port);
     s.assign_server_id(5);
+
+#ifdef STANDALONE
+#  warning "STANDALONE BENCH"
+    std::shared_ptr<callable_replication> ptr_callable =
+      std::make_shared<callable_replication>(
+        driver, callable_obj_replication_empty);
+    s.register_replication(ptr_callable);
+#else
     std::shared_ptr<callable_replication> ptr_callable =
       std::make_shared<callable_replication>(driver, callable_obj_replication);
     s.register_replication(ptr_callable);
+#endif
     ev_run(EV_DEFAULT, 0);
 
     s.disconnect();
