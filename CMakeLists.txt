@@ -124,7 +124,7 @@ endif()
 
 if(REGULAR_VM)
   message( STATUS
-      "Building with REGURAL_VM: that will config IPs for regural VMs"
+      "Building with REGULAR_VM: that will config IPs for regural VMs"
   )
   add_compile_definitions(REGULAR_VM)
 endif()
