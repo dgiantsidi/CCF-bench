@@ -56,9 +56,9 @@ void callable_obj_replication(
     auto data = std::make_shared<std::vector<uint8_t>>();
     std::shared_ptr<RaftDriver> raft_drv =
       std::static_pointer_cast<RaftDriver>(drv_shared);
-    
+
     reqs_no++;
-   // auto now_ts = get_timestamp_ns();
+    // auto now_ts = get_timestamp_ns();
     if (reqs_no % 50000 == 0)
     {
       std::cout << __PRETTY_FUNCTION__
@@ -153,13 +153,13 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
       // fmt::print("{} --> data_sz={}\n", __func__, data_sz);
       auto src_node_str = ccf::NodeId(std::to_string(src_node));
       driver->periodic_applying(src_node_str, data.get(), data_sz);
-      #if 0
+#if 0
       fmt::print(
         "{} src_node={}, cmt_idx={} \n",
         __func__,
         src_node_str,
         driver->get_committed_seqno());
-        #endif
+#endif
     }
     else if (data_sz == 0)
     {
