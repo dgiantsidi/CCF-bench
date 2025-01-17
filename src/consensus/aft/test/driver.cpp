@@ -25,7 +25,8 @@ std::mutex leader_mtx;
 std::map<int, uint64_t> latencies;
 
 template <class K, class V>
-std::ostream& operator << (std::ostream& os, const std::map<K, V>& map) {
+std::ostream& operator<<(std::ostream& os, const std::map<K, V>& map)
+{
   for (auto& elem : map)
     os << "(" << elem.first << ", latency=" << elem.second << "ns)\n";
   return os;
@@ -73,6 +74,24 @@ void callable_obj_replication(
     auto now_ts = get_timestamp_ns();
     if (reqs_no % 50000 == 0)
     {
+      std::ofstream file("output.txt");
+
+      // Check if the file is open
+      if (!file.is_open())
+      {
+        std::cerr << "Failed to open the file." << std::endl;
+        exit(-1);
+      }
+
+      // Write something to the file
+      file << latencies << std::endl;
+
+      // Flush the output buffer to the file
+      file.flush();
+
+      // Close the file
+      file.close();
+
       std::cout << latencies;
       latencies.clear();
       /*
@@ -94,7 +113,7 @@ void callable_obj_replication(
 #endif
     }
     auto end_ts = get_timestamp_ns();
-    latencies.insert(std::make_pair(reqs_no, (end_ts-now_ts)));
+    latencies.insert(std::make_pair(reqs_no, (end_ts - now_ts)));
     // std::cout << __PRETTY_FUNCTION__ << " reqs_no=" << reqs_no
     //          << " committed_seqno=" << raft_drv->get_committed_seqno()
     //          << " latency (ns)=" << (end_ts - now_ts) << "\n";
