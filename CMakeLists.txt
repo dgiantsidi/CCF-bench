@@ -122,6 +122,13 @@ if(STANDALONE)
   add_compile_definitions(STANDALONE)
 endif()
 
+if(REGURAL_VM)
+  message( STATUS
+      "Building with REGURAL_VM: that will config IPs for regural VMs"
+  )
+  add_compile_definitions(REGURAL_VM)
+endif()
+
 if(SAN)
  message( STATUS
       "Building with address sanitizer")
