@@ -22,6 +22,14 @@
 
 using namespace std;
 std::mutex leader_mtx;
+std::map<int, uint64_t> latencies;
+
+template <class K, class V>
+std::ostream& operator << (std::ostream& os, const std::map<K, V>& map) {
+  for (auto& elem : map)
+    os << "(" << elem.first << ", latency=" << elem.second << "ns)\n";
+  return os;
+}
 static void print_data(uint8_t* ptr, size_t msg_size)
 {
   fmt::print(
@@ -62,12 +70,16 @@ void callable_obj_replication(
       std::static_pointer_cast<RaftDriver>(drv_shared);
 
     reqs_no++;
-    // auto now_ts = get_timestamp_ns();
+    auto now_ts = get_timestamp_ns();
     if (reqs_no % 50000 == 0)
     {
+      std::cout << latencies;
+      latencies.clear();
+      /*
       std::cout << __PRETTY_FUNCTION__
                 << " committed_seqno=" << raft_drv->get_committed_seqno()
                 << "\n";
+      */
     }
 
     raft_drv->replicate_commitable("2", data, 0);
@@ -81,7 +93,8 @@ void callable_obj_replication(
                 << "\n";
 #endif
     }
-    // auto end_ts = get_timestamp_ns();
+    auto end_ts = get_timestamp_ns();
+    latencies.insert(std::make_pair(reqs_no, (end_ts-now_ts)));
     // std::cout << __PRETTY_FUNCTION__ << " reqs_no=" << reqs_no
     //          << " committed_seqno=" << raft_drv->get_committed_seqno()
     //          << " latency (ns)=" << (end_ts - now_ts) << "\n";
