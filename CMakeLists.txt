@@ -122,11 +122,11 @@ if(STANDALONE)
   add_compile_definitions(STANDALONE)
 endif()
 
-if(REGURAL_VM)
+if(REGULAR_VM)
   message( STATUS
       "Building with REGURAL_VM: that will config IPs for regural VMs"
   )
-  add_compile_definitions(REGURAL_VM)
+  add_compile_definitions(REGULAR_VM)
 endif()
 
 if(SAN)
