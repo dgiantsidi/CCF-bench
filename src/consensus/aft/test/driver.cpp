@@ -195,10 +195,10 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
 #if 1
       if (reqs_nb.load() % 50000 == 0)
         fmt::print(
-          "{} src_node={}, cmt_idx={} \n",
+          "{} src_node={}, cmt_idx={}, reqs_no={}\n",
           __func__,
           src_node_str,
-          driver->get_committed_seqno());
+          driver->get_committed_seqno(), reqs_nb.load());
 #endif
     }
     else if (data_sz == 0)
