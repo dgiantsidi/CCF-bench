@@ -62,6 +62,7 @@ void callable_obj_replication(
   std::weak_ptr<void> driver, uint8_t* data = nullptr, size_t sz_data = 0)
 {
   static int reqs_no = 0;
+  static int log_id = 0;
   // fmt::print("{} here\n", __func__);
   std::shared_ptr<void> drv_shared = driver.lock();
   if (drv_shared)
@@ -71,10 +72,10 @@ void callable_obj_replication(
       std::static_pointer_cast<RaftDriver>(drv_shared);
 
     reqs_no++;
-    auto now_ts = get_timestamp_ns();
     if (reqs_no % 50000 == 0)
     {
-      std::ofstream file("output.txt");
+      std::string fname = "output_"+ std::to_string(log_id) + ".txt";
+      std::ofstream file(fname);
 
       // Check if the file is open
       if (!file.is_open())
@@ -100,6 +101,7 @@ void callable_obj_replication(
                 << "\n";
       */
     }
+    auto now_ts = get_timestamp_ns();
 
     raft_drv->replicate_commitable("2", data, 0);
 
