@@ -76,6 +76,7 @@ void callable_obj_replication(
     {
       std::string fname = "output_" + std::to_string(log_id) + ".txt";
       log_id++;
+#ifdef KEEP_LATENCIES
       std::ofstream file(fname);
 
       // Check if the file is open
@@ -93,7 +94,7 @@ void callable_obj_replication(
 
       // close the file
       file.close();
-
+#endif
       // std::cout << latencies;
       latencies.clear();
     }
