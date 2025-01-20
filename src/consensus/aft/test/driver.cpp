@@ -75,6 +75,7 @@ void callable_obj_replication(
     if (reqs_no % 50000 == 0)
     {
       std::string fname = "output_" + std::to_string(log_id) + ".txt";
+      log_id++;
       std::ofstream file(fname);
 
       // Check if the file is open
