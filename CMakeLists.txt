@@ -123,6 +123,13 @@ if(STANDALONE)
   add_compile_definitions(STANDALONE)
 endif()
 
+if(KEEP_LATENCIES)
+  message( STATUS
+      "Building with KEEP_LATENCIES: that will log in output_<ids>.txt the latencies for replication"
+  )
+  add_compile_definitions(KEEP_LATENCIES)
+endif()
+
 if(REGULAR_VM)
   message( STATUS
       "Building with REGULAR_VM: that will config IPs for regural VMs"
