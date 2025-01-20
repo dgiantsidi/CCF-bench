@@ -1284,6 +1284,7 @@ namespace aft
           {
             // If the current entry has already been deserialised, skip the
             // payload for that entry
+            fmt::print("{} If the current entry has already been deserialised, skip the payload for that entry.\n", __func__);
             ledger->skip_entry(data, size);
             continue;
           }
@@ -1388,7 +1389,7 @@ namespace aft
         {
           case ccf::kv::ApplyResult::FAIL:
           {
-            // fmt::print("Follower failed to apply log entry: {}\n", i);
+            fmt::print("Follower failed to apply log entry: {}\n", i);
             state->last_idx--;
             ledger->truncate(state->last_idx);
             send_append_entries_response_nack(from);
@@ -1463,6 +1464,7 @@ namespace aft
       auto lci = last_committable_index();
       if (r.term_of_idx == aft::ViewHistory::InvalidView)
       {
+        fmt::print("{} we don't yet have a term history..\n", __func__);
         // If we don't yet have a term history, then this must be happening in
         // the current term. This can only happen before _any_ transactions have
         // occurred, when processing a heartbeat at index 0, which does not
