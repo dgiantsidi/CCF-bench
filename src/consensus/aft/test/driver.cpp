@@ -182,16 +182,18 @@ std::atomic<int> total_acks;
 
 static void apply_cmds(std::shared_ptr<RaftDriver> driver)
 {
+  static std::atomic<int> reqs_nb = 0;
   for (;;)
   {
     auto [src_node, data, data_sz] = driver->message_queue.pop();
-
+    reqs_nb.fetch_add(1);
     if (data_sz > 0)
     {
       // fmt::print("{} --> data_sz={}\n", __func__, data_sz);
       auto src_node_str = ccf::NodeId(std::to_string(src_node));
       driver->periodic_applying(src_node_str, data.get(), data_sz);
-#if 0
+#if 1
+if (reqs_nb.load()%50000)
       fmt::print(
         "{} src_node={}, cmt_idx={} \n",
         __func__,
