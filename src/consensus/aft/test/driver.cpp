@@ -81,26 +81,21 @@ void callable_obj_replication(
       // Check if the file is open
       if (!file.is_open())
       {
-        std::cerr << "Failed to open the file." << std::endl;
+        fmt::print("{} failed to open log file={}\n", __func__, fname);
         exit(-1);
       }
 
-      // Write something to the file
+      // write latencies to the file
       file << latencies << std::endl;
 
-      // Flush the output buffer to the file
+      // flush the output buffer to the file
       file.flush();
 
-      // Close the file
+      // close the file
       file.close();
 
-      std::cout << latencies;
+      // std::cout << latencies;
       latencies.clear();
-      /*
-      std::cout << __PRETTY_FUNCTION__
-                << " committed_seqno=" << raft_drv->get_committed_seqno()
-                << "\n";
-      */
     }
     auto now_ts = get_timestamp_ns();
 
