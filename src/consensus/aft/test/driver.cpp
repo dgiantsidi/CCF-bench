@@ -198,7 +198,8 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
           "{} src_node={}, cmt_idx={}, reqs_no={}\n",
           __func__,
           src_node_str,
-          driver->get_committed_seqno(), reqs_nb.load());
+          driver->get_committed_seqno(),
+          reqs_nb.load());
 #endif
     }
     else if (data_sz == 0)
