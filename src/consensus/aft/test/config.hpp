@@ -10,7 +10,7 @@ constexpr int payload_sz_entry = sizeof(size_t) + sizeof(bool) +
   sizeof(ccf::kv::Version); //<payload_size><term><kv_version>;
 
 #ifdef REGULAR_VM
-#warning "R-VMs running here"
+#  warning "R-VMs running here"
 constexpr int primary_node = 0;
 std::string primary_ip = "10.5.0.7"; // 10.5.0.7";
 constexpr int primary_listening_port = 1800;

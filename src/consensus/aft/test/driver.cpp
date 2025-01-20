@@ -74,7 +74,7 @@ void callable_obj_replication(
     reqs_no++;
     if (reqs_no % 50000 == 0)
     {
-      std::string fname = "output_"+ std::to_string(log_id) + ".txt";
+      std::string fname = "output_" + std::to_string(log_id) + ".txt";
       std::ofstream file(fname);
 
       // Check if the file is open
@@ -193,12 +193,12 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
       auto src_node_str = ccf::NodeId(std::to_string(src_node));
       driver->periodic_applying(src_node_str, data.get(), data_sz);
 #if 1
-if (reqs_nb.load()%50000)
-      fmt::print(
-        "{} src_node={}, cmt_idx={} \n",
-        __func__,
-        src_node_str,
-        driver->get_committed_seqno());
+      if (reqs_nb.load() % 50000 == 0)
+        fmt::print(
+          "{} src_node={}, cmt_idx={} \n",
+          __func__,
+          src_node_str,
+          driver->get_committed_seqno());
 #endif
     }
     else if (data_sz == 0)
