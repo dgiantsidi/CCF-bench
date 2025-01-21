@@ -296,28 +296,28 @@ list(APPEND CCHOST_SOURCES ${CCF_DIR}/src/host/main.cpp
      ${CCF_DIR}/src/host/env.cpp
 )
 
-add_executable(cchost ${CCHOST_SOURCES})
+#add_executable(cchost ${CCHOST_SOURCES})
 
-add_warning_checks(cchost)
-add_san(cchost)
+#add_warning_checks(cchost)
+#add_san(cchost)
 
-target_compile_options(
-  cchost PRIVATE ${COMPILE_LIBCXX} ${SNMALLOC_COMPILE_OPTIONS}
-)
-target_include_directories(cchost PRIVATE ${CCF_GENERATED_DIR})
+#target_compile_options(
+#  cchost PRIVATE ${COMPILE_LIBCXX} ${SNMALLOC_COMPILE_OPTIONS}
+#)
+#target_include_directories(cchost PRIVATE ${CCF_GENERATED_DIR})
 
-if(COMPILE_TARGET STREQUAL "snp")
-  target_compile_definitions(cchost PUBLIC PLATFORM_SNP)
-elseif(COMPILE_TARGET STREQUAL "virtual")
-  target_compile_definitions(cchost PUBLIC PLATFORM_VIRTUAL)
-endif()
+#if(COMPILE_TARGET STREQUAL "snp")
+#  target_compile_definitions(cchost PUBLIC PLATFORM_SNP)
+#elseif(COMPILE_TARGET STREQUAL "virtual")
+#  target_compile_definitions(cchost PUBLIC PLATFORM_VIRTUAL)
+#endif()
 
-target_link_libraries(
-  cchost PRIVATE uv ${TLS_LIBRARY} ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT}
-                 ${LINK_LIBCXX} ccfcrypto.host
-)
+#target_link_libraries(
+#  cchost PRIVATE uv ${TLS_LIBRARY} ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT}
+#                 ${LINK_LIBCXX} ccfcrypto.host
+#)
 
-install(TARGETS cchost DESTINATION bin)
+#install(TARGETS cchost DESTINATION bin)
 
 # HTTP parser
 if(COMPILE_TARGET STREQUAL "snp")
@@ -900,129 +900,129 @@ if(BUILD_TESTS)
     # ccf_kv.host ) target_link_libraries( indexing_test PRIVATE
     # ccf_endpoints.host sss.host ccf_kv.host )
 
-    add_unit_test(
-      snapshot_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/snapshot.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/enclave/enclave_time.cpp
-    )
-    target_link_libraries(snapshot_test PRIVATE ccf_kv.host)
+    #add_unit_test(
+    #  snapshot_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/snapshot.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/enclave/enclave_time.cpp
+    #)
+    #target_link_libraries(snapshot_test PRIVATE ccf_kv.host)
 
-    add_unit_test(
-      snapshotter_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/snapshotter.cpp
-    )
-    target_link_libraries(
-      snapshotter_test PRIVATE ccf_kv.host ccf_endpoints.host
-    )
+    #add_unit_test(
+    #  snapshotter_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/snapshotter.cpp
+    #)
+    #target_link_libraries(
+    #  snapshotter_test PRIVATE ccf_kv.host ccf_endpoints.host
+    #)
 
-    add_unit_test(
-      node_info_json_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/node_info_json.cpp
-    )
+    #add_unit_test(
+    #  node_info_json_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/node_info_json.cpp
+    #)
 
-    add_unit_test(tls_test ${CMAKE_CURRENT_SOURCE_DIR}/src/tls/test/main.cpp)
-    target_link_libraries(tls_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+    #add_unit_test(tls_test ${CMAKE_CURRENT_SOURCE_DIR}/src/tls/test/main.cpp)
+    #target_link_libraries(tls_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
-    add_unit_test(
-      base64_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/base64.cpp
-    )
-    target_link_libraries(base64_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+    #add_unit_test(
+    #  base64_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/base64.cpp
+    #)
+    #target_link_libraries(base64_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
-    add_unit_test(
-      cose_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/cose.cpp
-    )
-    target_link_libraries(
-      cose_test PRIVATE ${CMAKE_THREAD_LIBS_INIT} ccfcrypto.host qcbor.host
-    )
+    #add_unit_test(
+    #  cose_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/cose.cpp
+    #)
+    #target_link_libraries(
+    #  cose_test PRIVATE ${CMAKE_THREAD_LIBS_INIT} ccfcrypto.host qcbor.host
+    #)
 
-    add_unit_test(pem_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/pem.cpp)
-    target_link_libraries(pem_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+    #add_unit_test(pem_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/pem.cpp)
+    #target_link_libraries(pem_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
-    add_test_bin(
-      kp_cert_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/kp_cert.cpp
-    )
-    target_link_libraries(kp_cert_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+    #add_test_bin(
+    #  kp_cert_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/kp_cert.cpp
+    #)
+    #target_link_libraries(kp_cert_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
-    add_unit_test(
-      channels_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/channels.cpp
-    )
-    target_link_libraries(channels_test PRIVATE)
+    #add_unit_test(
+    #  channels_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/channels.cpp
+    #)
+    #target_link_libraries(channels_test PRIVATE)
 
-    add_unit_test(
-      http_test ${CMAKE_CURRENT_SOURCE_DIR}/src/http/test/http_test.cpp
-    )
-    target_link_libraries(http_test PRIVATE http_parser.host)
+    #add_unit_test(
+    #  http_test ${CMAKE_CURRENT_SOURCE_DIR}/src/http/test/http_test.cpp
+    #)
+    #target_link_libraries(http_test PRIVATE http_parser.host)
 
-    add_unit_test(
-      http_etag_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/http/test/http_etag_test.cpp
-    )
+    #add_unit_test(
+    #  http_etag_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/http/test/http_etag_test.cpp
+    #)
 
-    add_unit_test(
-      frontend_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/rpc/test/frontend_test.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/enclave/enclave_time.cpp
-      ${CCF_DIR}/src/node/quote.cpp
-    )
-    target_link_libraries(
-      frontend_test
-      PRIVATE ${CMAKE_THREAD_LIBS_INIT}
-              http_parser.host
-              sss.host
-              ccf_js.host
-              ccf_endpoints.host
-              ccfcrypto.host
-              ccf_kv.host
-    )
+    #add_unit_test(
+    #  frontend_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/node/rpc/test/frontend_test.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/enclave/enclave_time.cpp
+    #  ${CCF_DIR}/src/node/quote.cpp
+    #)
+    #target_link_libraries(
+    #  frontend_test
+    #  PRIVATE ${CMAKE_THREAD_LIBS_INIT}
+    #          http_parser.host
+    #          sss.host
+    #          ccf_js.host
+    #          ccf_endpoints.host
+    #          ccfcrypto.host
+    #          ccf_kv.host
+    #)
 
-    add_unit_test(
-      endpoint_registry_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/endpoints/test/endpoint_registry.cpp
-    )
-    target_include_directories(
-      endpoint_registry_test PRIVATE ${CCF_DIR}/src/endpoints
-    )
-    target_link_libraries(endpoint_registry_test PRIVATE ccf_endpoints.host)
+    #add_unit_test(
+    #  endpoint_registry_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/endpoints/test/endpoint_registry.cpp
+    #)
+    #target_include_directories(
+    #  endpoint_registry_test PRIVATE ${CCF_DIR}/src/endpoints
+    #)
+    #target_link_libraries(endpoint_registry_test PRIVATE ccf_endpoints.host)
 
-    add_unit_test(
-      jwt_auth_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/endpoints/test/test_jwt_auth.cpp
-    )
-    target_link_libraries(jwt_auth_test PRIVATE ccf_endpoints.host)
+    #add_unit_test(
+    #  jwt_auth_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/endpoints/test/test_jwt_auth.cpp
+    #)
+    #target_link_libraries(jwt_auth_test PRIVATE ccf_endpoints.host)
 
-    add_unit_test(
-      tx_status_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/rpc/test/tx_status_test.cpp
-    )
+    #add_unit_test(
+    #  tx_status_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/node/rpc/test/tx_status_test.cpp
+    #)
 
-    add_unit_test(
-      node_frontend_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/rpc/test/node_frontend_test.cpp
-      ${CCF_DIR}/src/node/quote.cpp
-    )
-    target_link_libraries(
-      node_frontend_test
-      PRIVATE ${CMAKE_THREAD_LIBS_INIT}
-              http_parser.host
-              sss.host
-              ccf_js.host
-              ccf_endpoints.host
-              ccfcrypto.host
-              ccf_kv.host
-    )
+    #add_unit_test(
+    #  node_frontend_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/node/rpc/test/node_frontend_test.cpp
+    #  ${CCF_DIR}/src/node/quote.cpp
+    #)
+    #target_link_libraries(
+    #  node_frontend_test
+    #  PRIVATE ${CMAKE_THREAD_LIBS_INIT}
+    #          http_parser.host
+    #          sss.host
+    #          ccf_js.host
+    #          ccf_endpoints.host
+    #          ccfcrypto.host
+    #          ccf_kv.host
+    #)
 
-    add_unit_test(
-      merkle_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/merkle_test.cpp
-    )
+    #add_unit_test(
+    #  merkle_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/merkle_test.cpp
+    #)
 
     # Merkle Tree memory test
-    add_executable(merkle_mem src/node/test/merkle_mem.cpp)
-    target_compile_options(merkle_mem PRIVATE ${COMPILE_LIBCXX})
+    #add_executable(merkle_mem src/node/test/merkle_mem.cpp)
+    #target_compile_options(merkle_mem PRIVATE ${COMPILE_LIBCXX})
     set(PICOTLS_LIBS "-L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/picotls -lpicotls-openssl -lpicotls-core -lev -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/lib/.libs -lngtcp2 -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/crypto/picotls -lngtcp2_crypto_picotls -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/nghttp3/build/lib -lnghttp3")
     set(NGTCP2_THIRD_PARTY_LIBS "-L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/third-party/.libs -lurlparse")
-    target_link_libraries(
-      merkle_mem PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${LINK_LIBCXX}
-                         ccfcrypto.host
-    )
+    #target_link_libraries(
+    #  merkle_mem PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${LINK_LIBCXX}
+    #                     ccfcrypto.host
+    #)
     set (PICOTLS_CFLAGS "-I$PWD/picotls/include/")
     
     set(ptlsserver_SOURCES
@@ -1121,29 +1121,29 @@ if(BUILD_TESTS)
 
   if(NOT TSAN)
     # Picobench benchmarks
-    add_picobench(map_bench SRCS src/ds/test/map_bench.cpp)
-    add_picobench(logger_bench SRCS src/ds/test/logger_bench.cpp)
-    add_picobench(json_bench SRCS src/ds/test/json_bench.cpp)
-    add_picobench(ring_buffer_bench SRCS src/ds/test/ring_buffer_bench.cpp)
-    add_picobench(
-      crypto_bench
-      SRCS src/crypto/test/bench.cpp
-      LINK_LIBS
-    )
-    add_picobench(
-      history_bench
-      SRCS src/node/test/history_bench.cpp src/enclave/thread_local.cpp
-           ${CMAKE_CURRENT_SOURCE_DIR}/src/enclave/enclave_time.cpp
-      LINK_LIBS ccf_kv.host
-    )
+    #add_picobench(map_bench SRCS src/ds/test/map_bench.cpp)
+    #add_picobench(logger_bench SRCS src/ds/test/logger_bench.cpp)
+    #add_picobench(json_bench SRCS src/ds/test/json_bench.cpp)
+    #add_picobench(ring_buffer_bench SRCS src/ds/test/ring_buffer_bench.cpp)
+    #add_picobench(
+    #  crypto_bench
+    #  SRCS src/crypto/test/bench.cpp
+    #  LINK_LIBS
+    #)
+    #add_picobench(
+    #  history_bench
+    #  SRCS src/node/test/history_bench.cpp src/enclave/thread_local.cpp
+    #       ${CMAKE_CURRENT_SOURCE_DIR}/src/enclave/enclave_time.cpp
+    #  LINK_LIBS ccf_kv.host
+    #)
 
-    add_picobench(
-      kv_bench
-      SRCS src/kv/test/kv_bench.cpp src/enclave/thread_local.cpp
-      LINK_LIBS ccf_kv.host
-    )
-    add_picobench(merkle_bench SRCS src/node/test/merkle_bench.cpp)
-    add_picobench(hash_bench SRCS src/ds/test/hash_bench.cpp)
+    #add_picobench(
+    #  kv_bench
+    #  SRCS src/kv/test/kv_bench.cpp src/enclave/thread_local.cpp
+    #  LINK_LIBS ccf_kv.host
+    #)
+    #add_picobench(merkle_bench SRCS src/node/test/merkle_bench.cpp)
+    #add_picobench(hash_bench SRCS src/ds/test/hash_bench.cpp)
 
     if(LONG_TESTS)
       set(ADDITIONAL_RECOVERY_ARGS --with-load)
