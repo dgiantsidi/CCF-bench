@@ -120,7 +120,8 @@ void callable_obj_replication(
   if (drv_shared)
   {
     assert(sz_data > 0); // FIXME:@dimitra
-    // TODO: pass the data from the input
+    // fmt::print("{} sz_data={}B\n", __func__, sz_data);
+    // sz_data =0;
     auto data_to_replicate = std::make_shared<std::vector<uint8_t>>(sz_data);
     ::memcpy(data_to_replicate->data(), data, sz_data);
     std::shared_ptr<RaftDriver> raft_drv =
