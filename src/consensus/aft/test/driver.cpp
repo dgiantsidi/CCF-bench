@@ -67,16 +67,18 @@ void callable_obj_replication(
   std::shared_ptr<void> drv_shared = driver.lock();
   if (drv_shared)
   {
-    auto data = std::make_shared<std::vector<uint8_t>>();
+    assert(sz_data == 6); // FIXME:@dimitra
+    // TODO: pass the data from the input
+    auto data = std::make_shared<std::vector<uint8_t>>(sz_data);
     std::shared_ptr<RaftDriver> raft_drv =
       std::static_pointer_cast<RaftDriver>(drv_shared);
 
     reqs_no++;
     if (reqs_no % 50000 == 0)
     {
+#ifdef KEEP_LATENCIES
       std::string fname = "output_" + std::to_string(log_id) + ".txt";
       log_id++;
-#ifdef KEEP_LATENCIES
       std::ofstream file(fname);
 
       // Check if the file is open

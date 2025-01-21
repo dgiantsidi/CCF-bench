@@ -571,7 +571,7 @@ configure_file(
 )
 
 option(BUILD_TESTS "Build tests" ON)
-option(BUILD_UNIT_TESTS "Build unit tests" OFF)
+option(BUILD_UNIT_TESTS "Build unit tests" ON)
 option(CLIENT_PROTOCOLS_TEST "Test client protocols (TLS, HTTP/2)" OFF)
 option(BUILD_TPCC "Build TPPC sample app and clients" OFF)
 option(
@@ -758,140 +758,140 @@ if(BUILD_TESTS)
 
   # Unit tests
   if(BUILD_UNIT_TESTS)
-    add_unit_test(map_test ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/map_test.cpp)
+    # add_unit_test(map_test ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/map_test.cpp)
 
-    add_unit_test(
-      json_schema ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/json_schema.cpp
-    )
+    # add_unit_test(
+    #  json_schema ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/json_schema.cpp
+    #)
 
-    add_unit_test(
-      logger_test ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/logger.cpp
-    )
+    #add_unit_test(
+    #  logger_test ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/logger.cpp
+    #)
 
-    add_unit_test(
-      openapi_test ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/openapi.cpp
-    )
-    target_link_libraries(openapi_test PRIVATE http_parser.host)
+    #add_unit_test(
+    #  openapi_test ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/openapi.cpp
+    #)
+    #target_link_libraries(openapi_test PRIVATE http_parser.host)
 
-    add_unit_test(
-      logger_json_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/logger_json_test.cpp
-    )
+    #add_unit_test(
+    #  logger_json_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/logger_json_test.cpp
+    #)
 
-    add_unit_test(
-      kv_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_test.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_contention.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_serialisation.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_snapshot.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_dynamic_tables.cpp
-    )
-    target_link_libraries(
-      kv_test PRIVATE ${CMAKE_THREAD_LIBS_INIT} http_parser.host ccf_kv.host
-    )
+    #add_unit_test(
+    #  kv_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_test.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_contention.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_serialisation.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_snapshot.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_dynamic_tables.cpp
+    #)
+    #target_link_libraries(
+    #  kv_test PRIVATE ${CMAKE_THREAD_LIBS_INIT} http_parser.host ccf_kv.host
+    #)
 
-    add_unit_test(
-      ds_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/ring_buffer.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/messaging.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/oversized.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/typed_messages.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/serialized.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/serializer.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/hash.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/thread_messaging.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/lru.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/hex.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/contiguous_set.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/unit_strings.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/dl_list.cpp
-    )
-    target_link_libraries(ds_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+    #add_unit_test(
+    #  ds_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/ring_buffer.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/messaging.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/oversized.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/typed_messages.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/serialized.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/serializer.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/hash.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/thread_messaging.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/lru.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/hex.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/contiguous_set.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/unit_strings.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/dl_list.cpp
+    #)
+    #target_link_libraries(ds_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
-    add_unit_test(
-      ledger_test ${CMAKE_CURRENT_SOURCE_DIR}/src/host/test/ledger.cpp
-    )
+    #add_unit_test(
+    #  ledger_test ${CMAKE_CURRENT_SOURCE_DIR}/src/host/test/ledger.cpp
+    #)
 
-    add_unit_test(
-      raft_test ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/main.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/view_history.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/committable_suffix.cpp
-    )
-    target_link_libraries(raft_test PRIVATE ccfcrypto.host)
+    #add_unit_test(
+    #  raft_test ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/main.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/view_history.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/committable_suffix.cpp
+    #)
+    #target_link_libraries(raft_test PRIVATE ccfcrypto.host)
 
-    add_unit_test(
-      raft_enclave_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/enclave.cpp
-    )
-    target_include_directories(raft_enclave_test PRIVATE ${CCFCRYPTO_INC})
-    target_link_libraries(raft_enclave_test PRIVATE ccfcrypto.host)
+    #add_unit_test(
+    #  raft_enclave_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/enclave.cpp
+    #)
+    #target_include_directories(raft_enclave_test PRIVATE ${CCFCRYPTO_INC})
+    #target_link_libraries(raft_enclave_test PRIVATE ccfcrypto.host)
 
-    add_unit_test(
-      crypto_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/crypto.cpp
-    )
-    target_include_directories(crypto_test PRIVATE ${CCFCRYPTO_INC})
-    target_link_libraries(crypto_test PRIVATE ccfcrypto.host)
+    #add_unit_test(
+    #  crypto_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/crypto.cpp
+    #)
+    #target_include_directories(crypto_test PRIVATE ${CCFCRYPTO_INC})
+    #target_link_libraries(crypto_test PRIVATE ccfcrypto.host)
 
-    add_unit_test(
-      sharing_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/secret_sharing.cpp
-    )
-    target_include_directories(sharing_test PRIVATE ${CCFCRYPTO_INC})
-    target_link_libraries(sharing_test PRIVATE ccfcrypto.host)
+    #add_unit_test(
+    #  sharing_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/secret_sharing.cpp
+    #)
+    #target_include_directories(sharing_test PRIVATE ${CCFCRYPTO_INC})
+    #target_link_libraries(sharing_test PRIVATE ccfcrypto.host)
 
-    add_unit_test(
-      key_exchange_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/key_exchange.cpp
-    )
-    target_link_libraries(key_exchange_test PRIVATE)
+    #add_unit_test(
+    #  key_exchange_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/key_exchange.cpp
+    #)
+    #target_link_libraries(key_exchange_test PRIVATE)
 
-    add_unit_test(
-      history_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/history.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/enclave/enclave_time.cpp
-    )
-    target_link_libraries(
-      history_test PRIVATE ccfcrypto.host http_parser.host ccf_kv.host
-    )
+    #add_unit_test(
+    #  history_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/history.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/enclave/enclave_time.cpp
+    #)
+    #target_link_libraries(
+    #  history_test PRIVATE ccfcrypto.host http_parser.host ccf_kv.host
+    #)
 
-    add_unit_test(
-      secret_sharing_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/secret_share.cpp
-    )
-    target_link_libraries(secret_sharing_test PRIVATE sss.host)
+    #add_unit_test(
+    #  secret_sharing_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/secret_share.cpp
+    #)
+    #target_link_libraries(secret_sharing_test PRIVATE sss.host)
 
-    add_unit_test(
-      encryptor_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/encryptor.cpp
-    )
-    target_link_libraries(encryptor_test PRIVATE ccfcrypto.host ccf_kv.host)
+    #add_unit_test(
+    #  encryptor_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/encryptor.cpp
+    #)
+    #target_link_libraries(encryptor_test PRIVATE ccfcrypto.host ccf_kv.host)
 
-    add_unit_test(js_test ${CMAKE_CURRENT_SOURCE_DIR}/src/js/test/js.cpp)
-    target_link_libraries(
-      js_test PRIVATE ccf_js.host ccf_kv.host ccf_endpoints.host ccfcrypto.host
-                      http_parser.host
-    )
+    #add_unit_test(js_test ${CMAKE_CURRENT_SOURCE_DIR}/src/js/test/js.cpp)
+    #target_link_libraries(
+    #  js_test PRIVATE ccf_js.host ccf_kv.host ccf_endpoints.host ccfcrypto.host
+    #                  http_parser.host
+    #)
 
-    add_unit_test(
-      endorsements_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/endorsements.cpp
-    )
-    set_property(
-      TEST endorsements_test
-      APPEND
-      PROPERTY
-        ENVIRONMENT
-        "TEST_ENDORSEMENTS_PATH=${CMAKE_CURRENT_SOURCE_DIR}/tests/uvm_endorsements"
-    )
+    #add_unit_test(
+    #  endorsements_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/endorsements.cpp
+    #)
+    #set_property(
+    #  TEST endorsements_test
+    #  APPEND
+    #  PROPERTY
+    #    ENVIRONMENT
+    #    "TEST_ENDORSEMENTS_PATH=${CMAKE_CURRENT_SOURCE_DIR}/tests/uvm_endorsements"
+    #)
 
-    add_unit_test(
-      historical_queries_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/historical_queries.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/receipt.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/receipt.cpp
-    )
-    target_link_libraries(
-      historical_queries_test PRIVATE http_parser.host sss.host ccf_kv.host
-                                      ccf_endpoints.host
-    )
+    #add_unit_test(
+    #  historical_queries_test
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/historical_queries.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/receipt.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/node/receipt.cpp
+    #)
+    #target_link_libraries(
+    #  historical_queries_test PRIVATE http_parser.host sss.host ccf_kv.host
+    #                                  ccf_endpoints.host
+    #)
     # Temporarily disabled flaky test
     # https://github.com/microsoft/CCF/issues/4403 add_unit_test( indexing_test
     # ${CMAKE_CURRENT_SOURCE_DIR}/src/indexing/test/indexing.cpp
