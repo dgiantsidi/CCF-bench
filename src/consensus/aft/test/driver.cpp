@@ -101,9 +101,10 @@ static uint64_t get_timestamp_ns()
 
 void callable_obj_replication_empty(
   std::weak_ptr<void> driver,
+  uint64_t client_req_id,
   uint8_t* data = nullptr,
-  size_t sz_data = 0,
-  uint64_t req_id = 0)
+  size_t sz_data = 0
+  )
 {}
 
 void callable_obj_replication(
