@@ -69,7 +69,8 @@ void callable_obj_replication(
   {
     assert(sz_data == 6); // FIXME:@dimitra
     // TODO: pass the data from the input
-    auto data = std::make_shared<std::vector<uint8_t>>(sz_data);
+    auto data_to_replicate = std::make_shared<std::vector<uint8_t>>(sz_data);
+    ::memcpy(data_to_replicate->data(), data, sz_data);
     std::shared_ptr<RaftDriver> raft_drv =
       std::static_pointer_cast<RaftDriver>(drv_shared);
 
@@ -102,7 +103,7 @@ void callable_obj_replication(
     }
     auto now_ts = get_timestamp_ns();
 
-    raft_drv->replicate_commitable("2", data, 0);
+    raft_drv->replicate_commitable("2", data_to_replicate, 0);
 
     while (raft_drv->get_committed_seqno() < reqs_no)
     {
