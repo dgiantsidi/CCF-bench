@@ -22,7 +22,52 @@
 
 using namespace std;
 std::mutex leader_mtx;
-std::map<int, uint64_t> latencies;
+
+struct metadata
+{
+  uint64_t client_req_id; // req_id assigned by client
+  uint64_t latency_ns; // replication latency
+
+  metadata() = delete;
+  explicit metadata(uint64_t req, uint64_t lat) :
+    client_req_id(req),
+    latency_ns(lat){};
+
+  metadata(const metadata& other)
+  {
+    client_req_id = other.client_req_id;
+    latency_ns = other.latency_ns;
+  };
+
+  metadata(metadata&& other)
+  {
+    client_req_id = other.client_req_id;
+    latency_ns = other.latency_ns;
+  };
+
+  metadata& operator=(const metadata& other)
+  {
+    client_req_id = other.client_req_id;
+    latency_ns = other.latency_ns;
+    return *this;
+  }
+
+  metadata& operator=(metadata&& other)
+  {
+    client_req_id = other.client_req_id;
+    latency_ns = other.latency_ns;
+    return *this;
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const metadata& m)
+  {
+    os << "(client_req_id=" << m.client_req_id
+       << ", latency (ns)=" << m.latency_ns << ")\n";
+    return os;
+  }
+};
+
+std::map<int, metadata> latencies;
 
 template <class K, class V>
 std::ostream& operator<<(std::ostream& os, const std::map<K, V>& map)
@@ -55,11 +100,17 @@ static uint64_t get_timestamp_ns()
 }
 
 void callable_obj_replication_empty(
-  std::weak_ptr<void> driver, uint8_t* data = nullptr, size_t sz_data = 0)
+  std::weak_ptr<void> driver,
+  uint8_t* data = nullptr,
+  size_t sz_data = 0,
+  uint64_t req_id = 0)
 {}
 
 void callable_obj_replication(
-  std::weak_ptr<void> driver, uint8_t* data = nullptr, size_t sz_data = 0)
+  std::weak_ptr<void> driver,
+  uint64_t client_req_id,
+  uint8_t* data = nullptr,
+  size_t sz_data = 0)
 {
   static int reqs_no = 0;
   static int log_id = 0;
@@ -67,7 +118,7 @@ void callable_obj_replication(
   std::shared_ptr<void> drv_shared = driver.lock();
   if (drv_shared)
   {
-    assert(sz_data == 6); // FIXME:@dimitra
+    assert(sz_data > 0); // FIXME:@dimitra
     // TODO: pass the data from the input
     auto data_to_replicate = std::make_shared<std::vector<uint8_t>>(sz_data);
     ::memcpy(data_to_replicate->data(), data, sz_data);
@@ -115,7 +166,8 @@ void callable_obj_replication(
 #endif
     }
     auto end_ts = get_timestamp_ns();
-    latencies.insert(std::make_pair(reqs_no, (end_ts - now_ts)));
+    latencies.insert(
+      std::make_pair(reqs_no, metadata(client_req_id, (end_ts - now_ts))));
     // std::cout << __PRETTY_FUNCTION__ << " reqs_no=" << reqs_no
     //          << " committed_seqno=" << raft_drv->get_committed_seqno()
     //          << " latency (ns)=" << (end_ts - now_ts) << "\n";
