@@ -312,6 +312,7 @@ int main(int argc, char* argv[])
 
   if (ccf::NodeId(node_id) == ccf::NodeId(std::to_string(primary_node)))
   {
+    std::cout << __func__ << " primary node_id=" << node_id << "\n";
     config_set_default(config);
     if (argc - optind < 4)
     {
@@ -480,6 +481,7 @@ int main(int argc, char* argv[])
   }
   else
   {
+    std::cout << __func__ << " secondary node_id=" << node_id << "\n";
     std::vector<std::thread> threads_follower;
     driver->make_follower(
       ccf::NodeId(node_id),
