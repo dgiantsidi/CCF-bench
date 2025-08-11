@@ -22,7 +22,7 @@ constexpr int follower_1_listening_port = 2800;
 constexpr int follower_1_sending_port = 2900;
 
 constexpr int follower_2 = 2;
-std::string follower_2_ip = "10.5.0.5";
+std::string follower_2_ip = "10.5.0.6";
 constexpr int follower_2_listening_port = 3800;
 constexpr int follower_2_sending_port = 3900;
 #else
