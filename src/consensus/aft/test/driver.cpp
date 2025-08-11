@@ -247,7 +247,7 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
       auto src_node_str = ccf::NodeId(std::to_string(src_node));
       driver->periodic_applying(src_node_str, data.get(), data_sz);
 #if 1
-      if (reqs_nb.load() % 50000 == 0)
+      if (reqs_nb.load() % 10000 == 0)
         fmt::print(
           "{} src_node={}, cmt_idx={}, reqs_no={}\n",
           __func__,
@@ -275,7 +275,7 @@ static void listen_for_acks(std::shared_ptr<RaftDriver> driver, int node_id)
       acks += driver->periodic_listening_acks(std::to_string(node_id));
     }
     total_acks.fetch_add(1);
-    if (acks % 50000 == 0)
+    if (acks % 10000 == 0)
     {
       fmt::print(
         "{} acks={} from node_id={}, cmt_idx={} \n",
