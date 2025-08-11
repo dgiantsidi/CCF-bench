@@ -1091,15 +1091,16 @@ namespace aft
       size_t size)
     {
       std::unique_lock<ccf::pal::Mutex> guard(state->lock);
-#if 0
+#if 1
       fmt::print(
-        "Received append entries: {}.{} to {}.{} (from {} in term {}) data_sz={}\n",
+        "Received append entries: {}.{} to {}.{} (from {} in term {}) data_sz={}, leader_commit_idx={}\n",
         r.prev_term,
         r.prev_idx,
         r.term_of_idx,
         r.idx,
         from,
-        r.term, size);
+        r.term, size, 
+        r.leader_commit_idx);
 #endif
 #ifdef CCF_RAFT_TRACING
       nlohmann::json j = {};
@@ -1493,6 +1494,8 @@ namespace aft
       // We must only ACK this far, as we know nothing about the agreement of a
       // suffix we may still hold _after_ r.idx with the leader's log
       const auto response_idx = ae.idx;
+      fmt::print(
+        "{} ---> to node={} for log_idx={}, commit_seqno={}, last_idx={}\n", __func__, to, response_idx, state->commit_idx, state->last_idx);
       send_append_entries_response(
         to, AppendEntriesResponseType::OK, state->current_view, response_idx);
     }
@@ -2371,8 +2374,14 @@ namespace aft
 
       // This could happen if a follower becomes the leader when it
       // has committed fewer log entries, although it has them available.
-      if (idx <= state->commit_idx)
+      if (idx <= state->commit_idx) {
+        fmt::print(
+          "Asked to commit idx:{} but already committed to commit_idx:{} - "
+          "ignoring commit request\n",
+          idx,
+          state->commit_idx);
         return;
+      }
 
 #ifdef CCF_RAFT_TRACING
       nlohmann::json j = {};

@@ -156,7 +156,7 @@ void callable_obj_replication(
     }
     auto now_ts = get_timestamp_ns();
 
-    if (reqs_no % 100 ==0) {
+    if (reqs_no % 1 ==0) {
       std::cout << __PRETTY_FUNCTION__
                 << " reqs_no=" << reqs_no
                 << " committed_seqno=" << raft_drv->get_committed_seqno()
