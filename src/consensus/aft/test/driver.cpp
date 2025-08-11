@@ -174,18 +174,13 @@ void callable_obj_replication(
                 << "\n";
 #endif
     }
-    if (reqs_no % 100 ==0) {
-      std::cout << __PRETTY_FUNCTION__
-                << " reqs_no=" << reqs_no
-                << " committed_seqno=" << raft_drv->get_committed_seqno()
-                << "\n";
-    }
+    
     auto end_ts = get_timestamp_ns();
     latencies.insert(
       std::make_pair(reqs_no, metadata(client_req_id, (end_ts - now_ts))));
-    // std::cout << __PRETTY_FUNCTION__ << " reqs_no=" << reqs_no
-    //          << " committed_seqno=" << raft_drv->get_committed_seqno()
-    //          << " latency (ns)=" << (end_ts - now_ts) << "\n";
+    std::cout << __PRETTY_FUNCTION__ << " reqs_no=" << reqs_no
+              << " committed_seqno=" << raft_drv->get_committed_seqno()
+              << " latency (ns)=" << (end_ts - now_ts) << "\n";
   }
   else
   {

@@ -173,6 +173,9 @@ private:
       _nodes.emplace(node_id, NodeDriver{kv, raft});
       fmt::print("{}: {} added\n", __func__, node_id);
     }
+    fmt::print(
+      "{}: node_id={} committed_seqno={}\n",
+      __func__, node_id, raft->get_committed_seqno());
   }
 
 public:
