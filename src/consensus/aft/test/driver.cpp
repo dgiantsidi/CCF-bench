@@ -156,7 +156,19 @@ void callable_obj_replication(
     }
     auto now_ts = get_timestamp_ns();
 
+    if (reqs_no % 100 ==0) {
+      std::cout << __PRETTY_FUNCTION__
+                << " reqs_no=" << reqs_no
+                << " committed_seqno=" << raft_drv->get_committed_seqno()
+                << "\n";
+   }
     raft_drv->replicate_commitable("2", data_to_replicate, 0);
+    if (reqs_no % 100 ==0) {
+      std::cout << __PRETTY_FUNCTION__
+                << " reqs_no=" << reqs_no
+                << " committed_seqno=" << raft_drv->get_committed_seqno()
+                << "\n";
+   }
 
     while (raft_drv->get_committed_seqno() < reqs_no)
     {
@@ -249,11 +261,11 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
 #if 1
       if (reqs_nb.load() % 10000 == 0)
         fmt::print(
-          "{} src_node={}, cmt_idx={}, reqs_no={}\n",
+          "{} src_node={}, cmt_idx={}, reqs_no={}, data_sz={}\n",
           __func__,
           src_node_str,
           driver->get_committed_seqno(),
-          reqs_nb.load());
+          reqs_nb.load(), data_sz);
 #endif
     }
     else if (data_sz == 0)
@@ -278,7 +290,7 @@ static void listen_for_acks(std::shared_ptr<RaftDriver> driver, int node_id)
     if (acks % 10000 == 0)
     {
       fmt::print(
-        "{} acks={} from node_id={}, cmt_idx={} \n",
+        "{} acks={} from node_id={}, cmt_idx={}\n",
         __func__,
         acks,
         node_id,
