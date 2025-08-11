@@ -163,12 +163,7 @@ void callable_obj_replication(
                 << "\n";
    }
     raft_drv->replicate_commitable("2", data_to_replicate, 0);
-    if (reqs_no % 100 ==0) {
-      std::cout << __PRETTY_FUNCTION__
-                << " reqs_no=" << reqs_no
-                << " committed_seqno=" << raft_drv->get_committed_seqno()
-                << "\n";
-   }
+    
 
     while (raft_drv->get_committed_seqno() < reqs_no)
     {
@@ -178,6 +173,12 @@ void callable_obj_replication(
                 << " committed_seqno=" << raft_drv->get_committed_seqno()
                 << "\n";
 #endif
+    }
+    if (reqs_no % 100 ==0) {
+      std::cout << __PRETTY_FUNCTION__
+                << " reqs_no=" << reqs_no
+                << " committed_seqno=" << raft_drv->get_committed_seqno()
+                << "\n";
     }
     auto end_ts = get_timestamp_ns();
     latencies.insert(
@@ -259,7 +260,7 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
       auto src_node_str = ccf::NodeId(std::to_string(src_node));
       driver->periodic_applying(src_node_str, data.get(), data_sz);
 #if 1
-      if (reqs_nb.load() % 10000 == 0)
+      if (reqs_nb.load() % 100 == 0)
         fmt::print(
           "{} src_node={}, cmt_idx={}, reqs_no={}, data_sz={}\n",
           __func__,
