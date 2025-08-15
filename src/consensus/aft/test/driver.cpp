@@ -113,6 +113,9 @@ void callable_obj_replication(
   uint8_t* data = nullptr,
   size_t sz_data = 0)
 {
+  static double sum_latency = 0.0;
+  static int count = 0;
+
   static int reqs_no = 0;
   static int log_id = 0;
   // fmt::print("{} here\n", __func__);
@@ -156,7 +159,7 @@ void callable_obj_replication(
     }
     auto now_ts = get_timestamp_ns();
 
-    if (reqs_no % 1 ==0) {
+    if (reqs_no % 10000 ==0) {
       std::cout << __PRETTY_FUNCTION__
                 << " reqs_no=" << reqs_no
                 << " committed_seqno=" << raft_drv->get_committed_seqno()
@@ -178,9 +181,13 @@ void callable_obj_replication(
     auto end_ts = get_timestamp_ns();
     latencies.insert(
       std::make_pair(reqs_no, metadata(client_req_id, (end_ts - now_ts))));
-    std::cout << __PRETTY_FUNCTION__ << " reqs_no=" << reqs_no
+    sum_latency += (end_ts - now_ts);
+    count ++;
+    if (count % 1000 == 0) {  
+      std::cout << __PRETTY_FUNCTION__ << " reqs_no=" << reqs_no
               << " committed_seqno=" << raft_drv->get_committed_seqno()
-              << " latency (ns)=" << (end_ts - now_ts) << "\n";
+              << " latency (ns)=" << (end_ts - now_ts) <<  " avg_lat = " << (sum_latency/(1.0*count)) << "\n";
+    }
   }
   else
   {

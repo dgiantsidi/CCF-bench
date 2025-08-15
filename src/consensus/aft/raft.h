@@ -984,11 +984,12 @@ namespace aft
 #if 0
       fmt::print(
         "Sending append entries to node {} in batches of {}, covering the "
-        "range {} -> {}\n",
+        "range {} -> log_idx={}, commit_idx={}\n",
         to,
         entries_batch_size,
         start_idx,
-        state->last_idx);
+        state->last_idx, 
+        state->commit_idx);
 #endif
       auto calculate_end_index = [this](Index start) {
         // Cap the end index in 2 ways:
@@ -1005,6 +1006,8 @@ namespace aft
         {
           max_idx = index_at_end_of_term;
         }
+       
+        
         return std::min(start + entries_batch_size - 1, max_idx);
       };
 
@@ -1018,6 +1021,16 @@ namespace aft
         // fmt::print("Sending sub range {} -> {}\n", start_idx, end_idx);
         send_append_entries_range(to, start_idx, end_idx);
         start_idx = std::min(end_idx + 1, state->last_idx);
+         #if 0
+      fmt::print(
+        "Sending append entries to node {} in batches of {}, covering the "
+        "range {} -> log_idx={}, commit_idx={}\n",
+        to,
+        entries_batch_size,
+        start_idx,
+        state->last_idx, 
+        state->commit_idx);
+#endif
       } while (end_idx != state->last_idx);
     }
 
@@ -1091,7 +1104,7 @@ namespace aft
       size_t size)
     {
       std::unique_lock<ccf::pal::Mutex> guard(state->lock);
-#if 1
+#if 0
       fmt::print(
         "Received append entries: {}.{} to {}.{} (from {} in term {}) data_sz={}, leader_commit_idx={}\n",
         r.prev_term,
@@ -1494,8 +1507,10 @@ namespace aft
       // We must only ACK this far, as we know nothing about the agreement of a
       // suffix we may still hold _after_ r.idx with the leader's log
       const auto response_idx = ae.idx;
+      #if 0
       fmt::print(
         "{} ---> to node={} for log_idx={}, commit_seqno={}, last_idx={}\n", __func__, to, response_idx, state->commit_idx, state->last_idx);
+      #endif
       send_append_entries_response(
         to, AppendEntriesResponseType::OK, state->current_view, response_idx);
     }
