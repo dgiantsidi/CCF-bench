@@ -4,10 +4,10 @@
 
 #include "ccf/crypto/key_pair.h"
 #include "ccf/crypto/verifier.h"
+#include "ccf/ds/logger.h"
 #include "ccf/pal/locking.h"
 #include "ccf/tx_status.h"
 #include "consensus/aft/raft_types.h"
-#include "ds/internal_logger.h"
 #include "kv/kv_types.h"
 
 #include <deque>
@@ -31,12 +31,12 @@ namespace aft
       {
         update(terms_[i], i + 1);
       }
-      LOG_DEBUG_FMT("Initialised views: {}", fmt::join(views, ", "));
+      fmt::print("Initialised views: {}\n", fmt::join(views, ", "));
     }
 
     void update(ccf::kv::Version idx, ccf::View view)
     {
-      LOG_DEBUG_FMT("Updating view to: {} at version: {}", view, idx);
+      //fmt::print("Updating view to: {} at version: {}\n", view, idx);
       if (!views.empty())
       {
         const auto current_latest_index = views.back();
@@ -53,7 +53,7 @@ namespace aft
       {
         views.push_back(idx);
       }
-      LOG_DEBUG_FMT("Resulting views: {}", fmt::join(views, ", "));
+      // fmt::print("Resulting views: {}\n", fmt::join(views, ", "));
     }
 
     ccf::View view_at(ccf::kv::Version idx)
@@ -125,8 +125,8 @@ namespace aft
     {
       auto it = upper_bound(views.begin(), views.end(), idx);
       views.erase(it, views.end());
-      LOG_DEBUG_FMT(
-        "Resulting views from rollback: {}", fmt::join(views, ", "));
+      fmt::print(
+        "Resulting views from rollback: {}\n", fmt::join(views, ", "));
     }
   };
 

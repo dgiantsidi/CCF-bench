@@ -4,6 +4,7 @@
 
 #include "ccf/ds/json.h"
 
+
 namespace ccf
 {
   enum ConsensusType

@@ -2,9 +2,12 @@
 // Licensed under the Apache 2.0 License.
 #pragma once
 
+#include "ccf/ds/logger.h"
 #include "consensus/aft/raft.h"
-#include "ds/internal_logger.h"
+#include "loggin_stub_mermaid.h"
 #include "logging_stub.h"
+#include "message_queue.h"
+#include "networking_api.h"
 
 #include <chrono>
 #include <random>
@@ -24,87 +27,20 @@
     std::cout << "<RaftDriver>  " << fmt::format(__VA_ARGS__) << std::endl;
 #endif
 
-std::string stringify(const std::vector<uint8_t>& v, size_t max_size = 15ul)
-{
-  auto size = std::min(v.size(), max_size);
-  return fmt::format(
-    "[{} bytes] {}", v.size(), std::string(v.begin(), v.begin() + size));
-}
-
-std::string stringify(const std::optional<std::vector<uint8_t>>& o)
-{
-  if (o.has_value())
-  {
-    return stringify(*o);
-  }
-
-  return "MISSING";
-}
-
-struct LedgerStubProxy_Mermaid : public aft::LedgerStubProxy
-{
-  using LedgerStubProxy::LedgerStubProxy;
-
-  void put_entry(
-    const std::vector<uint8_t>& data,
-    bool globally_committable,
-    ccf::kv::Term term,
-    ccf::kv::Version index) override
-  {
-    RAFT_DRIVER_PRINT(
-      "{}->>{}: [ledger] appending: {}.{}={}",
-      _id,
-      _id,
-      term,
-      index,
-      stringify(data));
-    aft::LedgerStubProxy::put_entry(data, globally_committable, term, index);
-  }
-
-  void truncate(aft::Index idx) override
-  {
-    RAFT_DRIVER_PRINT("{}->>{}: [ledger] truncating to {}", _id, _id, idx);
-    aft::LedgerStubProxy::truncate(idx);
-  }
-};
-
-struct LoggingStubStore_Mermaid : public aft::LoggingStubStoreConfig
-{
-  using LoggingStubStoreConfig::LoggingStubStoreConfig;
-
-  void compact(aft::Index idx) override
-  {
-    RAFT_DRIVER_PRINT("{}->>{}: [KV] compacting to {}", _id, _id, idx);
-    aft::LoggingStubStoreConfig::compact(idx);
-  }
-
-  void rollback(const ccf::kv::TxID& tx_id, aft::Term t) override
-  {
-    RAFT_DRIVER_PRINT(
-      "{}->>{}: [KV] rolling back to {}.{}, in term {}",
-      _id,
-      _id,
-      tx_id.term,
-      tx_id.version,
-      t);
-    aft::LoggingStubStoreConfig::rollback(tx_id, t);
-  }
-
-  void initialise_term(aft::Term t) override
-  {
-    RAFT_DRIVER_PRINT("{}->>{}: [KV] initialising in term {}", _id, _id, t);
-    aft::LoggingStubStoreConfig::initialise_term(t);
-  }
-};
-
 using ms = std::chrono::milliseconds;
-using TRaft = aft::Aft<LedgerStubProxy_Mermaid>;
 using Store = LoggingStubStore_Mermaid;
 using Adaptor = aft::Adaptor<Store>;
 
+#if 0
 aft::ChannelStubProxy* channel_stub_proxy(const TRaft& r)
 {
   return (aft::ChannelStubProxy*)r.channels.get();
+}
+#endif
+
+network_stack* channel_stub_proxy(const TRaft& r)
+{
+  return (network_stack*)r.channels.get();
 }
 
 class RaftDriver
@@ -117,7 +53,7 @@ private:
   };
 
   std::map<ccf::NodeId, NodeDriver> _nodes;
-  std::set<std::pair<ccf::NodeId, ccf::NodeId>> _connections;
+  // std::set<std::pair<ccf::NodeId, ccf::NodeId>> _connections;
 
   void _replicate(
     const std::string& term_s,
@@ -129,6 +65,10 @@ private:
     const std::optional<ccf::kv::Configuration::Nodes>& retired_committed =
       std::nullopt)
   {
+#if 0
+    fmt::print(
+      "{} --> term={}\tcommittable={}\n", __func__, term_s, committable);
+#endif
     const auto opt = find_primary_in_term(term_s, lineno);
     if (!opt.has_value())
     {
@@ -139,16 +79,20 @@ private:
       return;
     }
     const auto& [term, node_id] = *opt;
+    // fmt::print("{} --> primary found is node_id={}\n", __func__, node_id);
+
     auto& raft = _nodes.at(node_id).raft;
     const auto idx = raft->get_last_idx() + 1;
-    RAFT_DRIVER_PRINT(
-      "{}->>{}: replicate {}.{} = {} [{}]",
+#if 0
+    fmt::print(
+      "{}->>{}: replicate {}.{} = {} [{}]\n",
       node_id,
       node_id,
       term_s,
       idx,
       stringify(data),
       configuration.has_value() ? "reconfiguration" : "raw");
+#endif
 
     aft::ReplicatedDataType type = aft::ReplicatedDataType::raw;
     auto hooks = std::make_shared<ccf::kv::ConsensusHookPtrs>();
@@ -185,6 +129,8 @@ private:
 
     auto s = nlohmann::json(aft::ReplicatedData{type, data}).dump();
     auto d = std::make_shared<std::vector<uint8_t>>(s.begin(), s.end());
+    // auto r = nlohmann::json::parse(std::span{d->data(), d->size()});
+
     raft->replicate(ccf::kv::BatchVector{{idx, d, committable, hooks}}, term);
   }
 
@@ -192,12 +138,18 @@ private:
   {
     auto kv = std::make_shared<Store>(node_id);
     const ccf::consensus::Configuration settings{{"10ms"}, {"100ms"}};
+    std::shared_ptr<ccf::NodeToNode> net_stack =
+      std::make_shared<network_stack>();
+    auto state = std::make_shared<aft::State>(node_id);
+
     auto raft = std::make_shared<TRaft>(
       settings,
       std::make_unique<Adaptor>(kv),
       std::make_unique<LedgerStubProxy_Mermaid>(node_id),
-      std::make_shared<aft::ChannelStubProxy>(),
-      std::make_shared<aft::State>(node_id),
+      net_stack,
+      /*std::make_shared<aft::ChannelStubProxy>(),*/
+      /*std::make_shared<aft::State>(node_id),*/
+      state,
       nullptr);
     kv->set_set_retired_committed_hook(
       [raft](aft::Index idx, const std::vector<ccf::kv::NodeId>& node_ids) {
@@ -205,28 +157,178 @@ private:
       });
     raft->start_ticking();
 
+    static_cast<network_stack*>(net_stack.get())->register_ledger_getter(raft);
     if (_nodes.find(node_id) != _nodes.end())
     {
-      throw std::logic_error(fmt::format("Node {} already exists", node_id));
+      fmt::print("{} ---> node={} already exists\n", __func__, node_id);
+      // throw std::logic_error(fmt::format("Node {} already exists", node_id));
     }
-
-    _nodes.emplace(node_id, NodeDriver{kv, raft});
+    else if (my_nid != node_id)
+    {
+      // _nodes.emplace(node_id, NodeDriver{kv, raft});
+      fmt::print("{}: {} added w/o creating a raft obj\n", __func__, node_id);
+    }
+    else
+    {
+      _nodes.emplace(node_id, NodeDriver{kv, raft});
+      fmt::print("{}: {} added\n", __func__, node_id);
+    }
+    fmt::print(
+      "{}: node_id={} committed_seqno={}\n",
+      __func__, node_id, raft->get_committed_seqno());
   }
 
 public:
-  RaftDriver() = default;
+  RaftDriver(std::string node_id) : my_nid(ccf::NodeId(node_id)){};
+  std::map<ccf::NodeId, network_stack::connectivity_description> my_connections;
+  m_queue message_queue;
 
+  int get_committed_seqno()
+  {
+    return (_nodes[my_nid].raft)->get_committed_seqno();
+  }
+
+  size_t get_ledger_size()
+  {
+    return (_nodes[my_nid].raft)->ledger->ledger_size();
+  }
+
+  void become_primary()
+  {
+#if 0
+    fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      __func__);
+#endif
+    _nodes[std::to_string(primary_node)].raft->force_become_primary();
+#if 0
+    fmt::print(
+      "\n=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      __func__);
+#endif
+  }
+  std::shared_ptr<TRaft> get_raft_copy()
+  {
+    return _nodes.at(my_nid).raft;
+  }
+
+  void close_connections(ccf::NodeId peer_id)
+  {
+    network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
+    net->close_channel(peer_id);
+  }
+
+  void make_primary(
+    const ccf::NodeId& peer_id,
+    const std::string& peer_hostname,
+    const int& port)
+  {
+#if 0
+    fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      __func__);
+#endif
+    add_node(my_nid);
+    auto raft = _nodes.at(my_nid).raft.get();
+
+    network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
+    net->associate_node_address(my_nid, peer_hostname, std::to_string(port));
+    net->connect_to_peer(
+      peer_hostname,
+      std::to_string(port),
+      std::to_string(follower_1),
+      follower_1_ip,
+      follower_1_listening_port);
+
+    net->accept_connection(
+      std::to_string(primary_node), std::to_string(follower_1));
+
+#ifdef SECOND_FOLLOWER
+#  warning "We run with 2 follower nodes"
+    net->associate_node_address(
+      my_nid, peer_hostname, std::to_string(port + 1));
+    net->connect_to_peer(
+      peer_hostname,
+      std::to_string(port + 1),
+      std::to_string(follower_2),
+      follower_2_ip,
+      follower_2_listening_port);
+    net->accept_connection(
+      std::to_string(primary_node), std::to_string(follower_2));
+#endif
+#if 0
+    fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      __func__);
+#endif
+  }
+
+  void make_follower(
+    const ccf::NodeId& peer_id, /* my id */
+    const std::string& peer_hostname, /* my ip*/
+    const int& port /* listening port */)
+  {
+#if 0
+    fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      __func__);
+#endif
+    add_node(my_nid);
+
+    auto raft = _nodes.at(my_nid).raft.get();
+    // fmt::print("{}: last_idx={}\n", __func__, raft->get_last_idx());
+
+    network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
+    net->associate_node_address(my_nid, peer_hostname, std::to_string(port));
+    // net->accept_connection(std::to_string(follower_1));
+    net->accept_connection(peer_id, peer_id);
+
+    if (peer_id == ccf::NodeId("2"))
+      net->connect_to_peer(
+        peer_hostname,
+        std::to_string(port),
+        std::to_string(primary_node),
+        primary_ip,
+        primary_listening_port + 1);
+    else
+      net->connect_to_peer(
+        peer_hostname,
+        std::to_string(port),
+        std::to_string(primary_node),
+        primary_ip,
+        primary_listening_port);
+
+#if 0
+    fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      __func__);
+#endif
+  }
+  ccf::NodeId my_nid;
   // Note: deprecated, to be removed when the last scenario using it is removed
-  void create_new_nodes(std::vector<std::string> node_ids)
+  void create_new_nodes(
+    std::map<std::string, ccf::kv::Configuration::NodeInfo> node_ids)
   {
     // Unrealistic way to create network. Initial configuration is automatically
     // added to all nodes.
     ccf::kv::Configuration::Nodes configuration;
-    for (auto const& n : node_ids)
+
+    for (auto const& [n, info] : node_ids)
     {
-      add_node(n);
-      configuration.try_emplace(n);
+      // add_node(n);
+      configuration.try_emplace(n, info);
+      fmt::print("{} -> n={}\n", __func__, n);
+      //configuration[n].print();
     }
+
+    fmt::print(
+      "{} ---> configuration.size()={}\n", __func__, configuration.size());
 
     for (auto& node : _nodes)
     {
@@ -245,14 +347,28 @@ public:
   // Note: deprecated, to be removed when the last scenario using it is removed
   void create_start_node(const std::string& start_node_id, const size_t lineno)
   {
+#if 0
     if (!_nodes.empty())
     {
       throw std::logic_error("Start node already exists");
     }
+#endif
     ccf::kv::Configuration::Nodes configuration;
-    add_node(start_node_id);
+    // add_node(start_node_id);
     configuration.try_emplace(start_node_id);
+#if 0
+    fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      __func__);
+#endif
     _nodes[start_node_id].raft->force_become_primary();
+#if 0
+    fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      __func__);
+#endif
     _replicate("2", {}, lineno, false, configuration);
     RAFT_DRIVER_PRINT(
       "Note over {}: Node {} created",
@@ -260,6 +376,7 @@ public:
       start_node_id);
   }
 
+#if 0
   void cleanup_nodes(
     const std::string& term,
     const std::vector<std::string>& node_ids,
@@ -278,6 +395,7 @@ public:
     _replicate(term, {}, lineno, false, std::nullopt, retired_committed);
   }
 
+
   void trust_nodes(
     const std::string& term,
     const std::vector<std::string>& node_ids,
@@ -285,10 +403,11 @@ public:
   {
     for (const auto& node_id : node_ids)
     {
-      add_node(node_id);
+      // add_node(node_id);
       RAFT_DRIVER_PRINT(
         "Note over {}: Node {} trusted", ccf::NodeId(node_id), node_id);
     }
+    // fmt::print("{}->success\n", __func__);
     ccf::kv::Configuration::Nodes configuration;
     for (const auto& [id, node] : _nodes)
     {
@@ -304,8 +423,10 @@ public:
         }
       }
     }
+    sleep(1);
     _replicate(term, {}, lineno, false, configuration);
   }
+
 
   void swap_nodes(
     const std::string& term,
@@ -368,6 +489,7 @@ public:
 
     _replicate(term_s, {}, lineno, false, configuration);
   }
+
 
   void log(
     ccf::NodeId first,
@@ -527,7 +649,7 @@ public:
       }
     }
 
-#ifdef CCF_RAFT_TRACING
+#  ifdef CCF_RAFT_TRACING
     if (dropped)
     {
       nlohmann::json j = {};
@@ -542,22 +664,26 @@ public:
       j["packet"] = packet;
       RAFT_TRACE_JSON_OUT(j);
     }
-#endif
+#  endif
   }
+
 
   void connect(ccf::NodeId first, ccf::NodeId second)
   {
     RAFT_DRIVER_PRINT("{}-->{}: connect", first, second);
     _connections.insert(std::make_pair(first, second));
     _connections.insert(std::make_pair(second, first));
+    ////_nodes.at(first).raft->periodic(ms(10));
+    /*
+     network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
+    net->
+    */
   }
+
 
   void periodic_one(ccf::NodeId node_id, ms ms_)
   {
-    std::ostringstream s;
-    s << "periodic for " << std::to_string(ms_.count()) << " ms";
-    log(node_id, node_id, s.str());
-    _nodes.at(node_id).raft->periodic(ms_);
+    // ...
   }
 
   void periodic_all(ms ms_)
@@ -856,10 +982,12 @@ public:
       }
     }
   }
-
+#endif
   std::vector<std::pair<aft::Term, ccf::NodeId>> find_primaries()
   {
     std::vector<std::pair<aft::Term, ccf::NodeId>> primaries;
+    primaries.emplace_back(aft::Term(2), ccf::NodeId("0"));
+#if 0
     for (const auto& [node_id, node_driver] : _nodes)
     {
       if (node_driver.raft->is_primary())
@@ -867,6 +995,7 @@ public:
         primaries.emplace_back(node_driver.raft->get_view(), node_id);
       }
     }
+#endif
     return primaries;
   }
 
@@ -920,6 +1049,35 @@ public:
     _replicate(term_s, sig, lineno, true);
   }
 
+  void replicate_commitable(
+    const std::string& term_s,
+    std::shared_ptr<std::vector<uint8_t>> data,
+    const size_t lineno)
+  {
+#if 0
+    fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #1 "
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      __func__);
+
+    std::vector<uint8_t>& vec = *(data.get());
+    fmt::print("{}: data->size()={}\n", __func__, vec.size());
+    for (auto i = 0ULL; i < vec.size(); i++)
+    {
+      fmt::print("{}", (char)(vec[i]));
+    }
+    fmt::print("\n");
+#endif
+    _replicate(term_s, *data, lineno, true);
+#if 0
+    fmt::print(
+      "=*=*=*==*=*=*==*=*=*==*=*=*= {} #2 "
+      "=*=*=*==*=*=*==*=*=*==*=*=*=\n",
+      __func__);
+#endif
+  }
+
+#if 0
   void disconnect(ccf::NodeId left, ccf::NodeId right)
   {
     bool noop = true;
@@ -999,6 +1157,7 @@ public:
 
   using Discrepancies = std::map<ccf::NodeId, std::vector<std::string>>;
 
+
   Discrepancies check_state_sync(const std::map<ccf::NodeId, NodeDriver> nodes)
   {
     Discrepancies discrepancies;
@@ -1013,12 +1172,14 @@ public:
     const auto target_term = target_raft->get_view();
     const auto target_last_idx = target_raft->get_last_idx();
     const auto target_commit_idx = target_raft->get_committed_seqno();
-
+    auto quorum = 1;
+    auto n = 2;
     for (auto it = std::next(nodes.begin()); it != nodes.end(); ++it)
     {
       const auto& node_id = it->first;
       auto& raft = it->second.raft;
-
+      // fmt::print("========= {} for node_id={} =========\n", __func__,
+      // node_id);
       if (raft->get_view() != target_term)
       {
         discrepancies[node_id].push_back(fmt::format(
@@ -1079,6 +1240,11 @@ public:
           target_commit_idx,
           target_id));
       }
+      quorum++;
+      if (quorum >= ((n / 2) + 1))
+      {
+        break;
+      }
     }
 
     return discrepancies;
@@ -1105,6 +1271,145 @@ public:
 
       throw std::runtime_error(fmt::format(
         "States not in sync on line {}", std::to_string((int)lineno)));
+    }
+  }
+#endif
+
+  int periodic_applying(ccf::NodeId src_node, uint8_t* data, size_t data_sz)
+  {
+    auto& my_raft = _nodes.at(my_nid).raft;
+    _nodes.at(my_nid).raft->recv_message(src_node, data, data_sz);
+    return 1;
+  }
+
+  int establish_state(ccf::NodeId src_node)
+  {
+    auto& my_raft = _nodes.at(my_nid).raft;
+    network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
+
+    auto& incomming_socket =
+      net->node_connections_map[my_nid]->listening_handle;
+    auto [data, data_sz] = socket_layer::get_from_socket(
+      incomming_socket, sizeof(aft::AppendEntries));
+
+    _nodes.at(my_nid).raft->recv_message(src_node, data.get(), data_sz);
+
+    return 1;
+  }
+
+  int periodic_listening(ccf::NodeId src_node)
+  {
+    auto& my_raft = _nodes.at(my_nid).raft;
+    network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
+
+    auto& incomming_socket =
+      net->node_connections_map[my_nid]->listening_handle;
+    auto [data, data_sz] = socket_layer::get_from_socket(
+      incomming_socket, sizeof(aft::AppendEntries));
+
+    // fmt::print("{} --> data_sz={}\n", __func__, data_sz);
+    int id_node = std::stoi(src_node.value());
+    message_queue.append(id_node, std::move(data), data_sz);
+
+    // todo: enqueue
+    // _nodes.at(my_nid).raft->recv_message(src_node, data.get(), data_sz);
+
+    return 1;
+  }
+
+  int periodic_listening_acks(ccf::NodeId src_node)
+  {
+    auto& my_raft = _nodes.at(my_nid).raft;
+    network_stack* net = channel_stub_proxy(*(_nodes.at(my_nid).raft.get()));
+
+    auto& incomming_socket =
+      net->node_connections_map[src_node]->listening_handle;
+    // fmt::print("{} ---> src_node={} from socket={}\n", __func__, src_node,
+    // incomming_socket);
+    auto [data, data_sz] = socket_layer::get_from_socket(
+      incomming_socket, sizeof(aft::AppendEntriesResponse));
+
+    _nodes.at(my_nid).raft->recv_message(
+      src_node, data.get(), sizeof(aft::AppendEntriesResponse));
+
+    return 1;
+  }
+
+#if 0
+  void loop_until_sync_quorum(const size_t lineno)
+  {
+#  if 0
+    std::pair<aft::Term, ccf::NodeId> term_primary;
+    {
+      // Find primary in highest term
+      auto primaries = find_primaries();
+
+      if (primaries.size() > 0)
+      {
+        std::sort(primaries.begin(), primaries.end());
+        term_primary = primaries.back();
+      }
+      else
+      {
+        // If no primary exists, try to create one? No such scenario, so far
+        throw std::runtime_error(
+          fmt::format("Can't currently loop until sync, no primary"));
+      }
+    }
+#  endif
+    // const auto& [term, primary] = term_primary;
+    const int term = 2;
+    ccf::NodeId primary = ccf::NodeId("0");
+
+    // Don't try to confirm sync with retired nodes
+    decltype(_nodes) nodes;
+    for (auto& [node_id, node_driver] : _nodes)
+    {
+      if (node_driver.raft->is_active())
+      {
+        nodes[node_id] = node_driver;
+      }
+      else
+      {
+        RAFT_DRIVER_PRINT(
+          "Note over {}: Ignoring from sync check, due to retirement", node_id);
+      }
+    }
+
+    // Emit a fresh signature on that primary (so that they can advance commit)
+    emit_signature(std::to_string(term), lineno);
+
+    // Reconnect all nodes
+    for (const auto& [node_id, _] : nodes)
+    {
+      reconnect_node(node_id);
+    }
+
+    // Loop, doing periodic and dispatch, until sync.
+    // Can make iterations higher if any scenario actually needs more
+    auto iterations = 0;
+    static constexpr auto max_iterations = 20;
+    while (true)
+    {
+      fmt::print("-------- S T A R T   P E R I O D I C --------\n");
+      periodic_one(primary, ms(10));
+      fmt::print("-------- S T A R T   D I S P A T C H --------\n");
+      dispatch_all();
+      fmt::print("-------- E  N  D   D I S P A T C H --------\n");
+
+      auto discrepancies = check_state_sync(nodes);
+      if (discrepancies.empty())
+      {
+        break;
+      }
+
+      if (++iterations >= max_iterations)
+      {
+        print_discrepancies(discrepancies);
+
+        throw std::logic_error(fmt::format(
+          "Failed to reach state sync after {} loop iterations", iterations));
+      }
     }
   }
 
@@ -1160,8 +1465,11 @@ public:
     static constexpr auto max_iterations = 20;
     while (true)
     {
+      fmt::print("-------- S T A R T   P E R I O D I C --------\n");
       periodic_one(primary, ms(10));
+      fmt::print("-------- S T A R T   D I S P A T C H --------\n");
       dispatch_all();
+      fmt::print("-------- E  N  D   D I S P A T C H --------\n");
 
       auto discrepancies = check_state_sync(nodes);
       if (discrepancies.empty())
@@ -1178,6 +1486,12 @@ public:
       }
     }
   }
+
+  ccf::View get_term(ccf::NodeId node_id)
+  {
+    return (_nodes.at(node_id).raft)->get_view();
+  }
+
 
   void assert_commit_safety(ccf::NodeId node_id, const size_t lineno)
   {
@@ -1263,6 +1577,14 @@ public:
     assert_commit_safety_all(lineno);
   }
 
+  void print_commit_idx(ccf::NodeId node_id)
+  {
+    fmt::print(
+      "node={}\tcmt_idx={}\n",
+      node_id,
+      _nodes.at(node_id).raft->get_committed_seqno());
+  }
+
   void assert_commit_idx(
     ccf::NodeId node_id, const std::string& idx_s, const size_t lineno)
   {
@@ -1286,6 +1608,7 @@ public:
     const std::string& expected,
     bool equal,
     const size_t lineno)
+
   {
     auto details = _nodes.at(node_id).raft->get_details();
     nlohmann::json d = details;
@@ -1321,4 +1644,6 @@ public:
         std::to_string((int)lineno)));
     }
   }
+
+#endif
 };

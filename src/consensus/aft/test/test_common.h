@@ -2,10 +2,10 @@
 // Licensed under the Apache 2.0 License.
 #pragma once
 
+#include "ccf/ds/logger.h"
 #include "consensus/aft/raft.h"
-#include "ds/internal_logger.h"
 #include "kv/test/stub_consensus.h"
-#include "logging_stub.h"
+#include "logging_stub_org.h"
 
 #include <chrono>
 #include <string>

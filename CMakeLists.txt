@@ -2,9 +2,18 @@
 # Licensed under the Apache 2.0 License.
 cmake_minimum_required(VERSION 3.21)
 
+
+
 set(CCF_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 include(${CCF_DIR}/cmake/preproject.cmake)
 include(${CCF_DIR}/cmake/version.cmake)
+
+
+# Enable ThreadSanitizer
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -g -O1")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g -O1")
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+
 
 project(
   ${CCF_PROJECT}
@@ -49,6 +58,27 @@ set(CMAKE_MODULE_PATH "${CCF_DIR}/cmake;${CMAKE_MODULE_PATH}")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Threads REQUIRED)
+
+set(PICOTLS_LIBS "-L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/picotls -lpicotls-openssl -lpicotls-core -lev -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/lib/.libs -lngtcp2 -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/crypto/picotls -lngtcp2_crypto_picotls -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/nghttp3/build/lib -lnghttp3")
+#set(PICOTLS_LIBS "-L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/picotls -lpicotls-openssl -lpicotls-core -lev -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/lib/.libs -lngtcp2 -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/crypto/picotls -lngtcp2_crypto_picotls -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/nghttp3/build/lib -lnghttp3 -fsanitize-thread-memory-access -fsanitize=address")
+set(NGTCP2_THIRD_PARTY_LIBS "-L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/third-party/.libs -lurlparse")
+set (PICOTLS_CFLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/picotls/include/")
+#set (PICOTLS_CFLAGS "-I$PWD/picotls/include/ -fsanitize-thread-memory-access -fsanitize=address")
+set(ptlsserver_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/ccf_related_work/server_ccf.cc
+    #${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/server_req_pipelining.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/server_base.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/debug.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/util.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/http.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/shared.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/tls_server_context_picotls.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/tls_server_session_picotls.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/tls_session_base_picotls.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/tls_shared_picotls.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/util_openssl.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/ccf_related_work/config.cpp
+  )
 
 function(message)
   if(NOT MESSAGE_QUIET)
@@ -104,7 +134,7 @@ if(KV_STATE_RB)
   add_compile_definitions(KV_STATE_RB)
 endif()
 
-option(USE_SNMALLOC "Link against snmalloc" ON)
+option(USE_SNMALLOC "Link against snmalloc" OFF)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/snmalloc.cmake)
 
 # Useful for debugging with libc++ hardening options
@@ -472,361 +502,400 @@ target_link_libraries(
 )
 install(TARGETS verify_uvm_attestation_and_endorsements DESTINATION bin)
 
+
 if(BUILD_TESTS)
   enable_testing()
 
   # Unit tests
   if(BUILD_UNIT_TESTS)
-    add_test(
-      NAME verify_uvm_attestation_and_endorsements
-      COMMAND
-        bash
-        ${CMAKE_SOURCE_DIR}/tests/run_verify_uvm_attestation_and_endorsements.sh
-        $<TARGET_FILE:verify_uvm_attestation_and_endorsements>
-    )
-    set_property(
-      TEST verify_uvm_attestation_and_endorsements
-      APPEND
-      PROPERTY LABELS unit
-    )
-    add_san_test_properties(verify_uvm_attestation_and_endorsements)
+  #  add_test(
+  #    NAME verify_uvm_attestation_and_endorsements
+  #    COMMAND
+  #      bash
+  #      ${CMAKE_SOURCE_DIR}/tests/run_verify_uvm_attestation_and_endorsements.sh
+  #      $<TARGET_FILE:verify_uvm_attestation_and_endorsements>
+  #  )
+  #  set_property(
+  #    TEST verify_uvm_attestation_and_endorsements
+  #    APPEND
+  #    PROPERTY LABELS unit
+  #  )
+  #  add_san_test_properties(verify_uvm_attestation_and_endorsements)
 
-    add_unit_test(
-      snp_ioctl_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/pal/test/snp_ioctl_test.cpp
-    )
+  #  add_unit_test(
+  #    snp_ioctl_test
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/pal/test/snp_ioctl_test.cpp
+  #  )
 
-    add_unit_test(
-      snp_attestation_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/pal/test/snp_attestation_validation.cpp
-    )
-    target_link_libraries(snp_attestation_test PRIVATE ccf_pal ccfcrypto)
+  #  add_unit_test(
+  #    snp_attestation_test
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/pal/test/snp_attestation_validation.cpp
+  #  )
+  #  target_link_libraries(snp_attestation_test PRIVATE ccf_pal ccfcrypto)
 
-    add_unit_test(map_test ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/map_test.cpp)
+  #  add_unit_test(map_test ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/map_test.cpp)
 
-    add_unit_test(
-      env_test ${CMAKE_CURRENT_SOURCE_DIR}/src/host/test/env.cpp
-      ${CCF_DIR}/src/host/env.cpp
-    )
+  #  add_unit_test(
+  #    env_test ${CMAKE_CURRENT_SOURCE_DIR}/src/host/test/env.cpp
+  #    ${CCF_DIR}/src/host/env.cpp
+  #  )
 
-    add_unit_test(
-      json_schema ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/json_schema.cpp
-    )
+  #  add_unit_test(
+  #    json_schema ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/json_schema.cpp
+  #  )
 
-    add_unit_test(
-      logger_test ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/logger.cpp
-    )
+  #  add_unit_test(
+  #    logger_test ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/logger.cpp
+  #  )
 
-    add_unit_test(
-      openapi_test ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/openapi.cpp
-    )
-    target_link_libraries(openapi_test PRIVATE http_parser)
+  #  add_unit_test(
+  #    openapi_test ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/openapi.cpp
+  #  )
+  #  target_link_libraries(openapi_test PRIVATE http_parser)
 
-    add_unit_test(
-      logger_json_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/logger_json_test.cpp
-    )
+  #  add_unit_test(
+  #    logger_json_test
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/logger_json_test.cpp
+  #  )
 
-    add_unit_test(
-      kv_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_test.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_contention.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_serialisation.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_snapshot.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_dynamic_tables.cpp
-    )
-    target_link_libraries(
-      kv_test PRIVATE ${CMAKE_THREAD_LIBS_INIT} http_parser ccf_kv
-    )
+  #  add_unit_test(
+  #    kv_test
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_test.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_contention.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_serialisation.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_snapshot.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/kv/test/kv_dynamic_tables.cpp
+  #  )
+  #  target_link_libraries(
+  #    kv_test PRIVATE ${CMAKE_THREAD_LIBS_INIT} http_parser ccf_kv
+  #  )
 
-    add_unit_test(
-      ds_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/ring_buffer.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/messaging.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/oversized.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/typed_messages.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/serialized.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/serializer.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/hash.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/thread_messaging.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/lru.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/hex.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/contiguous_set.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/unit_strings.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/dl_list.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/nonstd.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/work_beacon.cpp
-    )
-    target_link_libraries(ds_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+  #  add_unit_test(
+  #    ds_test
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/ring_buffer.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/messaging.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/oversized.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/typed_messages.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/serialized.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/serializer.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/hash.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/thread_messaging.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/lru.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/hex.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/contiguous_set.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/unit_strings.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/dl_list.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/nonstd.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/ds/test/work_beacon.cpp
+  #  )
+  #  target_link_libraries(ds_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
-    add_unit_test(
-      task_system_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/basic_tasks.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/ordered_tasks.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/delayed_tasks.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/fan_in_tasks.cpp
-    )
-    target_link_libraries(task_system_test PRIVATE ccf_tasks)
+  #  add_unit_test(
+  #    task_system_test
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/basic_tasks.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/ordered_tasks.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/delayed_tasks.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/fan_in_tasks.cpp
+  #  )
+  #  target_link_libraries(task_system_test PRIVATE ccf_tasks)
 
-    add_unit_test(
-      task_system_demo ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/demo/main.cpp
-    )
-    target_link_libraries(task_system_demo PRIVATE ccf_tasks)
+  #  add_unit_test(
+  #    task_system_demo ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/demo/main.cpp
+  #  )
+  #  target_link_libraries(task_system_demo PRIVATE ccf_tasks)
 
-    add_unit_test(
-      ledger_test ${CMAKE_CURRENT_SOURCE_DIR}/src/host/test/ledger.cpp
-    )
+  #  add_unit_test(
+  #    ledger_test ${CMAKE_CURRENT_SOURCE_DIR}/src/host/test/ledger.cpp
+  #  )
 
-    add_unit_test(
-      raft_test ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/main.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/view_history.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/committable_suffix.cpp
-    )
-    target_link_libraries(raft_test PRIVATE ccfcrypto)
+  #  add_unit_test(
+  #    raft_test ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/main.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/view_history.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/committable_suffix.cpp
+  #  )
+  #  target_link_libraries(raft_test PRIVATE ccfcrypto)
 
-    add_unit_test(
-      raft_enclave_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/enclave.cpp
-    )
-    target_include_directories(raft_enclave_test PRIVATE ${CCFCRYPTO_INC})
-    target_link_libraries(raft_enclave_test PRIVATE ccfcrypto)
+  #  add_unit_test(
+  #    raft_enclave_test
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/enclave.cpp
+  #  )
+  #  target_include_directories(raft_enclave_test PRIVATE ${CCFCRYPTO_INC})
+  #  target_link_libraries(raft_enclave_test PRIVATE ccfcrypto)
 
-    add_unit_test(
-      crypto_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/crypto.cpp
-    )
-    target_include_directories(crypto_test PRIVATE ${CCFCRYPTO_INC})
-    target_link_libraries(crypto_test PRIVATE ccfcrypto)
+  #  add_unit_test(
+  #    crypto_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/crypto.cpp
+  #  )
+  #  target_include_directories(crypto_test PRIVATE ${CCFCRYPTO_INC})
+  #  target_link_libraries(crypto_test PRIVATE ccfcrypto)
 
-    add_unit_test(
-      sharing_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/secret_sharing.cpp
-    )
-    target_include_directories(sharing_test PRIVATE ${CCFCRYPTO_INC})
-    target_link_libraries(sharing_test PRIVATE ccfcrypto)
+  #  add_unit_test(
+  #    sharing_test
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/secret_sharing.cpp
+  #  )
+  #  target_include_directories(sharing_test PRIVATE ${CCFCRYPTO_INC})
+  #  target_link_libraries(sharing_test PRIVATE ccfcrypto)
 
-    add_unit_test(
-      key_exchange_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/key_exchange.cpp
-    )
-    target_link_libraries(key_exchange_test PRIVATE)
+  #  add_unit_test(
+  #    key_exchange_test
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/key_exchange.cpp
+  #  )
+  #  target_link_libraries(key_exchange_test PRIVATE)
 
-    add_unit_test(
-      history_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/history.cpp
-    )
-    target_link_libraries(history_test PRIVATE ccfcrypto http_parser ccf_kv)
+  #  add_unit_test(
+  #    history_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/history.cpp
+  #  )
+  #  target_link_libraries(history_test PRIVATE ccfcrypto http_parser ccf_kv)
 
-    add_unit_test(
-      encryptor_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/encryptor.cpp
-    )
-    target_link_libraries(encryptor_test PRIVATE ccfcrypto ccf_kv)
+  #  add_unit_test(
+  #    encryptor_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/encryptor.cpp
+  #  )
+  #  target_link_libraries(encryptor_test PRIVATE ccfcrypto ccf_kv)
 
-    add_unit_test(js_test ${CMAKE_CURRENT_SOURCE_DIR}/src/js/test/js.cpp)
-    target_link_libraries(
-      js_test PRIVATE ccf_js ccf_kv ccf_endpoints ccfcrypto http_parser
-    )
+  #  add_unit_test(js_test ${CMAKE_CURRENT_SOURCE_DIR}/src/js/test/js.cpp)
+  #  target_link_libraries(
+  #    js_test PRIVATE ccf_js ccf_kv ccf_endpoints ccfcrypto http_parser
+  #  )
 
-    add_unit_test(
-      endorsements_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/endorsements.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/uvm_endorsements.cpp
-    )
-    set_property(
-      TEST endorsements_test
-      APPEND
-      PROPERTY
-        ENVIRONMENT
-        "TEST_ENDORSEMENTS_PATH=${CMAKE_CURRENT_SOURCE_DIR}/tests/uvm_endorsements"
-    )
+  #  add_unit_test(
+  #    endorsements_test
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/endorsements.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/node/uvm_endorsements.cpp
+  #  )
+  #  set_property(
+  #    TEST endorsements_test
+  #    APPEND
+  #    PROPERTY
+  #      ENVIRONMENT
+  #      "TEST_ENDORSEMENTS_PATH=${CMAKE_CURRENT_SOURCE_DIR}/tests/uvm_endorsements"
+  #  )
 
-    add_unit_test(
-      historical_queries_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/historical_queries.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/receipt.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/receipt.cpp
-    )
-    target_link_libraries(
-      historical_queries_test PRIVATE http_parser ccf_kv ccf_endpoints
-    )
-    add_unit_test(
-      indexing_test ${CMAKE_CURRENT_SOURCE_DIR}/src/indexing/test/indexing.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/indexing/test/lfs.cpp
-    )
-    target_link_libraries(indexing_test PRIVATE ccf_endpoints ccf_kv)
+  #  add_unit_test(
+  #    historical_queries_test
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/historical_queries.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/receipt.cpp
+  #    ${CMAKE_CURRENT_SOURCE_DIR}/src/node/receipt.cpp
+  #  )
+  #  target_link_libraries(
+  #    historical_queries_test PRIVATE http_parser ccf_kv ccf_endpoints
+  #  )
+    #add_unit_test(
+    #  indexing_test ${CMAKE_CURRENT_SOURCE_DIR}/src/indexing/test/indexing.cpp
+    #  ${CMAKE_CURRENT_SOURCE_DIR}/src/indexing/test/lfs.cpp
+    #)
+    #target_link_libraries(indexing_test PRIVATE ccf_endpoints ccf_kv)
 
-    add_unit_test(
-      snapshot_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/snapshot.cpp
-    )
-    target_link_libraries(snapshot_test PRIVATE ccf_kv)
+ #   add_unit_test(
+ #     snapshot_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/snapshot.cpp
+ #   )
+ #   target_link_libraries(snapshot_test PRIVATE ccf_kv)
 
-    add_unit_test(
-      snapshotter_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/snapshotter.cpp
-    )
-    target_link_libraries(snapshotter_test PRIVATE ccf_kv ccf_endpoints)
+ #   add_unit_test(
+ #     snapshotter_test
+ #     ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/snapshotter.cpp
+ #   )
+ #   target_link_libraries(snapshotter_test PRIVATE ccf_kv ccf_endpoints)
 
-    add_unit_test(
-      node_info_json_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/node_info_json.cpp
-    )
+#  add_unit_test(
+#      node_info_json_test
+#      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/node_info_json.cpp
+#    )
 
-    add_unit_test(tls_test ${CMAKE_CURRENT_SOURCE_DIR}/src/tls/test/main.cpp)
-    target_link_libraries(tls_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+#    add_unit_test(tls_test ${CMAKE_CURRENT_SOURCE_DIR}/src/tls/test/main.cpp)
+#    target_link_libraries(tls_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
-    add_unit_test(
-      base64_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/base64.cpp
-    )
-    target_link_libraries(base64_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+#    add_unit_test(
+#      base64_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/base64.cpp
+#    )
+#    target_link_libraries(base64_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
-    add_unit_test(
-      cose_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/cose.cpp
-    )
-    target_link_libraries(
-      cose_test PRIVATE ${CMAKE_THREAD_LIBS_INIT} ccfcrypto qcbor
-    )
+#    add_unit_test(
+#      cose_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/cose.cpp
+#    )
+#    target_link_libraries(
+#      cose_test PRIVATE ${CMAKE_THREAD_LIBS_INIT} ccfcrypto qcbor
+#    )
 
-    add_unit_test(pem_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/pem.cpp)
-    target_link_libraries(pem_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+#    add_unit_test(pem_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/pem.cpp)
+#    target_link_libraries(pem_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
-    add_test_bin(
-      kp_cert_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/kp_cert.cpp
-    )
-    target_link_libraries(kp_cert_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+#    add_test_bin(
+#      kp_cert_test ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/test/kp_cert.cpp
+#    )
+#    target_link_libraries(kp_cert_test PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 
-    add_unit_test(
-      channels_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/channels.cpp
-    )
-    target_link_libraries(channels_test PRIVATE)
+#    add_unit_test(
+#      channels_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/channels.cpp
+#    )
+#    target_link_libraries(channels_test PRIVATE)
 
-    add_unit_test(
-      http_test ${CMAKE_CURRENT_SOURCE_DIR}/src/http/test/http_test.cpp
-    )
-    target_link_libraries(http_test PRIVATE http_parser)
+#    add_unit_test(
+#      http_test ${CMAKE_CURRENT_SOURCE_DIR}/src/http/test/http_test.cpp
+#    )
+#    target_link_libraries(http_test PRIVATE http_parser)
 
-    add_unit_test(
-      http_etag_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/http/test/http_etag_test.cpp
-    )
+#    add_unit_test(
+#      http_etag_test
+#      ${CMAKE_CURRENT_SOURCE_DIR}/src/http/test/http_etag_test.cpp
+#    )
 
-    add_unit_test(
-      frontend_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/rpc/test/frontend_test.cpp
-      ${CCF_DIR}/src/node/quote.cpp ${CCF_DIR}/src/node/uvm_endorsements.cpp
-    )
-    target_link_libraries(
-      frontend_test PRIVATE ${CMAKE_THREAD_LIBS_INIT} http_parser ccf_js
-                            ccf_endpoints ccfcrypto ccf_kv
-    )
+#    add_unit_test(
+#      frontend_test
+#      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/rpc/test/frontend_test.cpp
+#      ${CCF_DIR}/src/node/quote.cpp ${CCF_DIR}/src/node/uvm_endorsements.cpp
+#    )
+#    target_link_libraries(
+#      frontend_test PRIVATE ${CMAKE_THREAD_LIBS_INIT} http_parser ccf_js
+#                            ccf_endpoints ccfcrypto ccf_kv
+#    )
 
-    add_unit_test(
-      endpoint_registry_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/endpoints/test/endpoint_registry.cpp
-    )
-    target_include_directories(
-      endpoint_registry_test PRIVATE ${CCF_DIR}/src/endpoints
-    )
-    target_link_libraries(endpoint_registry_test PRIVATE ccf_endpoints)
+#    add_unit_test(
+#      endpoint_registry_test
+#      ${CMAKE_CURRENT_SOURCE_DIR}/src/endpoints/test/endpoint_registry.cpp
+#    )
+#    target_include_directories(
+#      endpoint_registry_test PRIVATE ${CCF_DIR}/src/endpoints
+#    )
+#    target_link_libraries(endpoint_registry_test PRIVATE ccf_endpoints)
 
-    add_unit_test(
-      jwt_auth_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/endpoints/test/test_jwt_auth.cpp
-    )
-    target_link_libraries(jwt_auth_test PRIVATE ccf_endpoints)
+#    add_unit_test(
+#      jwt_auth_test
+#      ${CMAKE_CURRENT_SOURCE_DIR}/src/endpoints/test/test_jwt_auth.cpp
+#    )
+#    target_link_libraries(jwt_auth_test PRIVATE ccf_endpoints)
 
-    add_unit_test(
-      tx_status_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/rpc/test/tx_status_test.cpp
-    )
+#    add_unit_test(
+#      tx_status_test
+#      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/rpc/test/tx_status_test.cpp
+#    )
 
-    add_unit_test(
-      node_frontend_test
-      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/rpc/test/node_frontend_test.cpp
-      ${CCF_DIR}/src/node/quote.cpp ${CCF_DIR}/src/node/uvm_endorsements.cpp
-    )
-    target_link_libraries(
-      node_frontend_test PRIVATE ${CMAKE_THREAD_LIBS_INIT} http_parser ccf_js
-                                 ccf_endpoints ccfcrypto ccf_kv
-    )
+#    add_unit_test(
+#      node_frontend_test
+#      ${CMAKE_CURRENT_SOURCE_DIR}/src/node/rpc/test/node_frontend_test.cpp
+#      ${CCF_DIR}/src/node/quote.cpp ${CCF_DIR}/src/node/uvm_endorsements.cpp
+#    )
+#    target_link_libraries(
+#      node_frontend_test PRIVATE ${CMAKE_THREAD_LIBS_INIT} http_parser ccf_js
+#                                 ccf_endpoints ccfcrypto ccf_kv
+#    )
 
-    add_unit_test(
-      merkle_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/merkle_test.cpp
-    )
+#    add_unit_test(
+#      merkle_test ${CMAKE_CURRENT_SOURCE_DIR}/src/node/test/merkle_test.cpp
+#    )
 
-    # Merkle Tree memory test
-    add_executable(
-      merkle_mem src/node/test/merkle_mem.cpp
-                 ${CCF_DIR}/src/enclave/thread_local.cpp
-    )
-    target_compile_options(merkle_mem PRIVATE ${COMPILE_LIBCXX})
-    target_link_libraries(
-      merkle_mem PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${LINK_LIBCXX} ccfcrypto
-    )
+#    # Merkle Tree memory test
+#    add_executable(
+#      merkle_mem src/node/test/merkle_mem.cpp
+#                 ${CCF_DIR}/src/enclave/thread_local.cpp
+#    )
+#    target_compile_options(merkle_mem PRIVATE ${COMPILE_LIBCXX})
+#    target_link_libraries(
+#      merkle_mem PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${LINK_LIBCXX} ccfcrypto
+#    )
 
     # Raft driver and scenario test
-    add_executable(
-      raft_driver ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/driver.cpp
-                  src/enclave/thread_local.cpp
+  add_executable(
+    raft_driver ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/driver.cpp
+        src/enclave/thread_local.cpp
+        ${ptlsserver_SOURCES}
     )
+  
+    set_target_properties(raft_driver PROPERTIES
+      COMPILE_FLAGS "${WARNCXXFLAGS} -DENABLE_EXAMPLE_PICOTLS -DWITH_EXAMPLE_PICOTLS -DHAVE_NETINET_IP_H"
+    )
+    target_link_libraries(raft_driver PRIVATE ${PICOTLS_LIBS} ${NGTCP2_THIRD_PARTY_LIBS} ${CMAKE_THREAD_LIBS_INIT})
     target_link_libraries(raft_driver PRIVATE ccfcrypto)
+
     target_include_directories(raft_driver PRIVATE src/aft)
+    target_include_directories(raft_driver PRIVATE src/aft)
+    target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+    target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/lib/includes)
+    target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/nghttp3/lib/includes)
+    target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/crypto/includes)
+    target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/picotls/include)
+    target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/third-party/urlparse)
+    target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/third-party/http-parser)
 
-    add_test(
-      NAME raft_scenario_test
-      COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/tests/raft_scenarios_runner.py
-              ./raft_driver ${CMAKE_SOURCE_DIR}/tests/raft_scenarios/
-    )
-    set_property(TEST raft_scenario_test PROPERTY LABELS raft_scenario)
 
-    add_test(NAME csr_test COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/tests/certs.py
-                                   ./kp_cert_test
-    )
-    set_property(
-      TEST csr_test
-      APPEND
-      PROPERTY LABELS unit_test
-    )
+   # Raft driver and scenario test
+   # add_executable(
+   #   raft_driver ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/aft/test/driver.cpp
+   #               src/enclave/thread_local.cpp
+   #               ${ptlsserver_SOURCES}
+   # )
+   # set_target_properties(raft_driver PROPERTIES
+   #   COMPILE_FLAGS "${WARNCXXFLAGS} -DENABLE_EXAMPLE_PICOTLS -DWITH_EXAMPLE_PICOTLS -DHAVE_NETINET_IP_H"
+   # )
+   # target_link_libraries(raft_driver PRIVATE ccfcrypto.host)
+   # target_link_libraries(raft_driver PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${PICOTLS_LIBS} ${NGTCP2_THIRD_PARTY_LIBS})
 
-    add_test(NAME versionifier_test
-             COMMAND ${PYTHON}
-                     ${CMAKE_SOURCE_DIR}/python/src/ccf/_versionifier.py
-    )
+   # target_include_directories(raft_driver PRIVATE src/aft)
+   # target_include_directories(raft_driver PRIVATE src/aft)
+   # target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
+   # target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/lib/includes)
+   # target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/nghttp3/lib/includes)
+   # target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/crypto/includes)
+   # target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/picotls/include)
+   # target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/third-party/urlparse)
+   # target_include_directories(raft_driver PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/third-party/http-parser)
 
-    add_test(NAME github_version_lts_test
-             COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/tests/infra/github.py
-    )
+   # add_test(
+   #   NAME raft_scenario_test
+   #   COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/tests/raft_scenarios_runner.py
+   #           ./raft_driver ${CMAKE_SOURCE_DIR}/tests/raft_scenarios/
+   # )
+   # set_property(TEST raft_scenario_test PROPERTY LABELS raft_scenario)
+
+   # add_test(NAME csr_test COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/tests/certs.py
+   #                                ./kp_cert_test
+   # )
+   # set_property(
+   #   TEST csr_test
+   #   APPEND
+   #   PROPERTY LABELS unit_test
+   # )
+
+   # add_test(NAME versionifier_test
+   #          COMMAND ${PYTHON}
+   #                  ${CMAKE_SOURCE_DIR}/python/src/ccf/_versionifier.py
+   # )
+
+   # add_test(NAME github_version_lts_test
+   #          COMMAND ${PYTHON} ${CMAKE_SOURCE_DIR}/tests/infra/github.py
+   # )
   endif()
 
   if(NOT TSAN AND NOT USE_LIBCXX)
     # Picobench benchmarks
-    add_picobench(map_bench SRCS src/ds/test/map_bench.cpp)
-    add_picobench(logger_bench SRCS src/ds/test/logger_bench.cpp)
-    add_picobench(json_bench SRCS src/ds/test/json_bench.cpp)
-    add_picobench(ring_buffer_bench SRCS src/ds/test/ring_buffer_bench.cpp)
-    add_picobench(
-      crypto_bench
-      SRCS src/crypto/test/bench.cpp
-      LINK_LIBS
-    )
-    add_picobench(
-      history_bench
-      SRCS src/node/test/history_bench.cpp src/enclave/thread_local.cpp
-      LINK_LIBS ccf_kv
-    )
+   # add_picobench(map_bench SRCS src/ds/test/map_bench.cpp)
+   # add_picobench(logger_bench SRCS src/ds/test/logger_bench.cpp)
+   # add_picobench(json_bench SRCS src/ds/test/json_bench.cpp)
+   # add_picobench(ring_buffer_bench SRCS src/ds/test/ring_buffer_bench.cpp)
+   # add_picobench(
+   #   crypto_bench
+   #   SRCS src/crypto/test/bench.cpp
+   #   LINK_LIBS
+   # )
+   # add_picobench(
+   #   history_bench
+   #   SRCS src/node/test/history_bench.cpp src/enclave/thread_local.cpp
+   #   LINK_LIBS ccf_kv
+   # )
 
-    add_picobench(
-      kv_bench
-      SRCS src/kv/test/kv_bench.cpp src/enclave/thread_local.cpp
-      LINK_LIBS ccf_kv
-    )
-    add_picobench(merkle_bench SRCS src/node/test/merkle_bench.cpp)
-    add_picobench(hash_bench SRCS src/ds/test/hash_bench.cpp)
+  #  add_picobench(
+  #    kv_bench
+  #    SRCS src/kv/test/kv_bench.cpp src/enclave/thread_local.cpp
+  #    LINK_LIBS ccf_kv
+  #  )
+  #  add_picobench(merkle_bench SRCS src/node/test/merkle_bench.cpp)
+  #  add_picobench(hash_bench SRCS src/ds/test/hash_bench.cpp)
 
-    add_picobench(
-      task_bench
-      SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/bench/merge_bench.cpp
-           ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/bench/sleep_bench.cpp
-           ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/bench/contention_bench.cpp
-      LINK_LIBS ccf_tasks
-    )
+  #  add_picobench(
+  #    task_bench
+  #    SRCS ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/bench/merge_bench.cpp
+  #         ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/bench/sleep_bench.cpp
+  #         ${CMAKE_CURRENT_SOURCE_DIR}/src/tasks/test/bench/contention_bench.cpp
+  #    LINK_LIBS ccf_tasks
+  #  )
   endif()
 
   if(LONG_TESTS)
@@ -836,36 +905,36 @@ if(BUILD_TESTS)
     endif()
   endif()
 
-  add_e2e_test(
-    NAME recovery_test_api_1
-    PYTHON_SCRIPT ${CMAKE_SOURCE_DIR}/tests/recovery.py
-    ADDITIONAL_ARGS ${ADDITIONAL_RECOVERY_ARGS} --gov-api-version "2024-07-01"
-  )
+  #add_e2e_test(
+  #  NAME recovery_test_api_1
+  #  PYTHON_SCRIPT ${CMAKE_SOURCE_DIR}/tests/recovery.py
+  #  ADDITIONAL_ARGS ${ADDITIONAL_RECOVERY_ARGS} --gov-api-version "2024-07-01"
+  #)
 
-  add_e2e_test(
-    NAME recovery_test_suite
-    PYTHON_SCRIPT ${CMAKE_SOURCE_DIR}/tests/e2e_suite.py
-    LABEL suite
-    ADDITIONAL_ARGS
-      --test-duration
-      300
-      --test-suite
-      rekey_recovery
-      --test-suite
-      membership_recovery
-      --jinja-templates-path
-      ${CMAKE_SOURCE_DIR}/samples/templates
-  )
+  #add_e2e_test(
+  #  NAME recovery_test_suite
+  #  PYTHON_SCRIPT ${CMAKE_SOURCE_DIR}/tests/e2e_suite.py
+  #  LABEL suite
+  #  ADDITIONAL_ARGS
+  #    --test-duration
+  #    300
+  #    --test-suite
+  #    rekey_recovery
+  #    --test-suite
+  #    membership_recovery
+  #    --jinja-templates-path
+  #    ${CMAKE_SOURCE_DIR}/samples/templates
+  #)
 
-  add_e2e_test(
-    NAME reconfiguration_test_suite
-    PYTHON_SCRIPT ${CMAKE_SOURCE_DIR}/tests/e2e_suite.py
-    LABEL suite
-    ADDITIONAL_ARGS
-      --test-duration 300 --test-suite reconfiguration --jinja-templates-path
-      ${CMAKE_SOURCE_DIR}/samples/templates
-  )
-  set_property(TEST reconfiguration_test_suite PROPERTY LABELS reconfiguration)
+  #add_e2e_test(
+  #  NAME reconfiguration_test_suite
+  #  PYTHON_SCRIPT ${CMAKE_SOURCE_DIR}/tests/e2e_suite.py
+  #  LABEL suite
+  #  ADDITIONAL_ARGS
+  #    --test-duration 300 --test-suite reconfiguration --jinja-templates-path
+  #    ${CMAKE_SOURCE_DIR}/samples/templates
+  #)
+  #set_property(TEST reconfiguration_test_suite PROPERTY LABELS reconfiguration)
 
   if(LONG_TESTS)
     add_e2e_test(

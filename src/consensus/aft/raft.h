@@ -3,12 +3,12 @@
 #pragma once
 
 #include "ccf/ds/ccf_exception.h"
+#include "ccf/ds/logger.h"
 #include "ccf/pal/locking.h"
-#include "ccf/service/reconfiguration_type.h"
 #include "ccf/tx_id.h"
 #include "ccf/tx_status.h"
-#include "ds/internal_logger.h"
 #include "ds/serialized.h"
+#include "enclave/reconfiguration_type.h"
 #include "impl/state.h"
 #include "kv/kv_types.h"
 #include "node/node_client.h"
@@ -185,8 +185,8 @@ namespace aft
 
     size_t entry_size_not_limited = 0;
     size_t entry_count = 0;
-    Index entries_batch_size = 20;
-    static constexpr int batch_window_size = 100;
+    Index entries_batch_size = 1;
+    static constexpr int batch_window_size = 1;
     int batch_window_sum = 0;
 
     // When this is set, only public domain is deserialised when receiving
@@ -203,7 +203,7 @@ namespace aft
     static constexpr size_t max_terms_per_append_entries = 1;
 
   public:
-    static constexpr size_t append_entries_size_limit = 20000;
+    static constexpr size_t append_entries_size_limit = 1;
     std::unique_ptr<LedgerProxy> ledger;
     std::shared_ptr<ccf::NodeToNode> channels;
 
@@ -535,8 +535,8 @@ namespace aft
       const std::unordered_set<ccf::NodeId>& new_learner_nodes = {},
       const std::unordered_set<ccf::NodeId>& new_retired_nodes = {}) override
     {
-      RAFT_DEBUG_FMT(
-        "Configurations: add new configuration at {}: {{{}}}", idx, conf);
+      fmt::print(
+        "Configurations: add new configuration at {}: {{{}}}\n", idx, conf);
 
       assert(new_learner_nodes.empty());
 
@@ -564,7 +564,7 @@ namespace aft
         become_retired(idx, ccf::kv::RetirementPhase::Ordered);
       }
 
-      if (configurations.empty() || conf != configurations.back().nodes)
+      if (conf != configurations.back().nodes)
       {
         Configuration new_config = {idx, std::move(conf), idx};
         configurations.push_back(new_config);
@@ -638,16 +638,16 @@ namespace aft
 
       if (state->leadership_state != ccf::kv::LeadershipState::Leader)
       {
-        RAFT_DEBUG_FMT(
-          "Failed to replicate {} items: not leader", entries.size());
+        fmt::print(
+          "Failed to replicate {} items: not leader\n", entries.size());
         rollback(state->last_idx);
         return false;
       }
 
       if (term != state->current_view)
       {
-        RAFT_DEBUG_FMT(
-          "Failed to replicate {} items at term {}, current term is {}",
+        fmt::print(
+          "Failed to replicate {} items at term {}, current term is {}\n",
           entries.size(),
           term,
           state->current_view);
@@ -656,14 +656,14 @@ namespace aft
 
       if (is_retired_committed())
       {
-        RAFT_DEBUG_FMT(
-          "Failed to replicate {} items: node retirement is complete",
+        fmt::print(
+          "Failed to replicate {} items: node retirement is complete\n",
           entries.size());
         rollback(state->last_idx);
         return false;
       }
 
-      RAFT_DEBUG_FMT("Replicating {} entries", entries.size());
+      //  fmt::print("Replicating {} entries\n", entries.size());
 
       for (auto& [index, data, is_globally_committable, hooks] : entries)
       {
@@ -671,14 +671,14 @@ namespace aft
 
         if (index != state->last_idx + 1)
           return false;
-
-        RAFT_DEBUG_FMT(
-          "Replicated on leader {}: {}{} ({} hooks)",
+#if 0
+        fmt::print(
+          "Replicated on leader {}: {}{} ({} hooks)\n",
           state->node_id,
           index,
           (globally_committable ? " committable" : ""),
           hooks->size());
-
+#endif
 #ifdef CCF_RAFT_TRACING
         nlohmann::json j = {};
         j["function"] = "replicate";
@@ -729,7 +729,7 @@ namespace aft
           entry_size_not_limited = 0;
           for (const auto& it : all_other_nodes)
           {
-            RAFT_DEBUG_FMT("Sending updates to follower {}", it.first);
+            // fmt::print("Sending updates to follower {}\n", it.first);
             send_append_entries(it.first, it.second.sent_idx + 1);
           }
         }
@@ -799,18 +799,19 @@ namespace aft
 
           default:
           {
+            fmt::print("Unhandled AFT message type: {}\n", type);
             RAFT_FAIL_FMT("Unhandled AFT message type: {}", type);
           }
         }
       }
       catch (const ccf::NodeToNode::DroppedMessageException& e)
       {
-        RAFT_INFO_FMT("Dropped invalid message from {}", e.from);
+        fmt::print("Dropped invalid message from {}\n", e.from);
         return;
       }
       catch (const serialized::InsufficientSpaceException& ise)
       {
-        RAFT_FAIL_FMT("Failed to parse message: {}", ise.what());
+        fmt::print("Failed to parse message: {}\n", ise.what());
         return;
       }
       catch (const std::exception& e)
@@ -860,8 +861,8 @@ namespace aft
             }
             if (search->second.last_ack_timeout >= election_timeout)
             {
-              RAFT_DEBUG_FMT(
-                "No ack received from {} in last {}",
+              fmt::print(
+                "No ack received from {} in last {}\n",
                 node.first,
                 election_timeout);
               backup_ack_timeout_count++;
@@ -883,9 +884,9 @@ namespace aft
           // active configuration in which it has heard back from a majority of
           // backups within an election timeout.
           // Also see CheckQuorum action in tla/ccfraft.tla.
-          RAFT_INFO_FMT(
+          fmt::print(
             "Stepping down as leader {}: No ack received from a majority of "
-            "backups in last {}",
+            "backups in last {}\n",
             state->node_id,
             election_timeout);
           become_follower();
@@ -927,8 +928,8 @@ namespace aft
         term_of_probe = state->view_history.view_at(probe_index);
       }
 
-      RAFT_TRACE_FMT(
-        "Looking for match with {}.{}, from {}.{}, best answer is {}",
+      fmt::print(
+        "Looking for match with {}.{}, from {}.{}, best answer is {}\n",
         tx_id.view,
         tx_id.seqno,
         state->view_history.view_at(state->last_idx),
@@ -980,14 +981,16 @@ namespace aft
 
     void send_append_entries(const ccf::NodeId& to, Index start_idx)
     {
-      RAFT_TRACE_FMT(
+#if 0
+      fmt::print(
         "Sending append entries to node {} in batches of {}, covering the "
-        "range {} -> {}",
+        "range {} -> log_idx={}, commit_idx={}\n",
         to,
         entries_batch_size,
         start_idx,
-        state->last_idx);
-
+        state->last_idx, 
+        state->commit_idx);
+#endif
       auto calculate_end_index = [this](Index start) {
         // Cap the end index in 2 ways:
         // - Must contain no more than entries_batch_size entries
@@ -1003,6 +1006,8 @@ namespace aft
         {
           max_idx = index_at_end_of_term;
         }
+       
+        
         return std::min(start + entries_batch_size - 1, max_idx);
       };
 
@@ -1013,9 +1018,19 @@ namespace aft
       do
       {
         end_idx = calculate_end_index(start_idx);
-        RAFT_TRACE_FMT("Sending sub range {} -> {}", start_idx, end_idx);
+        // fmt::print("Sending sub range {} -> {}\n", start_idx, end_idx);
         send_append_entries_range(to, start_idx, end_idx);
         start_idx = std::min(end_idx + 1, state->last_idx);
+         #if 0
+      fmt::print(
+        "Sending append entries to node {} in batches of {}, covering the "
+        "range {} -> log_idx={}, commit_idx={}\n",
+        to,
+        entries_batch_size,
+        start_idx,
+        state->last_idx, 
+        state->commit_idx);
+#endif
       } while (end_idx != state->last_idx);
     }
 
@@ -1033,9 +1048,9 @@ namespace aft
 
       const auto prev_term = get_term_internal(prev_idx);
       const auto term_of_idx = get_term_internal(end_idx);
-
-      RAFT_DEBUG_FMT(
-        "Send append entries from {} to {}: ({}.{}, {}.{}] ({})",
+#if 0
+      fmt::print(
+        "Send append entries from {} to {}: ({}.{}, {}.{}] ({})\n",
         state->node_id,
         to,
         prev_term,
@@ -1043,7 +1058,7 @@ namespace aft
         term_of_idx,
         end_idx,
         state->commit_idx);
-
+#endif
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc99-designator"
       AppendEntries ae{
@@ -1089,16 +1104,17 @@ namespace aft
       size_t size)
     {
       std::unique_lock<ccf::pal::Mutex> guard(state->lock);
-
-      RAFT_DEBUG_FMT(
-        "Received append entries: {}.{} to {}.{} (from {} in term {})",
+#if 0
+      fmt::print(
+        "Received append entries: {}.{} to {}.{} (from {} in term {}) data_sz={}, leader_commit_idx={}\n",
         r.prev_term,
         r.prev_idx,
         r.term_of_idx,
         r.idx,
         from,
-        r.term);
-
+        r.term, size, 
+        r.leader_commit_idx);
+#endif
 #ifdef CCF_RAFT_TRACING
       nlohmann::json j = {};
       j["function"] = "recv_append_entries";
@@ -1128,12 +1144,14 @@ namespace aft
       else if (state->current_view > r.term)
       {
         // Reply false, since our term is later than the received term.
-        RAFT_INFO_FMT(
-          "Recv append entries to {} from {} but our term is later ({} > {})",
+
+        fmt::print(
+          "Recv append entries to {} from {} but our term is later ({} > {})\n",
           state->node_id,
           from,
           state->current_view,
           r.term);
+
         send_append_entries_response_nack(from);
         return;
       }
@@ -1142,16 +1160,16 @@ namespace aft
       const auto prev_term = get_term_internal(r.prev_idx);
       if (prev_term != r.prev_term)
       {
-        RAFT_DEBUG_FMT(
-          "Previous term for {} should be {}", r.prev_idx, prev_term);
+        fmt::print(
+          "Previous term for {} should be {}\n", r.prev_idx, prev_term);
 
         // Reply false if the log doesn't contain an entry at r.prev_idx
         // whose term is r.prev_term. Rejects "future" entries.
         if (prev_term == 0)
         {
-          RAFT_DEBUG_FMT(
+          fmt::print(
             "Recv append entries to {} from {} but our log does not yet "
-            "contain index {}",
+            "contain index {}\n",
             state->node_id,
             from,
             r.prev_idx);
@@ -1159,9 +1177,9 @@ namespace aft
         }
         else
         {
-          RAFT_DEBUG_FMT(
+          fmt::print(
             "Recv append entries to {} from {} but our log at {} has the wrong "
-            "previous term (ours: {}, theirs: {})",
+            "previous term (ours: {}, theirs: {})\n",
             state->node_id,
             from,
             r.prev_idx,
@@ -1179,16 +1197,16 @@ namespace aft
       if (!leader_id.has_value() || leader_id.value() != from)
       {
         leader_id = from;
-        RAFT_DEBUG_FMT(
-          "Node {} thinks leader is {}", state->node_id, leader_id.value());
+        fmt::print(
+          "Node {} thinks leader is {}\n", state->node_id, leader_id.value());
       }
 
       // Third, check index consistency, making sure entries are not in the past
       if (r.prev_idx < state->commit_idx)
       {
-        RAFT_DEBUG_FMT(
+        fmt::print(
           "Recv append entries to {} from {} but prev_idx ({}) < commit_idx "
-          "({})",
+          "({})\n",
           state->node_id,
           from,
           r.prev_idx,
@@ -1201,22 +1219,23 @@ namespace aft
       // in which case this path should not be taken either.
       else if (r.prev_idx > state->last_idx)
       {
-        RAFT_FAIL_FMT(
-          "Recv append entries to {} from {} but prev_idx ({}) > last_idx ({})",
+        fmt::print(
+          "Recv append entries to {} from {} but prev_idx ({}) > last_idx "
+          "({})\n",
           state->node_id,
           from,
           r.prev_idx,
           state->last_idx);
         return;
       }
-
-      RAFT_DEBUG_FMT(
-        "Recv append entries to {} from {} for index {} and previous index {}",
+#if 0
+      fmt::print(
+        "Recv append entries to {} from {} for index {} and previous index {}\n",
         state->node_id,
         from,
         r.idx,
         r.prev_idx);
-
+#endif
       std::vector<std::tuple<
         std::unique_ptr<ccf::kv::AbstractExecutionWrapper>,
         ccf::kv::Version>>
@@ -1240,17 +1259,17 @@ namespace aft
             if (is_new_follower)
             {
               auto rollback_level = i - 1;
-              RAFT_DEBUG_FMT(
+              fmt::print(
                 "New follower received AppendEntries with conflict. Incoming "
-                "entry {}.{} conflicts with local {}.{}. Rolling back to {}.",
+                "entry {}.{} conflicts with local {}.{}. Rolling back to {}.\n",
                 incoming_term,
                 i,
                 local_term,
                 i,
                 rollback_level);
-              LOG_ROLLBACK_INFO_FMT(
+              fmt::print(
                 "Dropping conflicting branch. Rolling back {} entries, "
-                "beginning with {}.{}.",
+                "beginning with {}.{}.\n",
                 state->last_idx - rollback_level,
                 local_term,
                 i);
@@ -1266,9 +1285,9 @@ namespace aft
               // term.
               // This log is emitted as a canary, for what we hope is an
               // unreachable branch. If it is ever seen we should revisit this.
-              LOG_ROLLBACK_INFO_FMT(
+              fmt::print(
                 "Ignoring conflicting AppendEntries. Retaining {} entries, "
-                "beginning with {}.{}.",
+                "beginning with {}.{}.\n",
                 state->last_idx - (i - 1),
                 local_term,
                 i);
@@ -1279,6 +1298,7 @@ namespace aft
           {
             // If the current entry has already been deserialised, skip the
             // payload for that entry
+            fmt::print("{} If the current entry has already been deserialised, skip the payload for that entry.\n", __func__);
             ledger->skip_entry(data, size);
             continue;
           }
@@ -1287,13 +1307,15 @@ namespace aft
         std::vector<uint8_t> entry;
         try
         {
+          // fmt::print("**START** {} --> size={}\n", __func__, size);
           entry = LedgerProxy::get_entry(data, size);
+          // fmt::print("**END** {} --> size={}\n", __func__, size);
         }
         catch (const std::logic_error& e)
         {
           // This should only fail if there is malformed data.
-          RAFT_FAIL_FMT(
-            "Recv append entries to {} from {} but the data is malformed: {}",
+          fmt::print(
+            "Recv append entries to {} from {} but the data is malformed: {}\n",
             state->node_id,
             from,
             e.what());
@@ -1302,12 +1324,16 @@ namespace aft
         }
 
         ccf::kv::TxID expected{r.term_of_idx, i};
+        //  fmt::print("**START** {}: deserialize --> size={}\n", __func__,
+        //  entry.size());
+
         auto ds = store->deserialize(entry, public_only, expected);
+        //  fmt::print("**END** {}: deserialize --> size={}\n", __func__, size);
         if (ds == nullptr)
         {
-          RAFT_FAIL_FMT(
+          fmt::print(
             "Recv append entries to {} from {} but the entry could not be "
-            "deserialised",
+            "deserialised\n",
             state->node_id,
             from);
           send_append_entries_response_nack(from);
@@ -1331,7 +1357,7 @@ namespace aft
       for (auto& ae : append_entries)
       {
         auto& [ds, i] = ae;
-        RAFT_DEBUG_FMT("Replicating on follower {}: {}", state->node_id, i);
+        // fmt::print("Replicating on follower {}: {}\n", state->node_id, i);
 
 #ifdef CCF_RAFT_TRACING
         nlohmann::json j = {};
@@ -1367,6 +1393,9 @@ namespace aft
 
         const auto& entry = ds->get_entry();
 
+        // fmt::print("Replicating on follower {}: {} ---> term={}, index={}\n",
+        // state->node_id, i, ds->get_term(), ds->get_index());
+
         ledger->put_entry(
           entry, globally_committable, ds->get_term(), ds->get_index());
 
@@ -1374,7 +1403,7 @@ namespace aft
         {
           case ccf::kv::ApplyResult::FAIL:
           {
-            RAFT_FAIL_FMT("Follower failed to apply log entry: {}", i);
+            fmt::print("Follower failed to apply log entry: {}\n", i);
             state->last_idx--;
             ledger->truncate(state->last_idx);
             send_append_entries_response_nack(from);
@@ -1383,7 +1412,7 @@ namespace aft
 
           case ccf::kv::ApplyResult::PASS_SIGNATURE:
           {
-            RAFT_DEBUG_FMT("Deserialising signature at {}", i);
+            // fmt::print("Deserialising signature at {}", i);
             if (
               state->membership_state == ccf::kv::MembershipState::Retired &&
               state->retirement_phase == ccf::kv::RetirementPhase::Ordered)
@@ -1449,6 +1478,7 @@ namespace aft
       auto lci = last_committable_index();
       if (r.term_of_idx == aft::ViewHistory::InvalidView)
       {
+        fmt::print("{} we don't yet have a term history..\n", __func__);
         // If we don't yet have a term history, then this must be happening in
         // the current term. This can only happen before _any_ transactions have
         // occurred, when processing a heartbeat at index 0, which does not
@@ -1477,6 +1507,10 @@ namespace aft
       // We must only ACK this far, as we know nothing about the agreement of a
       // suffix we may still hold _after_ r.idx with the leader's log
       const auto response_idx = ae.idx;
+      #if 0
+      fmt::print(
+        "{} ---> to node={} for log_idx={}, commit_seqno={}, last_idx={}\n", __func__, to, response_idx, state->commit_idx, state->last_idx);
+      #endif
       send_append_entries_response(
         to, AppendEntriesResponseType::OK, state->current_view, response_idx);
     }
@@ -1484,6 +1518,8 @@ namespace aft
     void send_append_entries_response_nack(
       ccf::NodeId to, const ccf::TxID& rejected)
     {
+      fmt::print(
+        "{} ---> to node={} for txid={}\n", __func__, to, rejected.to_str());
       const auto response_idx = find_highest_possible_match(rejected);
       const auto response_term = get_term_internal(response_idx);
 
@@ -1506,12 +1542,15 @@ namespace aft
       aft::Term response_term,
       aft::Index response_idx)
     {
-      RAFT_DEBUG_FMT(
-        "Send append entries response from {} to {} for index {}: {}",
-        state->node_id,
-        to,
-        response_idx,
-        (answer == AppendEntriesResponseType::OK ? "ACK" : "NACK"));
+      if (answer != AppendEntriesResponseType::OK)
+      {
+        fmt::print(
+          "> Send append entries response from {} to {} for index {}: {}\n",
+          state->node_id,
+          to,
+          response_idx,
+          (answer == AppendEntriesResponseType::OK ? "ACK" : "NACK"));
+      }
 
       AppendEntriesResponse response{
         .term = response_term,
@@ -1542,8 +1581,8 @@ namespace aft
       if (node == all_other_nodes.end())
       {
         // Ignore if we don't recognise the node.
-        RAFT_FAIL_FMT(
-          "Recv append entries response to {} from {}: unknown node",
+        fmt::print(
+          "Recv append entries response to {} from {}: unknown node\n",
           state->node_id,
           from);
         return;
@@ -1564,8 +1603,8 @@ namespace aft
       // Ignore if we're not the leader.
       if (state->leadership_state != ccf::kv::LeadershipState::Leader)
       {
-        RAFT_INFO_FMT(
-          "Recv append entries response to {} from {}: no longer leader",
+        fmt::print(
+          "Recv append entries response to {} from {}: no longer leader\n",
           state->node_id,
           from);
         return;
@@ -1577,9 +1616,9 @@ namespace aft
       if (state->current_view < r.term)
       {
         // We are behind, update our state.
-        RAFT_DEBUG_FMT(
+        fmt::print(
           "Recv append entries response to {} from {}: more recent term ({} "
-          "> {})",
+          "> {})\n",
           state->node_id,
           from,
           r.term,
@@ -1596,8 +1635,9 @@ namespace aft
         // be older in this case.
         if (r.success == AppendEntriesResponseType::OK)
         {
-          RAFT_DEBUG_FMT(
-            "Recv append entries response to {} from {}: stale term ({} != {})",
+          fmt::print(
+            "Recv append entries response to {} from {}: stale term ({} != "
+            "{})\n",
             state->node_id,
             from,
             r.term,
@@ -1614,8 +1654,8 @@ namespace aft
         // after an election.
         if (r.success == AppendEntriesResponseType::OK)
         {
-          RAFT_DEBUG_FMT(
-            "Recv append entries response to {} from {}: stale idx",
+          fmt::print(
+            "Recv append entries response to {} from {}: stale idx\n",
             state->node_id,
             from);
           return;
@@ -1626,8 +1666,8 @@ namespace aft
       if (r.success == AppendEntriesResponseType::FAIL)
       {
         // Failed due to log inconsistency. Reset sent_idx, and try again soon.
-        RAFT_DEBUG_FMT(
-          "Recv append entries response to {} from {}: failed",
+        fmt::print(
+          "Recv append entries response to {} from {}: failed\n",
           state->node_id,
           from);
         const auto this_match =
@@ -1643,12 +1683,13 @@ namespace aft
         node->second.match_idx =
           std::max(node->second.match_idx, r.last_log_idx);
       }
-
-      RAFT_DEBUG_FMT(
-        "Recv append entries response to {} from {} for index {}: success",
+#if 0
+      fmt::print(
+        "Recv append entries response to {} from {} for index {}: success\n",
         state->node_id,
         from,
         r.last_log_idx);
+#endif
       update_commit();
     }
 
@@ -1705,8 +1746,8 @@ namespace aft
       if (state->current_view > r.term)
       {
         // Reply false, since our term is later than the received term.
-        RAFT_DEBUG_FMT(
-          "Recv request vote to {} from {}: our term is later ({} > {})",
+        fmt::print(
+          "Recv request vote to {} from {}: our term is later ({} > {})\n",
           state->node_id,
           from,
           state->current_view,
@@ -1716,8 +1757,8 @@ namespace aft
       }
       else if (state->current_view < r.term)
       {
-        RAFT_DEBUG_FMT(
-          "Recv request vote to {} from {}: their term is later ({} < {})",
+        fmt::print(
+          "Recv request vote to {} from {}: their term is later ({} < {})\n",
           state->node_id,
           from,
           state->current_view,
@@ -1728,8 +1769,9 @@ namespace aft
       if (leader_id.has_value())
       {
         // Reply false, since we already know the leader in the current term.
-        RAFT_DEBUG_FMT(
-          "Recv request vote to {} from {}: leader {} already known in term {}",
+        fmt::print(
+          "Recv request vote to {} from {}: leader {} already known in term "
+          "{}\n",
           state->node_id,
           from,
           leader_id.value(),
@@ -1741,8 +1783,8 @@ namespace aft
       if ((voted_for.has_value()) && (voted_for.value() != from))
       {
         // Reply false, since we already voted for someone else.
-        RAFT_DEBUG_FMT(
-          "Recv request vote to {} from {}: already voted for {}",
+        fmt::print(
+          "Recv request vote to {} from {}: already voted for {}\n",
           state->node_id,
           from,
           voted_for.value());
@@ -1785,8 +1827,8 @@ namespace aft
 
     void send_request_vote_response(const ccf::NodeId& to, bool answer)
     {
-      RAFT_INFO_FMT(
-        "Send request vote response from {} to {}: {}",
+      fmt::print(
+        "Send request vote response from {} to {}: {}\n",
         state->node_id,
         to,
         answer);
@@ -2238,9 +2280,10 @@ namespace aft
         // configuration.
         std::vector<Index> match;
         match.reserve(c.nodes.size());
-
+        // fmt::print("{} ---------------------------\n", __func__);
         for (auto node : c.nodes)
         {
+          // fmt::print("{} -->  node={}\n", __func__, node.first);
           if (node.first == state->node_id)
           {
             match.push_back(state->last_idx);
@@ -2253,6 +2296,8 @@ namespace aft
 
         sort(match.begin(), match.end());
         auto confirmed = match.at((match.size() - 1) / 2);
+        // fmt::print("{} ---> confirmed={} match.size()={})\n", __func__,
+        // confirmed, match.size());
 
         if (
           !new_agreement_index.has_value() ||
@@ -2275,12 +2320,13 @@ namespace aft
 
         if (new_commit_idx.has_value())
         {
-          RAFT_DEBUG_FMT(
+#if 0
+          fmt::print(
             "In update_commit, new_commit_idx: {}, "
-            "last_idx: {}",
+            "last_idx: {}\n",
             new_commit_idx.value(),
             state->last_idx);
-
+#endif
           const auto term_of_new = get_term_internal(new_commit_idx.value());
           if (term_of_new == state->current_view)
           {
@@ -2305,11 +2351,13 @@ namespace aft
     // given idx.
     void commit_if_possible(Index idx)
     {
-      RAFT_DEBUG_FMT(
+#if 0
+      fmt::print(
         "Commit if possible {} (ci: {}) (ti {})",
         idx,
         state->commit_idx,
         get_term_internal(idx));
+#endif
       if (
         (idx > state->commit_idx) &&
         (get_term_internal(idx) <= state->current_view))
@@ -2325,6 +2373,7 @@ namespace aft
 
     size_t get_quorum(size_t n) const
     {
+      fmt::print("{} ---> quorum={} (total={})\n", __func__, ((n / 2) + 1), n);
       return (n / 2) + 1;
     }
 
@@ -2340,8 +2389,14 @@ namespace aft
 
       // This could happen if a follower becomes the leader when it
       // has committed fewer log entries, although it has them available.
-      if (idx <= state->commit_idx)
+      if (idx <= state->commit_idx) {
+        fmt::print(
+          "Asked to commit idx:{} but already committed to commit_idx:{} - "
+          "ignoring commit request\n",
+          idx,
+          state->commit_idx);
         return;
+      }
 
 #ifdef CCF_RAFT_TRACING
       nlohmann::json j = {};
@@ -2370,7 +2425,7 @@ namespace aft
       store->compact(idx);
       ledger->commit(idx);
 
-      RAFT_DEBUG_FMT("Commit on {}: {}", state->node_id, idx);
+      // fmt::print("Commit on {}: {}", state->node_id, idx);
 
       // Examine each configuration that is followed by a globally committed
       // configuration.
@@ -2435,9 +2490,9 @@ namespace aft
     {
       if (idx < state->commit_idx)
       {
-        RAFT_FAIL_FMT(
+        fmt::print(
           "Asked to rollback to idx:{} but committed to commit_idx:{} - "
-          "ignoring rollback request",
+          "ignoring rollback request\n",
           idx,
           state->commit_idx);
         return;
@@ -2545,8 +2600,10 @@ namespace aft
         {
           if (!channels->have_channel(node_info.first))
           {
-            RAFT_DEBUG_FMT(
-              "Configurations: create node channel with {}", node_info.first);
+            fmt::print(
+              "{} ---> Configurations: create node channel with {}\n",
+              __func__,
+              node_info.first);
 
             channels->associate_node_address(
               node_info.first,
@@ -2562,11 +2619,17 @@ namespace aft
 
           if (state->leadership_state == ccf::kv::LeadershipState::Leader)
           {
+            fmt::print(
+              "{} ---> node_info.first={}, index={}\n",
+              __func__,
+              node_info.first,
+              index);
             send_append_entries(node_info.first, index);
           }
 
-          RAFT_INFO_FMT(
-            "Added raft node {} ({}:{})",
+          fmt::print(
+            "{} ---> Added raft node {}({}:{})\n",
+            __func__,
             node_info.first,
             node_info.second.hostname,
             node_info.second.port);
