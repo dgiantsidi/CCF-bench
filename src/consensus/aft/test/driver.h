@@ -84,12 +84,15 @@ private:
     auto& raft = _nodes.at(node_id).raft;
     const auto idx = raft->get_last_idx() + 1;
 #if 0
+    uint64_t blk = 0;
+    ::memcpy(&blk, data.data(), sizeof(uint64_t));
     fmt::print(
-      "{}->>{}: replicate {}.{} = {} [{}]\n",
+      "{}->>{}: replicate {}.{} = blk={} {} [{}]\n",
       node_id,
       node_id,
       term_s,
       idx,
+      blk, 
       stringify(data),
       configuration.has_value() ? "reconfiguration" : "raw");
 #endif

@@ -152,9 +152,25 @@ void ccf_replication(
     std::static_pointer_cast<RaftDriver>(drv_shared);
 
     reqs_no++;
-    uint64_t zil_blk_id = 0;
-    ::memcpy(&zil_blk_id, data, sizeof(uint64_t));
-    
+    uint64_t zil_blk_id = 2;// std::stoll;
+    ::memcpy(&zil_blk_id, data_to_replicate->data(), sizeof(uint64_t));
+    auto now_ts = get_timestamp_ns();
+    if (client_req_id <= raft_drv->get_committed_seqno()) {
+      std::cout << "*====RAFT====* " << __PRETTY_FUNCTION__
+                << " client_req_id=" << client_req_id
+                << " zil_blk_id=" << zil_blk_id
+                << " committed_seqno=" << raft_drv->get_committed_seqno()
+                << " ERROR\n";
+      exit(-1);
+    }
+    if (client_req_id % 10000 ==0) {
+      std::cout << "*====RAFT====* " << __PRETTY_FUNCTION__
+                << " client_req_id=" << client_req_id
+                << " zil_blk_id=" << zil_blk_id
+                << " size=" << sz_data
+                << " committed_seqno=" << raft_drv->get_committed_seqno()
+                << "\n";
+   }
     raft_drv->replicate_commitable("2", data_to_replicate, 0);
     if (reqs_no % 50000 == 0)
     {
@@ -176,15 +192,8 @@ void ccf_replication(
       // std::cout << latencies;
       latencies.clear();
     }
-    auto now_ts = get_timestamp_ns();
+    
 
-    if (reqs_no % 50000 ==0) {
-      std::cout << "*====RAFT====* " << __PRETTY_FUNCTION__
-                << " reqs_no=" << reqs_no
-                << " zil_blk_id=" << zil_blk_id
-                << " committed_seqno=" << raft_drv->get_committed_seqno()
-                << "\n";
-   }
    #if 0
     // wait until committed
     while (raft_drv->get_committed_seqno() < reqs_no)
@@ -204,10 +213,12 @@ void ccf_replication(
       std::make_pair(reqs_no, metadata(client_req_id, (end_ts - now_ts))));
     sum_latency += (end_ts - now_ts);
     count ++;
-    if (count % 10000 == 0) {  
-      std::cout << "*====RAFT====* " << __func__ << " reqs_no=" << reqs_no
-              << " committed_seqno=" << raft_drv->get_committed_seqno()
-              << " latency (ns)=" << (end_ts - now_ts) <<  " avg_lat = " << (sum_latency/(1.0*count)) << "\n";
+    if (client_req_id % 10000 == 0) {  
+      std::cout << "*====RAFT====* " << __func__ 
+                << " client_req_id=" << client_req_id
+                << " zil_blk_id=" << zil_blk_id
+                << " committed_seqno=" << raft_drv->get_committed_seqno()
+                << " latency (ns)=" << (end_ts - now_ts) <<  " avg_lat = " << (sum_latency/(1.0*count)) << " ns\n";
     }
   }
   else

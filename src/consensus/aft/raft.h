@@ -2054,6 +2054,9 @@ namespace aft
       // Try to advance commit at once if there are no other nodes.
       if (other_nodes_in_active_configs().size() == 0)
       {
+        fmt::print(
+          "Leader {} has no other nodes, advancing commit at once\n",
+          state->node_id);
         update_commit();
       }
 

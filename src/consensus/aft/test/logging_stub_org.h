@@ -62,12 +62,14 @@ namespace aft
 #if 0
       fmt::print(
         "{} ---> globally_committable={}, term={}, index={}, "
-        "combined_size={}\n",
+        "combined_size={},"
+        "original_size={}\n",
         __func__,
         globally_committable,
         term,
         index,
-        combined.size());
+        combined.size(),
+        original.size());
 #endif
       ledger.push_back(combined);
     }

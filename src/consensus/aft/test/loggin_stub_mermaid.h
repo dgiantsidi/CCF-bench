@@ -41,12 +41,13 @@ struct LedgerStubProxy_Mermaid : public aft::LedgerStubProxy
   {
 #if 0
     fmt::print(
-      "{}->>{}: [ledger] appending: term={} index={} -> data: {}\n",
+      "{}->>{}: [ledger] appending: term={} index={} -> data: {}, data_size={}\n",
       _id,
       _id,
       term,
       index,
-      stringify(data));
+      stringify(data),
+      data.size());
 #endif
     aft::LedgerStubProxy::put_entry(data, globally_committable, term, index);
   }
