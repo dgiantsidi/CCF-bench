@@ -59,7 +59,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Threads REQUIRED)
 
-set(PICOTLS_LIBS "-L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/picotls -lpicotls-openssl -lpicotls-core -lev -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/lib/.libs -lngtcp2 -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/crypto/picotls -lngtcp2_crypto_picotls -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2/nghttp3/build/lib -lnghttp3")
+set(PICOTLS_LIBS "-L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/picotls -lpicotls-openssl -lpicotls-core -lev -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/lib/.libs -lngtcp2 -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/crypto/picotls -lngtcp2_crypto_picotls -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/nghttp3/build/lib -lnghttp3")
 #set(PICOTLS_LIBS "-L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/picotls -lpicotls-openssl -lpicotls-core -lev -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/lib/.libs -lngtcp2 -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/crypto/picotls -lngtcp2_crypto_picotls -L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/nghttp3/build/lib -lnghttp3 -fsanitize-thread-memory-access -fsanitize=address")
 set(NGTCP2_THIRD_PARTY_LIBS "-L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/third-party/.libs -lurlparse")
 set (PICOTLS_CFLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/picotls/include/")
