@@ -721,6 +721,7 @@ private:
 
     if (authentication::is_enabled())
     {
+      // std::cout << "msg_size=" << msg_sz << "B\n";
       auto [hash, hash_len] = authentication::get_hash(msg.get(), msg_sz);
       auto hashed_msg = std::make_unique<uint8_t[]>(hash_len + msg_sz);
       ::memcpy(hashed_msg.get(), msg.get(), msg_sz);
