@@ -65,7 +65,7 @@ set(NGTCP2_THIRD_PARTY_LIBS "-L${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/
 set (PICOTLS_CFLAGS "-I${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/picotls/include/")
 #set (PICOTLS_CFLAGS "-I$PWD/picotls/include/ -fsanitize-thread-memory-access -fsanitize=address")
 set(ptlsserver_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/ccf_related_work/server_ccf.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/ccf_related_work/server_ccf_multitenant.cc
     #${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/server_req_pipelining.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/server_base.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/../ngtcp2-unmodified/examples/debug.cc
