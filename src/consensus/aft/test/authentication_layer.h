@@ -7,10 +7,12 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <tuple>
+#include <openssl/hmac.h>
+
 
 namespace authentication
 {
-#ifdef AUTHENTICATOR
+#ifndef AUTHENTICATOR
   void print_errors()
   {
     ERR_print_errors_fp(stderr);
@@ -38,6 +40,7 @@ namespace authentication
   std::tuple<std::unique_ptr<uint8_t[]>, size_t> get_hash(
     const uint8_t* msg, const size_t msg_size)
   {
+    #if 0
     // Create a context for hashing
     EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
     if (mdctx == NULL)
@@ -70,7 +73,48 @@ namespace authentication
     EVP_MD_CTX_free(mdctx);
     EVP_cleanup();
     ERR_free_strings();
+#endif
 
+
+    uint8_t hash[SHA256_DIGEST_LENGTH];
+    uint8_t key[] = {
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0
+    };
+    std::unique_ptr<uint8_t[]> hash_data =
+      std::make_unique<uint8_t[]>(SHA256_DIGEST_LENGTH);
+    unsigned int hash_len = SHA256_DIGEST_LENGTH;
+
+    if(!HMAC(EVP_sha256(), key, SHA256_DIGEST_LENGTH, (unsigned char*)msg, msg_size, hash, &hash_len)){
+      std::cout << "[ERROR]: HMAC Generation failed ";
+      return {};
+    }
+    ::memcpy(hash_data.get(), hash, hash_len);
+
+    #if 0
+    // This code will work with OpenSSL 1.1. but not with 1.0.1.
+    HMAC_CTX *hmac = HMAC_CTX_new();
+    HMAC_Init_ex(hmac, &key[0], key.length(), EVP_sha256(), nullptr);
+    HMAC_Update(hmac, (unsigned char*)msg, msg_size);
+    HMAC_Final(hmac, hash, &hash_len);
+    ::memcpy(hash_data.get(), hash, hash_len);
+    HMAC_CTX_free(hmac);
+    #endif
+    #if 0
+    std::cout << "msg: " << msg_size << " bytes, data: ";
+    for (auto i = 0; i < msg_size; i++) {
+      std::cout << std::hex << (int)msg[i];
+    }
+    std::cout << "\n";
+    std::cout << "hash: " << hash_len << " bytes, data: ";
+    for (unsigned int i = 0; i < hash_len; i++)
+    {
+    std::cout << std::hex << (int)hash_data[i];
+    }
+    std::cout << "\n";
+    #endif
     return {std::move(hash_data), hash_len};
   }
 
@@ -102,12 +146,15 @@ namespace authentication
   std::tuple<std::unique_ptr<uint8_t[]>, size_t> get_hash(
     const uint8_t* msg, const size_t msg_size)
   {
+        std::cout << "No authentication layer used, return 0\n";
+
     return {std::make_unique<uint8_t[]>(0), 0};
   }
 
   bool verify_hash(
     const uint8_t* message, const size_t msg_sz, const uint8_t* received_hash)
   {
+    std::cout << "No authentication layer used, always returning true\n";
     return true;
   }
 #endif
