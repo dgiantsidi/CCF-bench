@@ -387,7 +387,7 @@ static void apply_cmds(std::shared_ptr<RaftDriver> driver)
       auto src_node_str = ccf::NodeId(std::to_string(src_node));
       driver->periodic_applying(src_node_str, data.get(), data_sz);
 #if 1
-      if (reqs_nb.load() % 100 == 0)
+      if (reqs_nb.load() % 10000 == 0)
         fmt::print(
           "{} src_node={}, cmt_idx={}, reqs_no={}, data_sz={}\n",
           __func__,
