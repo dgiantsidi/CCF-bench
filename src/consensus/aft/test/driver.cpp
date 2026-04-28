@@ -443,7 +443,11 @@ static void create_server_thread(
 {
   // Create a new event loop for this thread
   struct ev_loop* loop = ev_loop_new(EVFLAG_AUTO);
-  
+
+
+  auto name = fmt::format("server_thread_{}", i);
+  pthread_setname_np(pthread_self(), name.c_str());
+
   TLSServerContext tls_ctx;
 
   if (tls_ctx.init(private_key_file, cert_file, AppProtocol::H3) != 0)
@@ -500,7 +504,7 @@ int main(int argc, char* argv[])
   {
     std::cout << __func__ << " primary node_id=" << node_id << "\n";
     config_set_default(config);
-    if (argc - optind < 4)
+    if (argc - optind < 5)
     {
       std::cerr << "Too few arguments" << std::endl;
       print_usage();
@@ -511,6 +515,7 @@ int main(int argc, char* argv[])
     auto port = argv[optind++];
     auto private_key_file = argv[optind++];
     auto cert_file = argv[optind++];
+    auto input_no_servers = argv[optind++];
 
     if (auto n = util::parse_uint(port); !n)
     {
@@ -527,12 +532,13 @@ int main(int argc, char* argv[])
       config.port = *n;
     }
 
-    TLSServerContext tls_ctx;
 
-    if (tls_ctx.init(private_key_file, cert_file, AppProtocol::H3) != 0)
-    {
-      exit(EXIT_FAILURE);
-    }
+    //TLSServerContext tls_ctx;
+
+    //if (tls_ctx.init(private_key_file, cert_file, AppProtocol::H3) != 0)
+    //{
+    //  exit(EXIT_FAILURE);
+   // }
 
     if (config.htdocs.back() != '/')
     {
@@ -541,7 +547,7 @@ int main(int argc, char* argv[])
 
     fmt::print("{} using document root:{}\n", __func__, config.htdocs);
 
-    auto ev_loop_d = defer(ev_loop_destroy, EV_DEFAULT);
+    //auto ev_loop_d = defer(ev_loop_destroy, EV_DEFAULT);
     if (util::generate_secret(config.static_secret) != 0)
     {
       fmt::print("{} unable to generate static secret\n", __func__);
@@ -593,7 +599,7 @@ int main(int argc, char* argv[])
 #endif
     fmt::print("{} QUIC server\n", __PRETTY_FUNCTION__);
     // =============== QUIC
-    int no_servers = 128;
+    int no_servers = std::stoi(input_no_servers);
 
     ccf_monitor_ptr = std::make_unique<ccf_monitor>(no_servers);
     std::vector<std::thread> threads;

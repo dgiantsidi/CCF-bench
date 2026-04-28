@@ -78,18 +78,21 @@ namespace authentication
 
     uint8_t hash[SHA256_DIGEST_LENGTH];
     uint8_t key[] = {
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0
+        1, 0, 0, 0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0, 0, 0, 0
     };
     std::unique_ptr<uint8_t[]> hash_data =
       std::make_unique<uint8_t[]>(SHA256_DIGEST_LENGTH);
     unsigned int hash_len = SHA256_DIGEST_LENGTH;
-
+    #warning "HMAC(EVP_sha256()) calculation"
     if(!HMAC(EVP_sha256(), key, SHA256_DIGEST_LENGTH, (unsigned char*)msg, msg_size, hash, &hash_len)){
       std::cout << "[ERROR]: HMAC Generation failed ";
       return {};
+    }
+    if (hash_len != SHA256_DIGEST_LENGTH) {
+      std::cout << "[ERROR]: hash_len=" << hash_len << " != " << SHA256_DIGEST_LENGTH << "\n";
     }
     ::memcpy(hash_data.get(), hash, hash_len);
 
