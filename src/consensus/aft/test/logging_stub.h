@@ -5,13 +5,68 @@
 #include "ccf/entity_id.h"
 #include "consensus/aft/raft.h"
 #include "consensus/aft/raft_types.h"
+#include "ngtcp2-unmodified/examples/ccf_related_work/config.h"
 
 #include <map>
 #include <optional>
 #include <vector>
 
+
+
 namespace aft
 {
+  static void deserialize_data_and_print(const char* func, uint8_t* data, size_t sz_data)
+{
+/* from /home/azureuser/ngtcp2/examples/client.cc
+ ::memcpy(stream->sent_data.data(), &last_cmt->blk_id, sizeof(uint64_t));
+ ::memcpy(stream->sent_data.data() + sizeof(uint64_t), last_cmt->tail_commitment, COMMITMENT_SIZE);
+ ::memcpy(stream->sent_data.data() + sizeof(uint64_t) + COMMITMENT_SIZE, &(last_cmt->blk_type), sizeof(int));
+*/
+
+  uint64_t zil_blk_id;
+  ::memcpy(&zil_blk_id, data, sizeof(uint64_t));
+  uint64_t cmt[4];
+  ::memcpy(cmt, data+sizeof(uint64_t), sizeof(cmt));
+    
+  uint64_t commitment_type = -1;
+  ::memcpy(&commitment_type, data+sizeof(uint64_t)+sizeof(cmt), sizeof(uint64_t));
+
+  {
+  using u_longlong_t = long long unsigned;
+  fmt::print(
+    "{}->{} deserialized (size={}): zil_blk_id={}, commitment_type={}, cmt=[{:016x}:{:016x}:{:016x}:{:016x}]\n",
+    func,
+    __func__,
+    sz_data,
+    zil_blk_id,
+    (commitment_type == block_type::TAIL) ? "TAIL" : "UB",
+    (u_longlong_t)cmt[0],
+    (u_longlong_t)cmt[1],
+    (u_longlong_t)cmt[2],
+    (u_longlong_t)cmt[3]);
+  }
+}
+
+  enum class ReplicatedDataType
+  {
+    raw = 0,
+    reconfiguration = 1,
+    retired_committed = 2
+  };
+  DECLARE_JSON_ENUM(
+    ReplicatedDataType,
+    {{ReplicatedDataType::raw, "raw"},
+     {ReplicatedDataType::reconfiguration, "reconfiguration"},
+     {ReplicatedDataType::retired_committed, "retired_committed"}});
+
+  struct ReplicatedData
+  {
+    ReplicatedDataType type;
+    std::vector<uint8_t> data;
+  };
+  DECLARE_JSON_TYPE(ReplicatedData);
+  DECLARE_JSON_REQUIRED_FIELDS(ReplicatedData, type, data);
+
   class LedgerStubProxy
   {
   protected:
@@ -63,16 +118,23 @@ namespace aft
       }
 
       combined.insert(combined.end(), original.begin(), original.end());
-#if 0
+      
+      
+      ReplicatedData r = nlohmann::json::parse(std::span{original.data(), original.size()});
+      if (r.type == ReplicatedDataType::raw)
+      {
+          deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+      }
       fmt::print(
-        "{} ---> globally_committable={}, term={}, index={}, "
-        "combined_size={}\n",
+        "{} [{}] ---> globally_committable={}, term={}, index={}, "
+        "payload_size={}, combined_size={}\n",
         __func__,
+        _id,
         globally_committable,
         term,
         index,
+        original.size(),
         combined.size());
-#endif
       ledger.push_back(combined);
     }
 
@@ -162,25 +224,7 @@ namespace aft
     void commit(Index idx) {}
   };
 
-  enum class ReplicatedDataType
-  {
-    raw = 0,
-    reconfiguration = 1,
-    retired_committed = 2
-  };
-  DECLARE_JSON_ENUM(
-    ReplicatedDataType,
-    {{ReplicatedDataType::raw, "raw"},
-     {ReplicatedDataType::reconfiguration, "reconfiguration"},
-     {ReplicatedDataType::retired_committed, "retired_committed"}});
 
-  struct ReplicatedData
-  {
-    ReplicatedDataType type;
-    std::vector<uint8_t> data;
-  };
-  DECLARE_JSON_TYPE(ReplicatedData);
-  DECLARE_JSON_REQUIRED_FIELDS(ReplicatedData, type, data);
 
   class ConfigurationChangeHook : public ccf::kv::ConsensusHook
   {
@@ -234,6 +278,10 @@ namespace aft
   protected:
     ccf::NodeId _id;
     RCHook set_retired_committed_hook;
+
+  protected:
+    std::mutex kvstore_access;
+    std::map<std::string, std::vector<uint8_t>> kvstore;  // key: id.commitment_type, value: data
 
   public:
     LoggingStubStore(ccf::NodeId id) : _id(id) {}
@@ -307,6 +355,13 @@ namespace aft
 
       ccf::kv::ApplyResult apply(bool track_deletes_on_missing_keys) override
       {
+        // Note: entry payload is stored in the 'entry' member variable
+        // For now, we just return the result. To actually store in KV:
+        // 1. Parse entry to extract: id, commitment_type, data
+        // 2. Create composite key: key = id + "." + commitment_type
+        // 3. Store in kvstore[key] = data (overwrites on duplicate)
+        deserialize_data_and_print(__func__, entry.data(), entry.size());
+
         return result;
       }
 

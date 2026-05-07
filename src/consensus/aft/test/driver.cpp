@@ -128,6 +128,38 @@ uint64_t ccf_committed_seqno(std::weak_ptr<void> driver)
   }
 }
 
+#if 0
+static void deserialize_data_and_print(uint8_t* data, size_t sz_data)
+{
+/* from /home/azureuser/ngtcp2/examples/client.cc
+ ::memcpy(stream->sent_data.data(), &last_cmt->blk_id, sizeof(uint64_t));
+ ::memcpy(stream->sent_data.data() + sizeof(uint64_t), last_cmt->tail_commitment, COMMITMENT_SIZE);
+ ::memcpy(stream->sent_data.data() + sizeof(uint64_t) + COMMITMENT_SIZE, &(last_cmt->blk_type), sizeof(int));
+*/
+
+  uint64_t zil_blk_id;
+  ::memcpy(&zil_blk_id, data, sizeof(uint64_t));
+  uint64_t cmt[4];
+  ::memcpy(cmt, data+sizeof(uint64_t), sizeof(cmt));
+    
+  uint64_t commitment_type = -1;
+  ::memcpy(&commitment_type, data+sizeof(uint64_t)+sizeof(cmt), sizeof(uint64_t));
+
+  {
+  using u_longlong_t = long long unsigned;
+  fmt::print(
+    "{} deserialized (size={}): zil_blk_id={}, commitment_type={}, cmt=[{:016x}:{:016x}:{:016x}:{:016x}]\n",
+    __func__,
+    sz_data,
+    zil_blk_id,
+    (commitment_type == block_type::TAIL) ? "TAIL" : "UB",
+    (u_longlong_t)cmt[0],
+    (u_longlong_t)cmt[1],
+    (u_longlong_t)cmt[2],
+    (u_longlong_t)cmt[3]);
+  }
+}
+#endif
 void ccf_replication(
   std::weak_ptr<void> driver,
   uint64_t client_req_id,
@@ -151,6 +183,7 @@ void ccf_replication(
     reqs_no++;
     uint64_t zil_blk_id = 2; // std::stoll;
     ::memcpy(&zil_blk_id, data_to_replicate->data(), sizeof(uint64_t));
+    aft::deserialize_data_and_print(__func__, data_to_replicate->data(), sz_data);
     auto now_ts = get_timestamp_ns();
     if (client_req_id <= raft_drv->get_committed_seqno())
     {
