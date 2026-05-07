@@ -129,6 +129,7 @@ option(BUILD_END_TO_END_TESTS "Build end to end tests" ON)
 option(COVERAGE "Enable coverage mapping" OFF)
 option(SHUFFLE_SUITE "Shuffle end to end test suite" OFF)
 option(LONG_TESTS "Enable long end-to-end tests" OFF)
+option(SECOND_FOLLOWER "Enable second follower in Raft driver" OFF)
 option(KV_STATE_RB "Enable RBMap as underlying KV state implementation" OFF)
 if(KV_STATE_RB)
   add_compile_definitions(KV_STATE_RB)
@@ -799,8 +800,13 @@ if(BUILD_TESTS)
         ${ptlsserver_SOURCES}
     )
   
+    set(RAFT_DRIVER_COMPILE_FLAGS "${WARNCXXFLAGS} -g3 -DENABLE_EXAMPLE_PICOTLS -DWITH_EXAMPLE_PICOTLS -DHAVE_NETINET_IP_H")
+    if(SECOND_FOLLOWER)
+      string(APPEND RAFT_DRIVER_COMPILE_FLAGS " -DSECOND_FOLLOWER")
+    endif()
+    
     set_target_properties(raft_driver PROPERTIES
-      COMPILE_FLAGS "${WARNCXXFLAGS} -g3 -DENABLE_EXAMPLE_PICOTLS -DWITH_EXAMPLE_PICOTLS -DHAVE_NETINET_IP_H"
+      COMPILE_FLAGS "${RAFT_DRIVER_COMPILE_FLAGS}"
     )
     target_link_libraries(raft_driver PRIVATE ${PICOTLS_LIBS} ${NGTCP2_THIRD_PARTY_LIBS} ${CMAKE_THREAD_LIBS_INIT})
     target_link_libraries(raft_driver PRIVATE ccfcrypto)
