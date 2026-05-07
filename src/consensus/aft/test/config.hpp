@@ -14,32 +14,32 @@ constexpr int payload_sz_entry = sizeof(size_t) + sizeof(bool) +
 #ifdef REGULAR_VM
 #  warning "R-VMs running here"
 constexpr int primary_node = 0;
-std::string primary_ip = "172.29.137.46"; // 10.5.0.7";
+std::string primary_ip = "10.0.0.5"; // 10.5.0.7";
 constexpr int primary_listening_port = 1800;
 constexpr int primary_sending_port = 1900;
 
 constexpr int follower_1 = 1;
-std::string follower_1_ip = "172.29.135.147"; //"10.5.0.5"; //"10.1.0.4";
+std::string follower_1_ip = "10.0.0.6"; //"10.5.0.5"; //"10.1.0.4";
 constexpr int follower_1_listening_port = 2800;
 constexpr int follower_1_sending_port = 2900;
 
 constexpr int follower_2 = 2;
-std::string follower_2_ip = "10.5.0.6";
+std::string follower_2_ip = "10.0.0.7";
 constexpr int follower_2_listening_port = 3800;
 constexpr int follower_2_sending_port = 3900;
 #else
 constexpr int primary_node = 0;
-std::string primary_ip = "192.168.10.2"; // 10.5.0.7";
+std::string primary_ip = "10.0.0.5"; // 10.5.0.7";
 constexpr int primary_listening_port = 1810;
 constexpr int primary_sending_port = 1910;
 
 constexpr int follower_1 = 1;
-std::string follower_1_ip = "192.168.10.4"; //"10.5.0.5"; //"10.1.0.4";
+std::string follower_1_ip = "10.0.0.6"; //"10.5.0.5"; //"10.1.0.4";
 constexpr int follower_1_listening_port = 2810;
 constexpr int follower_1_sending_port = 2910;
 
 constexpr int follower_2 = 2;
-std::string follower_2_ip = "TODO";
-constexpr int follower_2_listening_port = 3800;
-constexpr int follower_2_sending_port = 3900;
+std::string follower_2_ip = "10.0.0.7";
+constexpr int follower_2_listening_port = 3810;
+constexpr int follower_2_sending_port = 3910;
 #endif
