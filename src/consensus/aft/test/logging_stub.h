@@ -28,8 +28,8 @@ namespace aft
   uint64_t cmt[4];
   ::memcpy(cmt, data+sizeof(uint64_t), sizeof(cmt));
     
-  uint64_t commitment_type = -1;
-  ::memcpy(&commitment_type, data+sizeof(uint64_t)+sizeof(cmt), sizeof(uint64_t));
+  int commitment_type = -1;
+  ::memcpy(&commitment_type, data+sizeof(uint64_t)+sizeof(cmt), sizeof(int));
 
   {
   using u_longlong_t = long long unsigned;
@@ -39,7 +39,7 @@ namespace aft
     __func__,
     sz_data,
     zil_blk_id,
-    (commitment_type == block_type::TAIL) ? "TAIL" : "UB",
+    (commitment_type == (int)block_type::TAIL) ? "TAIL" : "UB",
     (u_longlong_t)cmt[0],
     (u_longlong_t)cmt[1],
     (u_longlong_t)cmt[2],
@@ -73,6 +73,7 @@ namespace aft
     ccf::NodeId _id;
 
     std::mutex ledger_access;
+    std::unordered_map<Index, std::vector<uint8_t>> commitments_store; // key: raft log index
 
   public:
     std::vector<std::vector<uint8_t>> ledger;
@@ -86,6 +87,7 @@ namespace aft
     {
       return ledger.size();
     }
+
     virtual void put_entry(
       const std::vector<uint8_t>& original,
       bool globally_committable,
@@ -143,6 +145,10 @@ namespace aft
         original.size(),
         combined.size());
       ledger.push_back(combined);
+      if (r.type == ReplicatedDataType::raw)
+      {
+        commitments_store[index] = r.data;  // keyed by raft log index
+      }
     }
 
     void skip_entry(const uint8_t*& data, size_t& size)
@@ -223,13 +229,41 @@ namespace aft
       ledger.resize(idx);
     }
 
+    // Must be called with ledger_access already held
+    int discard_stale_commitments(Index commit_idx)
+    {
+      // Keep only entries from commit_idx onwards (discard all older committed entries)
+      fmt::print(
+        "{} discard_stale_commitments that are less than commit_idx={} \n",
+        __func__,
+        commit_idx);
+      int max_idx = 0;
+      for (auto it = commitments_store.begin(); it != commitments_store.end(); )
+      {
+        max_idx = std::max(max_idx, (int)it->first);
+        if (it->first < commit_idx)
+        {
+          it = commitments_store.erase(it);
+        }
+        else
+        {
+          ++it;
+        }
+      }
+      return max_idx;
+    }
+
     void reset_skip_count()
     {
       skip_count = 0;
     }
 
     void commit(Index idx) {
-      fmt::print("{} commit idx={} ledger_idx={}\n", __func__, idx, ledger_size());
+      std::lock_guard<std::mutex> lock(ledger_access);
+      auto max_idx = discard_stale_commitments(idx);
+      fmt::print("{} commit idx={}, max_idx={}, commitments_store.size()={}\n", __func__, idx, max_idx,
+        commitments_store.size());
+
     }
   };
 
