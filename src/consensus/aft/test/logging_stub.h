@@ -127,12 +127,7 @@ namespace aft
       {
           deserialize_data_and_print(__func__, r.data.data(), r.data.size());
       }
-      // Note: entry payload is stored in the 'entry' member variable
-        // For now, we just return the result. To actually store in KV:
-        // 1. Parse entry to extract: id, commitment_type, data
-        // 2. Create composite key: key = id + "." + commitment_type
-        // 3. Store in kvstore[key] = data (overwrites on duplicate)
-
+      
 
       fmt::print(
         "{} [{}] ---> globally_committable={}, term={}, index={}, "
@@ -324,7 +319,7 @@ namespace aft
 
   protected:
     std::mutex kvstore_access;
-    std::map<std::string, std::vector<uint8_t>> kvstore;  // key: id.commitment_type, value: data
+    std::map<std::string, std::vector<uint8_t>> kvstore;  // key: fs_id.commitment_type, value: data
 
   public:
     LoggingStubStore(ccf::NodeId id) : _id(id) {}
@@ -373,6 +368,14 @@ namespace aft
         index = serialized::read<ccf::kv::Version>(data, size);
         entry = serialized::read(data, size, size);
 
+        fmt::print(
+          "{}: deserialized entry with committable={}, term={}, index={}, "
+          "entry_size={}\n",
+          __func__,
+          committable,
+          term,
+          index,
+          entry.size());
         result = committable ? ccf::kv::ApplyResult::PASS_SIGNATURE :
                                ccf::kv::ApplyResult::PASS;
 
@@ -398,6 +401,11 @@ namespace aft
 
       ccf::kv::ApplyResult apply(bool track_deletes_on_missing_keys) override
       {
+        ReplicatedData r = nlohmann::json::parse(std::span{entry.data(), entry.size()});
+        if (r.type == ReplicatedDataType::raw)
+        {
+            deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+        }
         return result;
       }
 
