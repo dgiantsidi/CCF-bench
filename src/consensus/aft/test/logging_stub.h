@@ -379,6 +379,8 @@ namespace aft
         ccf::kv::ConsensusHookPtrs&& hooks_) :
         hooks(std::move(hooks_))
       {
+        fmt::print(
+          "{}: deserialising entry of size {}\n", __func__, data_.size());
         const uint8_t* data = data_.data();
         auto size = data_.size();
 
@@ -471,6 +473,8 @@ namespace aft
       bool public_only = false,
       const std::optional<ccf::kv::TxID>& expected_txid = std::nullopt)
     {
+      fmt::print(
+        "{}: deserialising entry of size {}\n", __func__, data.size());
       ccf::kv::ConsensusHookPtrs hooks = {};
       return std::make_unique<ExecutionWrapper>(
         data, expected_txid, std::move(hooks));
@@ -549,12 +553,17 @@ namespace aft
       auto data_ = data.data();
       auto size = data.size();
 
+      fmt::print(
+        "{}: deserialising entry of size {}\n", __func__, data.size());
       const auto committable = serialized::read<bool>(data_, size);
-
-      serialized::read<aft::Term>(data_, size);
-
+      fmt::print(
+        "{}: deserialized committable={}\n", __func__, committable);
+      auto term = serialized::read<aft::Term>(data_, size);
+      fmt::print(
+        "{}: deserialized term={}\n", __func__, term);
       auto version = serialized::read<ccf::kv::Version>(data_, size);
-
+      fmt::print(
+        "{}: deserialized version={}\n", __func__, version);
       ReplicatedData r = nlohmann::json::parse(std::span{data_, size});
 
       ccf::kv::ConsensusHookPtrs hooks = {};

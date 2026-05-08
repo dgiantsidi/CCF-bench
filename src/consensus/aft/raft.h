@@ -207,6 +207,11 @@ namespace aft
     std::unique_ptr<LedgerProxy> ledger;
     std::shared_ptr<ccf::NodeToNode> channels;
 
+    std::unique_ptr<Store>& get_store()
+    {
+      return store;
+    }
+
   public:
     Aft(
       const ccf::consensus::Configuration& settings_,
