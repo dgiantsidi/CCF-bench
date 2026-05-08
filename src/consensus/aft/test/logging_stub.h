@@ -254,6 +254,7 @@ namespace aft
     }
 
     void commit(Index idx) {
+      return ;
       std::lock_guard<std::mutex> lock(ledger_access);
       auto max_idx = discard_stale_commitments(idx);
       fmt::print("{} commit idx={}, max_idx={}, commitments_store.size()={}\n", __func__, idx, max_idx,
@@ -352,7 +353,25 @@ namespace aft
       std::optional<ccf::crypto::Sha256Hash> commit_evidence_digest =
         std::nullopt;
       ccf::kv::ApplyResult result;
+      using filesystem_id = int; 
+      using commitment_store = std::unordered_map<Index, std::vector<uint8_t>>; // key: raft log index, value: commitment
+      std::map<filesystem_id, commitment_store> store; // key: fs_id, value: commitment_store
 
+    friend std::ostream& operator<<(std::ostream& os, const std::map<filesystem_id, commitment_store>& store)
+    {
+        for (const auto& [fs_id, commitments] : store)
+        {
+            os << "Filesystem " << fs_id << ":\n";
+            for (const auto& [index, commitment] : commitments)
+            {
+                ReplicatedData r = nlohmann::json::parse(std::span{commitment.data(), commitment.size()});
+                os << "  Index " << index << ": ";
+                deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+  
+            }
+        }
+        return os;
+    }
     public:
       ExecutionWrapper(
         const std::vector<uint8_t>& data_,
@@ -367,7 +386,7 @@ namespace aft
         term = serialized::read<aft::Term>(data, size);
         index = serialized::read<ccf::kv::Version>(data, size);
         entry = serialized::read(data, size, size);
-
+        
         fmt::print(
           "{}: deserialized entry with committable={}, term={}, index={}, "
           "entry_size={}\n",
@@ -405,7 +424,9 @@ namespace aft
         if (r.type == ReplicatedDataType::raw)
         {
             deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+            store[0][index] = r.data;  // Using 0 as the filesystem_id for simplicity
         }
+        
         return result;
       }
 
