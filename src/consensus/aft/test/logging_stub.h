@@ -308,10 +308,13 @@ namespace aft
     }
 
     virtual void compact(Index i) {
+      std::lock_guard<std::mutex> lock(kvstore_access);
       fmt::print("{} --> compacting up to index={}\n", __PRETTY_FUNCTION__, i);
     }
 
     virtual void rollback(const ccf::kv::TxID& tx_id, Term t) {
+      std::lock_guard<std::mutex> lock(kvstore_access);
+
       fmt::print(
         "{} --> rolling back to term={} index={}\n",
         __func__,
@@ -427,6 +430,7 @@ namespace aft
         if (r.type == ReplicatedDataType::raw)
         {
             auto cmt_type = deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+            std::lock_guard<std::mutex> lock(kvstore_access);
             if (cmt_type == (int)block_type::TAIL)
             {
                 stub_store_ptr->cmt_tail_store[0][index] = std::vector<uint8_t>(entry.begin(), entry.end());  // Using 0 as the filesystem_id for simplicity
