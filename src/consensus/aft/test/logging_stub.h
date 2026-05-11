@@ -317,7 +317,7 @@ namespace aft
         auto last_committed_it = std::prev(first_uncommitted_it);
 
         if (last_committed_it != commitment_store.end()) {
-          fmt::print("{} fs_id={} last_committed_index={} first_uncommitted_index={} (=0 for if there are no uncommitted entries)\n", __PRETTY_FUNCTION__, fs_id,
+          fmt::print("{} [TAIL] fs_id={} last_committed_index={} first_uncommitted_index={} (=0 for if there are no uncommitted entries)\n", __PRETTY_FUNCTION__, fs_id,
             last_committed_it->first, first_uncommitted_it != commitment_store.end() ? first_uncommitted_it->first : 0);
             commitment_store.erase(
             commitment_store.begin(),
@@ -337,9 +337,17 @@ namespace aft
         auto& [fs_id, commitment_store] = *it;
         auto first_uncommitted_it = commitment_store.upper_bound(i);
         auto last_committed_it = std::prev(first_uncommitted_it);
+        auto second_to_last_committed_it = std::prev(last_committed_it);
 
-        if (last_committed_it != commitment_store.end()) {
-          fmt::print("{} fs_id={} last_committed_index={} first_uncommitted_index={} (=0 for if there are no uncommitted entries)\n", __PRETTY_FUNCTION__, fs_id,
+        if (last_committed_it != commitment_store.end() && second_to_last_committed_it != commitment_store.end()) {
+          fmt::print("{} [UB] fs_id={} last_committed_index={} second_to_last_committed_index={} first_uncommitted_index={} (=0 for if there are no uncommitted entries)\n", __PRETTY_FUNCTION__, fs_id,
+            last_committed_it->first, second_to_last_committed_it->first, first_uncommitted_it != commitment_store.end() ? first_uncommitted_it->first : 0);
+            commitment_store.erase(
+            commitment_store.begin(),
+            second_to_last_committed_it);
+        }
+        else if (last_committed_it != commitment_store.end()) {
+          fmt::print("{} [UB] fs_id={} last_committed_index={} first_uncommitted_index={} (=0 for if there are no uncommitted entries)\n", __PRETTY_FUNCTION__, fs_id,
             last_committed_it->first, first_uncommitted_it != commitment_store.end() ? first_uncommitted_it->first : 0);
             commitment_store.erase(
             commitment_store.begin(),
