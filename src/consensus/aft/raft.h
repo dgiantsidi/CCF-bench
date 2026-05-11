@@ -2430,6 +2430,7 @@ namespace aft
       }
 
       RAFT_DEBUG_FMT("Compacting...");
+      fmt::print("{} ---> compacting to {}\n", __func__, idx);
       store->compact(idx);
       ledger->commit(idx);
 

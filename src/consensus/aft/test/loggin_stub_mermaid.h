@@ -65,7 +65,7 @@ struct LoggingStubStore_Mermaid : public aft::LoggingStubStoreConfig
 
   void compact(aft::Index idx) override
   {
-    // fmt::print("{}->>{}: [KV] compacting to {}\n", _id, _id, idx);
+    fmt::print("{}->>{}: [KV] compacting to {}\n", _id, _id, idx);
     aft::LoggingStubStoreConfig::compact(idx);
   }
 

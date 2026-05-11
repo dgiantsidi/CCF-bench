@@ -15,7 +15,7 @@
 
 namespace aft
 {
-  static void deserialize_data_and_print(const char* func, uint8_t* data, size_t sz_data)
+  static int deserialize_data_and_print(const char* func, uint8_t* data, size_t sz_data)
 {
 /* from /home/azureuser/ngtcp2/examples/client.cc
  ::memcpy(stream->sent_data.data(), &last_cmt->blk_id, sizeof(uint64_t));
@@ -45,6 +45,7 @@ namespace aft
     (u_longlong_t)cmt[2],
     (u_longlong_t)cmt[3]);
   }
+  return commitment_type;
 }
 
   enum class ReplicatedDataType
@@ -73,7 +74,6 @@ namespace aft
     ccf::NodeId _id;
 
     std::mutex ledger_access;
-    std::unordered_map<Index, std::vector<uint8_t>> commitments_store; // key: raft log index
 
   public:
     std::vector<std::vector<uint8_t>> ledger;
@@ -140,10 +140,7 @@ namespace aft
         original.size(),
         combined.size());
       ledger.push_back(combined);
-      if (r.type == ReplicatedDataType::raw)
-      {
-        commitments_store[index] = r.data;  // keyed by raft log index
-      }
+     
     }
 
     void skip_entry(const uint8_t*& data, size_t& size)
@@ -224,42 +221,17 @@ namespace aft
       ledger.resize(idx);
     }
 
-    // Must be called with ledger_access already held
-    int discard_stale_commitments(Index commit_idx)
-    {
-      // Keep only entries from commit_idx onwards (discard all older committed entries)
-      fmt::print(
-        "{} discard_stale_commitments that are less than commit_idx={} \n",
-        __func__,
-        commit_idx);
-      int max_idx = 0;
-      for (auto it = commitments_store.begin(); it != commitments_store.end(); )
-      {
-        max_idx = std::max(max_idx, (int)it->first);
-        if (it->first < commit_idx)
-        {
-          it = commitments_store.erase(it);
-        }
-        else
-        {
-          ++it;
-        }
-      }
-      return max_idx;
-    }
-
+  
     void reset_skip_count()
     {
       skip_count = 0;
     }
 
     void commit(Index idx) {
-      return ;
-      std::lock_guard<std::mutex> lock(ledger_access);
-      auto max_idx = discard_stale_commitments(idx);
-      fmt::print("{} commit idx={}, max_idx={}, commitments_store.size()={}\n", __func__, idx, max_idx,
-        commitments_store.size());
-
+      fmt::print("{} --> committing up to index={}\n", __func__, idx);
+      // In a real ledger, commit would make the entries available for
+      // deserialisation. In our stub, they are already available, so we just
+      // print the commit and do nothing else.
     }
   };
 
@@ -321,6 +293,10 @@ namespace aft
   protected:
     std::mutex kvstore_access;
     std::map<std::string, std::vector<uint8_t>> kvstore;  // key: fs_id.commitment_type, value: data
+    using filesystem_id = int; 
+    using commitment_store = std::map<Index, std::vector<uint8_t>>; // key: raft log index, value: commitment
+    std::map<filesystem_id, commitment_store> cmt_tail_store; // key: fs_id, value: commitment_store
+    std::map<filesystem_id, commitment_store> cmt_ub_store; // key: fs_id, value: commitment_store
 
   public:
     LoggingStubStore(ccf::NodeId id) : _id(id) {}
@@ -331,10 +307,19 @@ namespace aft
       set_retired_committed_hook = set_retired_committed_hook_;
     }
 
-    virtual void compact(Index i) {}
+    virtual void compact(Index i) {
+      fmt::print("{} --> compacting up to index={}\n", __PRETTY_FUNCTION__, i);
+    }
 
-    virtual void rollback(const ccf::kv::TxID& tx_id, Term t) {}
+    virtual void rollback(const ccf::kv::TxID& tx_id, Term t) {
+      fmt::print(
+        "{} --> rolling back to term={} index={}\n",
+        __func__,
+        tx_id.term,
+        tx_id.version);
+    }
 
+   
     virtual void initialise_term(Term t) {}
 
     ccf::kv::Version current_version()
@@ -342,9 +327,41 @@ namespace aft
       return ccf::kv::NoVersion;
     }
 
+ 
+
+    std::ostream& print_store(std::ostream& os) const
+    {
+      os << "====== cmt_tail_store ======\n";
+      for (const auto& [fs_id, commitment_store] : cmt_tail_store)
+        {
+            os << "Filesystem " << fs_id << ":\n";
+            for (const auto& [index, commitment] : commitment_store)
+            {
+                ReplicatedData r = nlohmann::json::parse(std::span{commitment.data(), commitment.size()});
+                os << "  Index: " << index << ": ";
+                deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+  
+            }
+        }
+        os << "====== cmt_ub_store ======\n";
+        for (const auto& [fs_id, commitment_store] : cmt_ub_store)
+        {
+            os << "Filesystem " << fs_id << ":\n";
+            for (const auto& [index, commitment] : commitment_store)
+            {
+                ReplicatedData r = nlohmann::json::parse(std::span{commitment.data(), commitment.size()});
+                os << "  Index: " << index << ": ";
+                deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+  
+            }
+        }
+        return os;
+    }
+
     class ExecutionWrapper : public ccf::kv::AbstractExecutionWrapper
     {
     private:
+      LoggingStubStore* stub_store_ptr; // key: fs_id, value: commitment_store
       ccf::kv::ConsensusHookPtrs hooks;
       aft::Term term;
       ccf::kv::Version index;
@@ -353,31 +370,15 @@ namespace aft
       std::optional<ccf::crypto::Sha256Hash> commit_evidence_digest =
         std::nullopt;
       ccf::kv::ApplyResult result;
-      using filesystem_id = int; 
-      using commitment_store = std::unordered_map<Index, std::vector<uint8_t>>; // key: raft log index, value: commitment
-      std::map<filesystem_id, commitment_store> store; // key: fs_id, value: commitment_store
-
-    friend std::ostream& operator<<(std::ostream& os, const std::map<filesystem_id, commitment_store>& store)
-    {
-        for (const auto& [fs_id, commitments] : store)
-        {
-            os << "Filesystem " << fs_id << ":\n";
-            for (const auto& [index, commitment] : commitments)
-            {
-                ReplicatedData r = nlohmann::json::parse(std::span{commitment.data(), commitment.size()});
-                os << "  Index " << index << ": ";
-                deserialize_data_and_print(__func__, r.data.data(), r.data.size());
-  
-            }
-        }
-        return os;
-    }
+      
     public:
       ExecutionWrapper(
         const std::vector<uint8_t>& data_,
         const std::optional<ccf::kv::TxID>& expected_txid,
-        ccf::kv::ConsensusHookPtrs&& hooks_) :
-        hooks(std::move(hooks_))
+        ccf::kv::ConsensusHookPtrs&& hooks_,
+        LoggingStubStore* stub_store_ptr_) :
+        hooks(std::move(hooks_)),
+        stub_store_ptr(stub_store_ptr_)
       {
         fmt::print(
           "{}: deserialising entry of size {}\n", __func__, data_.size());
@@ -425,8 +426,17 @@ namespace aft
         ReplicatedData r = nlohmann::json::parse(std::span{entry.data(), entry.size()});
         if (r.type == ReplicatedDataType::raw)
         {
-            deserialize_data_and_print(__func__, r.data.data(), r.data.size());
-            store[0][index] = r.data;  // Using 0 as the filesystem_id for simplicity
+            auto cmt_type = deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+            if (cmt_type == (int)block_type::TAIL)
+            {
+                stub_store_ptr->cmt_tail_store[0][index] = std::vector<uint8_t>(entry.begin(), entry.end());  // Using 0 as the filesystem_id for simplicity
+            }
+            else if (cmt_type == (int)block_type::UB)
+            {
+                stub_store_ptr->cmt_ub_store[0][index] = std::vector<uint8_t>(entry.begin(), entry.end());  // Using 0 as the filesystem_id for simplicity
+            }
+            std::cout << "Current state of the store after applying entry:\n";
+            stub_store_ptr->print_store(std::cout) << std::endl;
         }
         
         return result;
@@ -477,7 +487,7 @@ namespace aft
         "{}: deserialising entry of size {}\n", __func__, data.size());
       ccf::kv::ConsensusHookPtrs hooks = {};
       return std::make_unique<ExecutionWrapper>(
-        data, expected_txid, std::move(hooks));
+        data, expected_txid, std::move(hooks), this);
     }
 
     bool flag_enabled(ccf::kv::AbstractStore::StoreFlag)
@@ -501,6 +511,7 @@ namespace aft
     // node_state.h, circa line 2147
     virtual void compact(Index i) override
     {
+      fmt::print("{} --> compacting up to index={}\n", __func__, i);
       for (auto& [version, configuration] : retired_committed_entries)
       {
         if (version <= i)
@@ -523,6 +534,7 @@ namespace aft
           retired_committed_entries.end(),
           [i](const auto& entry) { return entry.first < i; }),
         retired_committed_entries.end());
+      LoggingStubStore::compact(i);
     }
 
     virtual void rollback(const ccf::kv::TxID& tx_id, Term t) override
@@ -546,7 +558,8 @@ namespace aft
     virtual std::unique_ptr<ccf::kv::AbstractExecutionWrapper> deserialize(
       const std::vector<uint8_t>& data,
       bool public_only = false,
-      const std::optional<ccf::kv::TxID>& expected_txid = std::nullopt) override
+      const std::optional<ccf::kv::TxID>& expected_txid = std::nullopt
+      ) override
     {
       // Set reconfiguration hook if there are any new nodes
       // Read wrapping term and version
@@ -583,7 +596,7 @@ namespace aft
       }
 
       return std::make_unique<ExecutionWrapper>(
-        data, expected_txid, std::move(hooks));
+        data, expected_txid, std::move(hooks), this);
     }
   };
 

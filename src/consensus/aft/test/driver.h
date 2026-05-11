@@ -135,6 +135,7 @@ private:
     // auto r = nlohmann::json::parse(std::span{d->data(), d->size()});
 
     raft->replicate(ccf::kv::BatchVector{{idx, d, committable, hooks}}, term);
+
     aft::ReplicatedData r = nlohmann::json::parse(std::span{d->data(), d->size()});
     if (r.type == aft::ReplicatedDataType::raw)
     {
@@ -147,29 +148,27 @@ private:
           idx,
           r.data.size());
         aft::deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+    
+
+        auto additional_size =
+            sizeof(bool) + sizeof(term) + sizeof(idx);
+          std::vector<uint8_t> combined(additional_size);
+          {
+            uint8_t* _data = combined.data();
+            serialized::write(_data, additional_size, committable);
+            serialized::write(_data, additional_size, term);
+            serialized::write(_data, additional_size, idx);
+          }
+
+          combined.insert(combined.end(), d->begin(), d->end());
+          
+
+        
+        auto wrapper = raft->get_store()->deserialize(
+          combined, committable, ccf::kv::TxID{term, idx});
+        wrapper->apply(false);
     }
-
-     auto additional_size =
-        sizeof(size_t) + sizeof(bool) + sizeof(term) + sizeof(idx);
-      std::vector<uint8_t> combined(additional_size);
-      {
-        uint8_t* _data = combined.data();
-        serialized::write(
-          _data,
-          additional_size,
-          (sizeof(bool) + sizeof(term) + sizeof(idx) + d->size()));
-        serialized::write(_data, additional_size, committable);
-        serialized::write(_data, additional_size, term);
-        serialized::write(_data, additional_size, idx);
-      }
-
-      combined.insert(combined.end(), d->begin(), d->end());
-      
-
-    #if 1
-    raft->get_store()->deserialize(
-      combined, committable, ccf::kv::TxID{term, idx});
-    #endif
+    
   }
 
   void add_node(ccf::NodeId node_id)
