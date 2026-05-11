@@ -10,12 +10,13 @@
 #include <map>
 #include <optional>
 #include <vector>
+#include <tuple>
 
 
 
 namespace aft
 {
-  static int deserialize_data_and_print(const char* func, uint8_t* data, size_t sz_data)
+  static std::tuple<int,int> deserialize_data_and_print(const char* func, uint8_t* data, size_t sz_data)
 {
 /* from /home/azureuser/ngtcp2/examples/client.cc
  ::memcpy(stream->sent_data.data(), &last_cmt->blk_id, sizeof(uint64_t));
@@ -31,6 +32,10 @@ namespace aft
   int commitment_type = -1;
   ::memcpy(&commitment_type, data+sizeof(uint64_t)+sizeof(cmt), sizeof(int));
 
+  // todo fs:Id
+  int fs_id = -1;
+  ::memcpy(&fs_id, data+sizeof(uint64_t)+sizeof(cmt)+sizeof(int), sizeof(int));
+
   {
   using u_longlong_t = long long unsigned;
   fmt::print(
@@ -45,7 +50,7 @@ namespace aft
     (u_longlong_t)cmt[2],
     (u_longlong_t)cmt[3]);
   }
-  return commitment_type;
+  return {commitment_type, fs_id};
 }
 
   enum class ReplicatedDataType
@@ -125,7 +130,7 @@ namespace aft
       ReplicatedData r = nlohmann::json::parse(std::span{original.data(), original.size()});
       if (r.type == ReplicatedDataType::raw)
       {
-          deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+          auto [commitment_type, fs_id] = deserialize_data_and_print(__func__, r.data.data(), r.data.size());
       }
       
 
@@ -388,15 +393,15 @@ namespace aft
       aft::ReplicatedData r = nlohmann::json::parse(std::span{entry.data(), entry.size()});
       if (r.type == aft::ReplicatedDataType::raw)
       {
-          auto cmt_type = deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+          auto [cmt_type, fs_id] = deserialize_data_and_print(__func__, r.data.data(), r.data.size());
           std::lock_guard<std::mutex> lock(kvstore_access);
           if (cmt_type == (int)block_type::TAIL)
           {
-              cmt_tail_store[0][index] = std::vector<uint8_t>(entry.begin(), entry.end());  // Using 0 as the filesystem_id for simplicity
+              cmt_tail_store[fs_id][index] = std::vector<uint8_t>(entry.begin(), entry.end());  // Using 0 as the filesystem_id for simplicity
           }
           else if (cmt_type == (int)block_type::UB)
           {
-              cmt_ub_store[0][index] = std::vector<uint8_t>(entry.begin(), entry.end());  // Using 0 as the filesystem_id for simplicity
+              cmt_ub_store[fs_id][index] = std::vector<uint8_t>(entry.begin(), entry.end());  // Using 0 as the filesystem_id for simplicity
           }
           std::cout << "Current state of the store after applying entry:\n";
           print_store(std::cout) << std::endl;
