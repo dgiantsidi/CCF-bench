@@ -330,7 +330,24 @@ namespace aft
       return ccf::kv::NoVersion;
     }
 
- 
+    void apply(const std::vector<uint8_t>& entry, ccf::kv::Version index) {
+      aft::ReplicatedData r = nlohmann::json::parse(std::span{entry.data(), entry.size()});
+      if (r.type == aft::ReplicatedDataType::raw)
+      {
+          auto cmt_type = deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+          std::lock_guard<std::mutex> lock(kvstore_access);
+          if (cmt_type == (int)block_type::TAIL)
+          {
+              cmt_tail_store[0][index] = std::vector<uint8_t>(entry.begin(), entry.end());  // Using 0 as the filesystem_id for simplicity
+          }
+          else if (cmt_type == (int)block_type::UB)
+          {
+              cmt_ub_store[0][index] = std::vector<uint8_t>(entry.begin(), entry.end());  // Using 0 as the filesystem_id for simplicity
+          }
+          std::cout << "Current state of the store after applying entry:\n";
+          print_store(std::cout) << std::endl;
+      }
+    }
 
     std::ostream& print_store(std::ostream& os) const
     {
@@ -426,23 +443,7 @@ namespace aft
 
       ccf::kv::ApplyResult apply(bool track_deletes_on_missing_keys) override
       {
-        ReplicatedData r = nlohmann::json::parse(std::span{entry.data(), entry.size()});
-        if (r.type == ReplicatedDataType::raw)
-        {
-            auto cmt_type = deserialize_data_and_print(__func__, r.data.data(), r.data.size());
-            std::lock_guard<std::mutex> lock(kvstore_access);
-            if (cmt_type == (int)block_type::TAIL)
-            {
-                stub_store_ptr->cmt_tail_store[0][index] = std::vector<uint8_t>(entry.begin(), entry.end());  // Using 0 as the filesystem_id for simplicity
-            }
-            else if (cmt_type == (int)block_type::UB)
-            {
-                stub_store_ptr->cmt_ub_store[0][index] = std::vector<uint8_t>(entry.begin(), entry.end());  // Using 0 as the filesystem_id for simplicity
-            }
-            std::cout << "Current state of the store after applying entry:\n";
-            stub_store_ptr->print_store(std::cout) << std::endl;
-        }
-        
+        stub_store_ptr->apply(entry, index);
         return result;
       }
 
