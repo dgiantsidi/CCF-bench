@@ -310,6 +310,52 @@ namespace aft
     virtual void compact(Index i) {
       std::lock_guard<std::mutex> lock(kvstore_access);
       fmt::print("{} --> compacting up to index={}\n", __PRETTY_FUNCTION__, i);
+      for (auto it = cmt_tail_store.begin(); it != cmt_tail_store.end();) {
+
+        auto& [fs_id, commitment_store] = *it;
+        auto first_uncommitted_it = commitment_store.upper_bound(i);
+        auto last_committed_it = std::prev(first_uncommitted_it);
+
+        if (last_committed_it != commitment_store.end()) {
+          fmt::print("{} fs_id={} last_committed_index={} first_uncommitted_index={} (=0 for if there are no uncommitted entries)\n", __PRETTY_FUNCTION__, fs_id,
+            last_committed_it->first, first_uncommitted_it != commitment_store.end() ? first_uncommitted_it->first : 0);
+            commitment_store.erase(
+            commitment_store.begin(),
+            last_committed_it);
+        }
+        
+        if (commitment_store.empty()) {
+          fmt::print("{} --> cmt_tail_store: is empty after compacting up to index={}\n", __PRETTY_FUNCTION__, fs_id, i);
+          it = cmt_tail_store.erase(it);
+        }
+        else {
+          ++it;
+        }
+      }
+      for (auto it = cmt_ub_store.begin(); it != cmt_ub_store.end();) {
+
+        auto& [fs_id, commitment_store] = *it;
+        auto first_uncommitted_it = commitment_store.upper_bound(i);
+        auto last_committed_it = std::prev(first_uncommitted_it);
+
+        if (last_committed_it != commitment_store.end()) {
+          fmt::print("{} fs_id={} last_committed_index={} first_uncommitted_index={} (=0 for if there are no uncommitted entries)\n", __PRETTY_FUNCTION__, fs_id,
+            last_committed_it->first, first_uncommitted_it != commitment_store.end() ? first_uncommitted_it->first : 0);
+            commitment_store.erase(
+            commitment_store.begin(),
+            last_committed_it);
+        }
+        
+        if (commitment_store.empty()) {
+          fmt::print("{} --> cmt_ub_store: is empty after compacting up to index={}\n", __PRETTY_FUNCTION__, fs_id, i);
+          it = cmt_ub_store.erase(it);
+        }
+        else {
+          ++it;
+        }
+      }
+
+      print_store(std::cout);
     }
 
     virtual void rollback(const ccf::kv::TxID& tx_id, Term t) {
