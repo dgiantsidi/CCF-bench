@@ -563,6 +563,7 @@ public:
       if (auto s_ptr = raft_copy.lock())
       {
         auto entry = s_ptr->ledger->get_entry_by_idx(ae.idx);
+       
         if (entry.has_value())
         {
           msg_ptr = std::make_unique<uint8_t[]>(

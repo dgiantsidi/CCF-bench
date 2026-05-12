@@ -134,8 +134,6 @@ private:
     auto d = std::make_shared<std::vector<uint8_t>>(s.begin(), s.end());
     // auto r = nlohmann::json::parse(std::span{d->data(), d->size()});
 
-    raft->replicate(ccf::kv::BatchVector{{idx, d, committable, hooks}}, term);
-
     aft::ReplicatedData r = nlohmann::json::parse(std::span{d->data(), d->size()});
     if (r.type == aft::ReplicatedDataType::raw)
     {
@@ -168,6 +166,9 @@ private:
           combined, committable, ccf::kv::TxID{term, idx});
         wrapper->apply(false);
     }
+    raft->replicate(ccf::kv::BatchVector{{idx, d, committable, hooks}}, term);
+
+    
     
   }
 

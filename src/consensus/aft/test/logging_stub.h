@@ -17,13 +17,12 @@ namespace aft
   static std::tuple<int, int, int> deserialize_data_and_print(
     const char* func, uint8_t* data, size_t sz_data)
   {
-    /* from /home/azureuser/ngtcp2/examples/client.cc
-     ::memcpy(stream->sent_data.data(), &last_cmt->blk_id, sizeof(uint64_t));
-     ::memcpy(stream->sent_data.data() + sizeof(uint64_t),
-     last_cmt->tail_commitment, COMMITMENT_SIZE);
-     ::memcpy(stream->sent_data.data() + sizeof(uint64_t) + COMMITMENT_SIZE,
-     &(last_cmt->blk_type), sizeof(int));
-    */
+    // from /home/azureuser/ngtcp2/examples/client.cc
+    // ::memcpy(stream->sent_data.data(), &last_cmt->blk_id, sizeof(uint64_t));
+    // ::memcpy(stream->sent_data.data() + sizeof(uint64_t), last_cmt->tail_commitment, COMMITMENT_SIZE);
+    // ::memcpy(stream->sent_data.data() + sizeof(uint64_t) + COMMITMENT_SIZE, &(last_cmt->blk_type), sizeof(int));
+    // ::memcpy(stream->sent_data.data() + sizeof(uint64_t) + COMMITMENT_SIZE + sizeof(int), &client_id /*fs_id*/, sizeof(int));
+    // ::memcpy(stream->sent_data.data() + sizeof(uint64_t) + COMMITMENT_SIZE + sizeof(int) + sizeof(int), &attestation_id /*emphemeral_id*/, sizeof(int));
 
     uint64_t zil_blk_id;
     ::memcpy(&zil_blk_id, data, sizeof(uint64_t));
@@ -46,21 +45,24 @@ namespace aft
       &attestation_id,
       data + sizeof(uint64_t) + sizeof(cmt) + 2 * sizeof(int),
       sizeof(int));
+    #if 1
     {
       using u_longlong_t = long long unsigned;
       fmt::print(
-        "{}->{} deserialized (size={}): zil_blk_id={}, commitment_type={}, "
+        "{}->{} deserialized (size={}): zil_blk_id={}, commitment_type={}, fs_id={}, "
         "cmt=[{:016x}:{:016x}:{:016x}:{:016x}]\n",
         func,
         __func__,
         sz_data,
         zil_blk_id,
         (commitment_type == (int)block_type::TAIL) ? "TAIL" : "UB",
+        (fs_id),
         (u_longlong_t)cmt[0],
         (u_longlong_t)cmt[1],
         (u_longlong_t)cmt[2],
         (u_longlong_t)cmt[3]);
     }
+    #endif
     return {commitment_type, fs_id, attestation_id};
   }
 
@@ -88,11 +90,17 @@ namespace aft
   {
   protected:
     ccf::NodeId _id;
-
     std::mutex ledger_access;
 
   public:
     std::vector<std::vector<uint8_t>> ledger;
+    using ledger_by_idx_t = std::map<Index, std::vector<uint8_t>>;
+    using filesystem_id = int;
+    //ledger_by_idx_t ledger_by_idx;
+    std::map<filesystem_id, ledger_by_idx_t> tail_ledger_by_fs_id;
+    std::map<filesystem_id, ledger_by_idx_t> ub_ledger_by_fs_id;
+    ledger_by_idx_t aux_ledger_by_fs_id;
+    Index cur_idx = 0;
     uint64_t skip_count = 0;
 
     LedgerStubProxy(const ccf::NodeId& id) : _id(id) {}
@@ -101,6 +109,17 @@ namespace aft
 
     size_t ledger_size()
     {
+      fmt::print("{}\n", __func__);
+      #if 0
+      if (cur_idx != ledger.size()) {
+        fmt::print(
+          "{}: cur_idx={} is different from ledger.size()={}\n",
+          __func__,
+          cur_idx,
+          ledger.size());
+      }
+      #endif
+      return cur_idx;
       return ledger.size();
     }
 
@@ -110,6 +129,8 @@ namespace aft
       ccf::kv::Term term,
       ccf::kv::Version index)
     {
+      fmt::print("{}\n", __func__);
+      
       std::lock_guard<std::mutex> lock(ledger_access);
 
       // The payload that we eventually deserialise must include the
@@ -119,7 +140,7 @@ namespace aft
       // (to mirror the deserialisation in LoggingStubStore::ExecutionWrapper).
       // We also size-prefix, so in a buffer of multiple of these messages we
       // can extract each with get_entry
-      const size_t idx = ledger.size() + 1;
+      const size_t idx = ledger_size() + 1;
       assert(idx == index);
       auto additional_size =
         sizeof(size_t) + sizeof(bool) + sizeof(term) + sizeof(index);
@@ -143,8 +164,18 @@ namespace aft
       {
         [[__maybe_unused__]] auto [commitment_type, fs_id, attestation_id] =
           deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+          if (commitment_type == (int)block_type::TAIL) {
+            tail_ledger_by_fs_id[fs_id][index] = combined;
+          }
+          else {
+            ub_ledger_by_fs_id[fs_id][index] = combined;
+          }
+      }
+      else {
+        aux_ledger_by_fs_id[index] = combined;
       }
 
+#if 0
       fmt::print(
         "{} [{}] ---> globally_committable={}, term={}, index={}, "
         "payload_size={}, combined_size={}\n",
@@ -155,17 +186,23 @@ namespace aft
         index,
         original.size(),
         combined.size());
-      ledger.push_back(combined);
+#endif
+      
+      // ledger_by_idx[index] = combined;
+      cur_idx = index;
+      // ledger.push_back(combined);
     }
 
     void skip_entry(const uint8_t*& data, size_t& size)
     {
+      fmt::print("{}\n", __func__);
       get_entry(data, size);
       ++skip_count;
     }
 
     static std::vector<uint8_t> get_entry(const uint8_t*& data, size_t& size)
     {
+      fmt::print("{}\n", __func__);
 #if 1
       // fmt::print("{} --> size={}\n", __func__, size);
       const auto entry_size = serialized::read<size_t>(data, size);
@@ -179,26 +216,54 @@ namespace aft
 
     std::optional<std::vector<uint8_t>> get_entry_by_idx(size_t idx)
     {
+      fmt::print("{}\n", __func__);
+      #if 1
       std::lock_guard<std::mutex> lock(ledger_access);
       // Ledger indices are 1-based, hence the -1
       if (idx > 0 && idx <= ledger.size())
       {
-#if 0
+#if 1
         fmt::print(
           "{} -> idx={} entry_size={}\n",
           __func__,
           idx,
           ledger[idx - 1].size());
 #endif
-        return ledger[idx - 1];
+        
+        
+        //return ledger[idx - 1];
+      }
+      #endif
+      for (auto& fs_ledger : tail_ledger_by_fs_id) {
+        auto& ledger_by_idx = fs_ledger.second;
+        if (ledger_by_idx.find(idx) != ledger_by_idx.end())
+        {
+          return ledger_by_idx[idx];
+        }
+      }
+      for (auto& fs_ledger : ub_ledger_by_fs_id) {
+        auto& ledger_by_idx = fs_ledger.second;
+        if (ledger_by_idx.find(idx) != ledger_by_idx.end())
+        {
+          return ledger_by_idx[idx];
+        }
+        
+      }
+      if (auto it = aux_ledger_by_fs_id.find(idx);
+          it != aux_ledger_by_fs_id.end())
+      {
+        return it->second;
       }
 
+      fmt::print("{} --> no entry found at idx={}\n", __func__, idx);
       return std::nullopt;
     }
 
     std::optional<std::vector<uint8_t>> get_raw_entry_by_idx(size_t idx)
     {
+      fmt::print("{}\n", __func__);
       auto data = get_entry_by_idx(idx);
+      #if 1
       if (data.has_value())
       {
         // Remove the View and Index that were written during put_entry
@@ -207,15 +272,16 @@ namespace aft
           data->begin() + sizeof(size_t) + sizeof(ccf::kv::Term) +
             sizeof(ccf::kv::Version));
       }
-
+      #endif
       return data;
     }
 
     std::optional<std::vector<uint8_t>> get_append_entries_payload(
       const aft::AppendEntries& ae)
     {
+      fmt::print("{}\n", __func__);
       std::vector<uint8_t> payload;
-
+      #if 1
       for (auto idx = ae.prev_idx + 1; idx <= ae.idx; ++idx)
       {
         auto entry_opt = get_entry_by_idx(idx);
@@ -227,12 +293,13 @@ namespace aft
         const auto& entry = *entry_opt;
         payload.insert(payload.end(), entry.begin(), entry.end());
       }
-
+      #endif
       return payload;
     }
 
     virtual void truncate(Index idx)
     {
+      fmt::print("{}\n", __func__);
       ledger.resize(idx);
     }
 
@@ -241,12 +308,84 @@ namespace aft
       skip_count = 0;
     }
 
+    std::ostream& print_ledgers(std::ostream& os) const
+    {
+       auto additional_size =
+        sizeof(size_t) + sizeof(bool) + + sizeof(ccf::kv::Term) +
+            sizeof(ccf::kv::Version);
+      os << "====== tail_ledger_by_fs_id ======\n";
+      for (auto& fs_ledger : tail_ledger_by_fs_id) {
+       auto& ledger_by_idx = fs_ledger.second;
+        os << ">Filesystem " << fs_ledger.first << " has " << ledger_by_idx.size() << " entries\n";
+        for (auto& [index, entry] : ledger_by_idx) {
+          ReplicatedData r = nlohmann::json::parse(
+            std::span{entry.data() + additional_size, entry.size() - additional_size});
+          os << "  Index: " << index << ": ";
+          deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+        }
+      }
+      os << "====== ub_ledger_by_fs_id ======\n";
+      for (auto& fs_ledger : ub_ledger_by_fs_id) {
+        auto& ledger_by_idx = fs_ledger.second;
+        os << ">Filesystem " << fs_ledger.first << " has " << ledger_by_idx.size() << " entries\n";
+        for (auto& [index, entry] : ledger_by_idx) {
+          ReplicatedData r = nlohmann::json::parse(
+            std::span{entry.data() + additional_size, entry.size() - additional_size});
+          os << "  Index: " << index << ": ";
+          auto [cmt_type, fs_id, attestation_id] = deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+          os << "    --> commitment_type=" << ((cmt_type == (int)block_type::TAIL) ? "TAIL" : "UB") << "\n";
+        }
+      }
+      os << "====== aux_ledger_by_fs_id ======\n";
+      return os;
+    }
+
     void commit(Index idx)
     {
+      std::lock_guard<std::mutex> lock(ledger_access);
       fmt::print("{} --> committing up to index={}\n", __func__, idx);
+
       // In a real ledger, commit would make the entries available for
       // deserialisation. In our stub, they are already available, so we just
       // print the commit and do nothing else.
+
+       for (auto it = tail_ledger_by_fs_id.begin(); it != tail_ledger_by_fs_id.end();)
+      {
+        auto& [fs_id, commitment_store] = *it;
+        auto first_uncommitted_it = commitment_store.upper_bound(idx);
+        auto last_committed_it = std::prev(first_uncommitted_it);
+
+        if (last_committed_it != commitment_store.end())
+        {
+          fmt::print(
+            "{} [TAIL] fs_id={} last_committed_index={} "
+            "first_uncommitted_index={} (=0 for if there are no uncommitted "
+            "entries)\n",
+            __PRETTY_FUNCTION__,
+            fs_id,
+            last_committed_it->first,
+            first_uncommitted_it != commitment_store.end() ?
+              first_uncommitted_it->first :
+              0);
+          commitment_store.erase(commitment_store.begin(), last_committed_it);
+        }
+
+        if (commitment_store.empty())
+        {
+          fmt::print(
+            "{} --> cmt_tail_store: is empty after compacting up to index={}\n",
+            __PRETTY_FUNCTION__,
+            fs_id,
+            idx);
+          it = tail_ledger_by_fs_id.erase(it);
+        }
+        else
+        {
+          ++it;
+        }
+      }
+      print_ledgers(std::cout) << std::endl;
+
     }
   };
 
@@ -326,6 +465,30 @@ namespace aft
       RCHook set_retired_committed_hook_)
     {
       set_retired_committed_hook = set_retired_committed_hook_;
+    }
+
+    std::optional<std::vector<uint8_t>> get_entry_by_idx(size_t idx)
+    {
+      std::lock_guard<std::mutex> lock(kvstore_access);
+      for (auto it = cmt_tail_store.begin(); it != cmt_tail_store.end(); ++it)
+      {
+        auto& [fs_id, commitment_store] = *it;
+        auto entry_it = commitment_store.find(idx);
+        if (entry_it != commitment_store.end())
+        {
+          return entry_it->second;
+        }
+      }
+      for (auto it = cmt_ub_store.begin(); it != cmt_ub_store.end(); ++it)
+      {
+        auto& [fs_id, commitment_store] = *it;
+        auto entry_it = commitment_store.find(idx);
+        if (entry_it != commitment_store.end())
+        {
+          return entry_it->second;
+        }
+      }
+      return std::nullopt;
     }
 
     virtual void compact(Index i)
