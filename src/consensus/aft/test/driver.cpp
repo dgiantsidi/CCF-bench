@@ -111,6 +111,23 @@ void empty_func(
   size_t sz_data = 0)
 {}
 
+
+void ccf_print_state(std::weak_ptr<void> driver)
+{
+  std::shared_ptr<void> drv_shared = driver.lock();
+  if (drv_shared)
+  {
+    std::shared_ptr<RaftDriver> raft_drv =
+      std::static_pointer_cast<RaftDriver>(drv_shared);
+    raft_drv->print_store();
+  }
+  else
+  {
+    fmt::print("{} error\n", __PRETTY_FUNCTION__);
+    assert(false);
+  }
+}
+
 uint64_t ccf_committed_seqno(std::weak_ptr<void> driver)
 {
   std::shared_ptr<void> drv_shared = driver.lock();
@@ -494,7 +511,8 @@ static void create_server_thread(
     std::make_shared<ccf_callbacks_set>(
       std::static_pointer_cast<void>(driver),
       ccf_replication,
-      ccf_committed_seqno);
+      ccf_committed_seqno, 
+      ccf_print_state);
   s->register_ccf_functions(ptr_callable);
   int port_num = std::stoll(port) + i;
   std::string port_str = std::to_string(port_num);

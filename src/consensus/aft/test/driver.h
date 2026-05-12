@@ -167,10 +167,9 @@ private:
         wrapper->apply(false);
     }
     raft->replicate(ccf::kv::BatchVector{{idx, d, committable, hooks}}, term);
-
-    
-    
   }
+
+  
 
   void add_node(ccf::NodeId node_id)
   {
@@ -224,6 +223,11 @@ public:
   int get_committed_seqno()
   {
     return (_nodes[my_nid].raft)->get_committed_seqno();
+  }
+
+  void print_store() {
+    auto& raft = _nodes.at(my_nid).raft;
+    raft->ledger->print_ledgers(std::cout);
   }
 
   size_t get_ledger_size()
