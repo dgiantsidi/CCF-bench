@@ -45,24 +45,49 @@ namespace aft
       &attestation_id,
       data + sizeof(uint64_t) + sizeof(cmt) + 2 * sizeof(int),
       sizeof(int));
-    #if 1
+    char ub_digest[UBERBLOCK_DIGEST_BUF_SIZE];
+    uint64_t zil_head_blk_id;
+    if (commitment_type == (int)block_type::UB) { 
+      ::memcpy(&zil_head_blk_id, data + sizeof(uint64_t) + sizeof(cmt) + 3 * sizeof(int), sizeof(uint64_t));
+      ::memcpy(ub_digest, data + sizeof(uint64_t) + sizeof(cmt) + 3 * sizeof(int) + sizeof(uint64_t), (UBERBLOCK_DIGEST_BUF_SIZE-1));
+      ub_digest[UBERBLOCK_DIGEST_BUF_SIZE-1] = '\0';
+    }
+
     {
       using u_longlong_t = long long unsigned;
-      fmt::print(
-        "{}->{} deserialized (size={}): zil_blk_id={}, commitment_type={}, fs_id={}, "
-        "cmt=[{:016x}:{:016x}:{:016x}:{:016x}]\n",
-        func,
-        __func__,
-        sz_data,
-        zil_blk_id,
-        (commitment_type == (int)block_type::TAIL) ? "TAIL" : "UB",
-        (fs_id),
-        (u_longlong_t)cmt[0],
-        (u_longlong_t)cmt[1],
-        (u_longlong_t)cmt[2],
-        (u_longlong_t)cmt[3]);
+      if (commitment_type == (int)block_type::UB) {
+        fmt::print(
+          "{}->{} deserialized (size={}) fs_id={}: ub_tx={}, commitment_type={}, , "
+          "head_cmt=[{:016x}:{:016x}:{:016x}:{:016x}], zil_head_blk_id={}, ub_digest={}\n",
+          func,
+          __func__,
+          sz_data,
+          fs_id,
+          zil_blk_id,
+          (commitment_type == (int)block_type::TAIL) ? "TAIL" : "UB",
+          (u_longlong_t)cmt[0],
+          (u_longlong_t)cmt[1],
+          (u_longlong_t)cmt[2],
+          (u_longlong_t)cmt[3],
+          zil_head_blk_id,
+          ub_digest);
+      } else {
+        fmt::print(
+          "{}->{} deserialized (size={}) fs_id={}: zil_blk_id={}, commitment_type={}, "
+          "cmt=[{:016x}:{:016x}:{:016x}:{:016x}]\n",
+          func,
+          __func__,
+          sz_data,
+          fs_id,
+          zil_blk_id,
+          (commitment_type == (int)block_type::TAIL) ? "TAIL" : "UB",
+          (u_longlong_t)cmt[0],
+          (u_longlong_t)cmt[1],
+          (u_longlong_t)cmt[2],
+          (u_longlong_t)cmt[3]);
+      }
     }
-    #endif
+     
     return {commitment_type, fs_id, attestation_id};
   }
 
@@ -349,7 +374,7 @@ namespace aft
       // deserialisation. In our stub, they are already available, so we just
       // print the commit and do nothing else.
 
-       for (auto it = tail_ledger_by_fs_id.begin(); it != tail_ledger_by_fs_id.end();)
+      for (auto it = tail_ledger_by_fs_id.begin(); it != tail_ledger_by_fs_id.end();)
       {
         auto& [fs_id, commitment_store] = *it;
         auto first_uncommitted_it = commitment_store.upper_bound(idx);
@@ -384,6 +409,46 @@ namespace aft
           ++it;
         }
       }
+
+      for (auto it = ub_ledger_by_fs_id.begin(); it != ub_ledger_by_fs_id.end();)
+      {
+        auto& [fs_id, commitment_store] = *it;
+        auto first_uncommitted_it = commitment_store.upper_bound(idx);
+        auto last_committed_it = std::prev(first_uncommitted_it);
+        auto second_to_last_committed_it = last_committed_it != commitment_store.begin() ?
+          std::prev(last_committed_it) :
+          commitment_store.end();
+
+        if (second_to_last_committed_it != commitment_store.end())
+        {
+          fmt::print(
+            "{} [TAIL] fs_id={} last_committed_index={} "
+            "first_uncommitted_index={} (=0 for if there are no uncommitted "
+            "entries)\n",
+            __PRETTY_FUNCTION__,
+            fs_id,
+            second_to_last_committed_it->first,
+            first_uncommitted_it != commitment_store.end() ?
+              first_uncommitted_it->first :
+              0);
+          commitment_store.erase(commitment_store.begin(), second_to_last_committed_it);
+        }
+
+        if (commitment_store.empty())
+        {
+          fmt::print(
+            "{} --> cmt_ub_store: is empty after compacting up to index={}\n",
+            __PRETTY_FUNCTION__,
+            fs_id,
+            idx);
+          it = ub_ledger_by_fs_id.erase(it);
+        }
+        else
+        {
+          ++it;
+        }
+      }
+
       print_ledgers(std::cout) << std::endl;
 
     }
