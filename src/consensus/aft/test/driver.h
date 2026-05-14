@@ -137,6 +137,7 @@ private:
     aft::ReplicatedData r = nlohmann::json::parse(std::span{d->data(), d->size()});
     if (r.type == aft::ReplicatedDataType::raw)
     {
+      #if 0
         fmt::print(
           "{}: replicated entry with committable={}, term={}, index={}, "
           "entry_size={}\n",
@@ -146,7 +147,7 @@ private:
           idx,
           r.data.size());
         aft::deserialize_data_and_print(__func__, r.data.data(), r.data.size());
-    
+      #endif
 
         auto additional_size =
             sizeof(bool) + sizeof(term) + sizeof(idx);
