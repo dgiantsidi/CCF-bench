@@ -14,7 +14,7 @@
 
 namespace aft
 {
-  static std::tuple<int, int, int> deserialize_data_and_print(
+  static std::tuple<int, int, int, uint64_t> deserialize_data_and_print(
     const char* func, uint8_t* data, size_t sz_data)
   {
     // from /home/azureuser/ngtcp2/examples/client.cc
@@ -53,6 +53,7 @@ namespace aft
       ub_digest[UBERBLOCK_DIGEST_BUF_SIZE-1] = '\0';
     }
 
+    #if 0
     {
       using u_longlong_t = long long unsigned;
       if (commitment_type == (int)block_type::UB) {
@@ -87,8 +88,9 @@ namespace aft
           (u_longlong_t)cmt[3]);
       }
     }
+    #endif
      
-    return {commitment_type, fs_id, attestation_id};
+    return {commitment_type, fs_id, attestation_id, zil_blk_id};
   }
 
   enum class ReplicatedDataType
@@ -134,7 +136,7 @@ namespace aft
 
     size_t ledger_size()
     {
-      fmt::print("{}\n", __func__);
+      //fmt::print("{}\n", __func__);
       #if 0
       if (cur_idx != ledger.size()) {
         fmt::print(
@@ -154,7 +156,6 @@ namespace aft
       ccf::kv::Term term,
       ccf::kv::Version index)
     {
-      fmt::print("{}\n", __func__);
       
       std::lock_guard<std::mutex> lock(ledger_access);
 
@@ -187,13 +188,17 @@ namespace aft
         nlohmann::json::parse(std::span{original.data(), original.size()});
       if (r.type == ReplicatedDataType::raw)
       {
-        [[__maybe_unused__]] auto [commitment_type, fs_id, attestation_id] =
+        [[__maybe_unused__]] auto [commitment_type, fs_id, attestation_id, blk_id] =
           deserialize_data_and_print(__func__, r.data.data(), r.data.size());
           if (commitment_type == (int)block_type::TAIL) {
             tail_ledger_by_fs_id[fs_id][index] = combined;
           }
-          else {
+          else if (commitment_type == (int)block_type::UB) {
             ub_ledger_by_fs_id[fs_id][index] = combined;
+          }
+          else {
+            fmt::print(" {} --> WARNING: received a r commitment for fs_id={} with blk_id={} of unknown type.\n",
+              __func__, fs_id, blk_id);
           }
       }
       else {
@@ -220,14 +225,14 @@ namespace aft
 
     void skip_entry(const uint8_t*& data, size_t& size)
     {
-      fmt::print("{}\n", __func__);
+      //fmt::print("{}\n", __func__);
       get_entry(data, size);
       ++skip_count;
     }
 
     static std::vector<uint8_t> get_entry(const uint8_t*& data, size_t& size)
     {
-      fmt::print("{}\n", __func__);
+      //fmt::print("{}\n", __func__);
 #if 1
       // fmt::print("{} --> size={}\n", __func__, size);
       const auto entry_size = serialized::read<size_t>(data, size);
@@ -241,18 +246,18 @@ namespace aft
 
     std::optional<std::vector<uint8_t>> get_entry_by_idx(size_t idx)
     {
-      fmt::print("{}\n", __func__);
+      //fmt::print("{}\n", __func__);
       #if 1
       std::lock_guard<std::mutex> lock(ledger_access);
       // Ledger indices are 1-based, hence the -1
       if (idx > 0 && idx <= ledger.size())
       {
 #if 1
-        fmt::print(
-          "{} -> idx={} entry_size={}\n",
-          __func__,
-          idx,
-          ledger[idx - 1].size());
+        //fmt::print(
+        //  "{} -> idx={} entry_size={}\n",
+        //  __func__,
+        //  idx,
+        //  ledger[idx - 1].size());
 #endif
         
         
@@ -286,7 +291,7 @@ namespace aft
 
     std::optional<std::vector<uint8_t>> get_raw_entry_by_idx(size_t idx)
     {
-      fmt::print("{}\n", __func__);
+      //fmt::print("{}\n", __func__);
       auto data = get_entry_by_idx(idx);
       #if 1
       if (data.has_value())
@@ -304,7 +309,7 @@ namespace aft
     std::optional<std::vector<uint8_t>> get_append_entries_payload(
       const aft::AppendEntries& ae)
     {
-      fmt::print("{}\n", __func__);
+      //fmt::print("{}\n", __func__);
       std::vector<uint8_t> payload;
       #if 1
       for (auto idx = ae.prev_idx + 1; idx <= ae.idx; ++idx)
@@ -324,7 +329,7 @@ namespace aft
 
     virtual void truncate(Index idx)
     {
-      fmt::print("{}\n", __func__);
+      //fmt::print("{}\n", __func__);
       ledger.resize(idx);
     }
 
@@ -357,7 +362,7 @@ namespace aft
           ReplicatedData r = nlohmann::json::parse(
             std::span{entry.data() + additional_size, entry.size() - additional_size});
           os << "  Index: " << index << ": ";
-          auto [cmt_type, fs_id, attestation_id] = deserialize_data_and_print(__func__, r.data.data(), r.data.size());
+          auto [cmt_type, fs_id, attestation_id, blk_id] = deserialize_data_and_print(__func__, r.data.data(), r.data.size());
           os << "    --> commitment_type=" << ((cmt_type == (int)block_type::TAIL) ? "TAIL" : "UB") << "\n";
         }
       }
@@ -368,7 +373,7 @@ namespace aft
     void commit(Index idx)
     {
       std::lock_guard<std::mutex> lock(ledger_access);
-      fmt::print("{} --> committing up to index={}\n", __func__, idx);
+      // fmt::print("{} --> committing up to index={}\n", __func__, idx);
 
       // In a real ledger, commit would make the entries available for
       // deserialisation. In our stub, they are already available, so we just
@@ -382,26 +387,26 @@ namespace aft
 
         if (last_committed_it != commitment_store.end())
         {
-          fmt::print(
-            "{} [TAIL] fs_id={} last_committed_index={} "
-            "first_uncommitted_index={} (=0 for if there are no uncommitted "
-            "entries)\n",
-            __PRETTY_FUNCTION__,
-            fs_id,
-            last_committed_it->first,
-            first_uncommitted_it != commitment_store.end() ?
-              first_uncommitted_it->first :
-              0);
+          // fmt::print(
+          //   "{} [TAIL] fs_id={} last_committed_index={} "
+          //   "first_uncommitted_index={} (=0 for if there are no uncommitted "
+          //   "entries)\n",
+          //   __PRETTY_FUNCTION__,
+          //   fs_id,
+          //  last_committed_it->first,
+          //  first_uncommitted_it != commitment_store.end() ?
+          //    first_uncommitted_it->first :
+          //      0);
           commitment_store.erase(commitment_store.begin(), last_committed_it);
         }
 
         if (commitment_store.empty())
         {
-          fmt::print(
-            "{} --> cmt_tail_store: is empty after compacting up to index={}\n",
-            __PRETTY_FUNCTION__,
-            fs_id,
-            idx);
+          // fmt::print(
+          //   "{} --> cmt_tail_store: is empty after compacting up to index={}\n",
+          //   __PRETTY_FUNCTION__,
+          //   fs_id,
+          //   idx);
           it = tail_ledger_by_fs_id.erase(it);
         }
         else
@@ -421,16 +426,16 @@ namespace aft
 
         if (second_to_last_committed_it != commitment_store.end())
         {
-          fmt::print(
-            "{} [TAIL] fs_id={} last_committed_index={} "
-            "first_uncommitted_index={} (=0 for if there are no uncommitted "
-            "entries)\n",
-            __PRETTY_FUNCTION__,
-            fs_id,
-            second_to_last_committed_it->first,
-            first_uncommitted_it != commitment_store.end() ?
-              first_uncommitted_it->first :
-              0);
+          // fmt::print(
+          //   "{} [TAIL] fs_id={} last_committed_index={} "
+          //   "first_uncommitted_index={} (=0 for if there are no uncommitted "
+          //   "entries)\n",
+          //   __PRETTY_FUNCTION__,
+          //   fs_id,
+          //   second_to_last_committed_it->first,
+          //   first_uncommitted_it != commitment_store.end() ?
+          //     first_uncommitted_it->first :
+          //       0);
           commitment_store.erase(commitment_store.begin(), second_to_last_committed_it);
         }
 
@@ -439,8 +444,8 @@ namespace aft
           fmt::print(
             "{} --> cmt_ub_store: is empty after compacting up to index={}\n",
             __PRETTY_FUNCTION__,
-            fs_id,
-            idx);
+             fs_id,
+             idx);
           it = ub_ledger_by_fs_id.erase(it);
         }
         else
@@ -449,7 +454,7 @@ namespace aft
         }
       }
 
-      print_ledgers(std::cout) << std::endl;
+      // print_ledgers(std::cout) << std::endl;
 
     }
   };
@@ -559,7 +564,7 @@ namespace aft
     virtual void compact(Index i)
     {
       std::lock_guard<std::mutex> lock(kvstore_access);
-      fmt::print("{} --> compacting up to index={}\n", __PRETTY_FUNCTION__, i);
+      //fmt::print("{} --> compacting up to index={}\n", __PRETTY_FUNCTION__, i);
       for (auto it = cmt_tail_store.begin(); it != cmt_tail_store.end();)
       {
         auto& [fs_id, commitment_store] = *it;
@@ -568,6 +573,7 @@ namespace aft
 
         if (last_committed_it != commitment_store.end())
         {
+          #if 0
           fmt::print(
             "{} [TAIL] fs_id={} last_committed_index={} "
             "first_uncommitted_index={} (=0 for if there are no uncommitted "
@@ -578,16 +584,19 @@ namespace aft
             first_uncommitted_it != commitment_store.end() ?
               first_uncommitted_it->first :
               0);
+          #endif
           commitment_store.erase(commitment_store.begin(), last_committed_it);
         }
 
         if (commitment_store.empty())
         {
+          #if 0
           fmt::print(
             "{} --> cmt_tail_store: is empty after compacting up to index={}\n",
             __PRETTY_FUNCTION__,
             fs_id,
             i);
+          #endif
           it = cmt_tail_store.erase(it);
         }
         else
@@ -606,6 +615,7 @@ namespace aft
           last_committed_it != commitment_store.end() &&
           second_to_last_committed_it != commitment_store.end())
         {
+          #if 0
           fmt::print(
             "{} [UB] fs_id={} last_committed_index={} "
             "second_to_last_committed_index={} first_uncommitted_index={} (=0 "
@@ -617,11 +627,13 @@ namespace aft
             first_uncommitted_it != commitment_store.end() ?
               first_uncommitted_it->first :
               0);
+          #endif
           commitment_store.erase(
             commitment_store.begin(), second_to_last_committed_it);
         }
         else if (last_committed_it != commitment_store.end())
         {
+          #if 0
           fmt::print(
             "{} [UB] fs_id={} last_committed_index={} "
             "first_uncommitted_index={} (=0 for if there are no uncommitted "
@@ -632,6 +644,7 @@ namespace aft
             first_uncommitted_it != commitment_store.end() ?
               first_uncommitted_it->first :
               0);
+          #endif
           commitment_store.erase(commitment_store.begin(), last_committed_it);
         }
 
@@ -650,7 +663,7 @@ namespace aft
         }
       }
 
-      print_store(std::cout);
+      //print_store(std::cout);
     }
 
     virtual void rollback(const ccf::kv::TxID& tx_id, Term t)
@@ -677,7 +690,7 @@ namespace aft
         nlohmann::json::parse(std::span{entry.data(), entry.size()});
       if (r.type == aft::ReplicatedDataType::raw)
       {
-        auto [cmt_type, fs_id, attestation_id] =
+        auto [cmt_type, fs_id, attestation_id, blk_id] =
           deserialize_data_and_print(__func__, r.data.data(), r.data.size());
         std::lock_guard<std::mutex> lock(kvstore_access);
         if (attestation_store.find(fs_id) == attestation_store.end())
@@ -712,8 +725,8 @@ namespace aft
             entry.begin(),
             entry.end()); // Using 0 as the filesystem_id for simplicity
         }
-        std::cout << "Current state of the store after applying entry:\n";
-        print_store(std::cout) << std::endl;
+        // std::cout << "Current state of the store after applying entry:\n";
+        // print_store(std::cout) << std::endl;
       }
     }
 
@@ -768,8 +781,8 @@ namespace aft
         hooks(std::move(hooks_)),
         stub_store_ptr(stub_store_ptr_)
       {
-        fmt::print(
-          "{}: deserialising entry of size {}\n", __func__, data_.size());
+        //fmt::print(
+        //  "{}: deserialising entry of size {}\n", __func__, data_.size());
         const uint8_t* data = data_.data();
         auto size = data_.size();
 
@@ -778,14 +791,14 @@ namespace aft
         index = serialized::read<ccf::kv::Version>(data, size);
         entry = serialized::read(data, size, size);
 
-        fmt::print(
-          "{}: deserialized entry with committable={}, term={}, index={}, "
-          "entry_size={}\n",
-          __func__,
-          committable,
-          term,
-          index,
-          entry.size());
+        //fmt::print(
+        //  "{}: deserialized entry with committable={}, term={}, index={}, "
+        //  "entry_size={}\n",
+        //  __func__,
+        //  committable,
+        //  term,
+        //  index,
+        //  entry.size());
         result = committable ? ccf::kv::ApplyResult::PASS_SIGNATURE :
                                ccf::kv::ApplyResult::PASS;
 
@@ -856,7 +869,7 @@ namespace aft
       bool public_only = false,
       const std::optional<ccf::kv::TxID>& expected_txid = std::nullopt)
     {
-      fmt::print("{}: deserialising entry of size {}\n", __func__, data.size());
+      // fmt::print("{}: deserialising entry of size {}\n", __func__, data.size());
       ccf::kv::ConsensusHookPtrs hooks = {};
       return std::make_unique<ExecutionWrapper>(
         data, expected_txid, std::move(hooks), this);
@@ -883,7 +896,7 @@ namespace aft
     // node_state.h, circa line 2147
     virtual void compact(Index i) override
     {
-      fmt::print("{} --> compacting up to index={}\n", __func__, i);
+      // fmt::print("{} --> compacting up to index={}\n", __func__, i);
       for (auto& [version, configuration] : retired_committed_entries)
       {
         if (version <= i)
@@ -937,13 +950,13 @@ namespace aft
       auto data_ = data.data();
       auto size = data.size();
 
-      fmt::print("{}: deserialising entry of size {}\n", __func__, data.size());
+      // fmt::print("{}: deserialising entry of size {}\n", __func__, data.size());
       const auto committable = serialized::read<bool>(data_, size);
-      fmt::print("{}: deserialized committable={}\n", __func__, committable);
+      // fmt::print("{}: deserialized committable={}\n", __func__, committable);
       auto term = serialized::read<aft::Term>(data_, size);
-      fmt::print("{}: deserialized term={}\n", __func__, term);
+      // fmt::print("{}: deserialized term={}\n", __func__, term);
       auto version = serialized::read<ccf::kv::Version>(data_, size);
-      fmt::print("{}: deserialized version={}\n", __func__, version);
+      // fmt::print("{}: deserialized version={}\n", __func__, version);
       ReplicatedData r = nlohmann::json::parse(std::span{data_, size});
 
       ccf::kv::ConsensusHookPtrs hooks = {};
