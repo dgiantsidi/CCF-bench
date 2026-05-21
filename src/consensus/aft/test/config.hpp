@@ -14,7 +14,7 @@ constexpr int payload_sz_entry = sizeof(size_t) + sizeof(bool) +
 #ifdef REGULAR_VM
 #  warning "R-VMs running here"
 constexpr int primary_node = 0;
-std::string primary_ip = "10.0.0.5"; // 10.5.0.7";
+std::string primary_ip = "10.0.0.3"; // 10.5.0.7";
 constexpr int primary_listening_port = 1800;
 constexpr int primary_sending_port = 1900;
 
